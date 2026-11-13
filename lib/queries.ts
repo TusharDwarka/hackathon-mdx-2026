@@ -1424,12 +1424,19 @@ function authFail(e: { status?: number; code?: string; message?: string }): neve
 const toUser = (u: { id: string; email?: string | null } | null | undefined): User | null => (u ? { id: u.id, email: u.email ?? null } : null);
 
 /**
- * Creates the account and signs in. Returns null when Supabase still wants the email confirmed
- * (P1 turns "Confirm email" off for the demo, so this should not happen).
+ * Creates the account and signs in. Server first (POST /api/account: created already confirmed, no email
+ * sent). Without the server key (503) it falls back to Supabase's own sign-up, which returns null while
+ * the email still needs confirming.
  */
 export async function signUp(email: string, password: string): Promise<User | null> {
   const v = validateCredentials(email, password);
   if (!v.ok) throw new ApiError(400, v.error);
+  try {
+    await api("/api/account", { method: "POST", body: v.value });
+    return await signIn(v.value.email, v.value.password);
+  } catch (e) {
+    if (!(e instanceof ApiError) || e.status !== 503) throw e;
+  }
   const { data, error } = await supabase.auth.signUp(v.value);
   if (error) authFail(error);
   // An existing email comes back as a user with no identities and no error (Supabase hides who exists).

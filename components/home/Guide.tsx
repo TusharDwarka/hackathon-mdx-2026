@@ -73,7 +73,7 @@ const TOURS: Record<"resident" | "landing", TourStep[]> = {
     { target: "calendar", title: "Never miss the water", text: "Your phone rings 30 min before the water, even with the app closed.", Icon: Bell },
     { target: "nav-report", title: "Tell your street", text: "Water is here, or no water? One tap in Report.", Icon: Megaphone },
     { target: "nav-request", title: "Request a tanker", text: "No water for too long? One tap, free. Then follow the truck live.", Icon: Truck },
-    { target: "nav-news", title: "CWA notices", text: "Every notice with its date and source.", Icon: Newspaper },
+    { target: "nav-drink", title: "Is my tap water safe?", text: "Official advisories for your area, and what to do if the water is cloudy, white or from a tank.", Icon: Newspaper },
     { target: "help", title: "That's it", text: "Tap the drop to see this tour again.", Icon: CircleHelp },
   ],
 };

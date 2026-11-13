@@ -4,8 +4,9 @@
 // supply rule (P5's supply_rules.csv via /api/supply), "Is my tap water safe to drink?" (op 26),
 // the notices feed with the AI label, and "near a river?" (computed on the phone, never sent).
 // Every card says "Not known yet" instead of inventing a number.
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Bot, CloudRain, Droplet, ExternalLink, Info, LocateFixed, Newspaper, ShieldAlert, ShieldQuestion, Waves } from "lucide-react";
+import { Bot, ChevronRight, CloudRain, Droplet, ExternalLink, Info, LocateFixed, Newspaper, ShieldAlert, ShieldQuestion, Waves } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton, fmtDate } from "@/components/home/shared";
 import { AI_NOTICE_LABEL, NEAR_RIVER_M, foldName, getNoticeFeed, loadRivers, nearestRiver, type FeedNotice, type Quality, type QualityReason, type Rivers } from "@/lib/queries";
@@ -88,7 +89,7 @@ const LEVEL = {
   none: { head: "No advisory found", style: "", icon: "text-primary" },
 } as const;
 
-export function SafeToDrink({ quality, locality }: { quality: Quality | null; locality: string | null }) {
+export function SafeToDrink({ quality, locality, more = true }: { quality: Quality | null; locality: string | null; more?: boolean }) {
   const lv = quality ? LEVEL[quality.level] : LEVEL.none;
   return (
     <section className={`${card} ${lv.style}`} aria-labelledby="safe-title" role={quality?.level === "official_notice" ? "alert" : undefined}>
@@ -122,6 +123,11 @@ export function SafeToDrink({ quality, locality }: { quality: Quality | null; lo
             <a href={quality.advice_source_url} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center gap-1 text-primary underline underline-offset-2">WHO: boil water <ExternalLink aria-hidden className="size-3" /></a>
             {quality.rain_mm_48h !== null && <span className="inline-flex min-h-11 items-center">Rain, last 48 h: {quality.rain_mm_48h} mm</span>}
           </p>
+          {more && (
+            <Link href="/resident?tab=drink" className="mt-1 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary underline underline-offset-2">
+              Cloudy, white, from a tank or tanker? What to do <ChevronRight aria-hidden className="size-4" />
+            </Link>
+          )}
         </>
       )}
     </section>

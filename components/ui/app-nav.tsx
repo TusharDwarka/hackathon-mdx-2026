@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useSyncExternalStore } from "react";
-import { ArrowLeftRight, BookOpen, CalendarClock, Info, LayoutDashboard, LayoutGrid, LogIn, LogOut, Map, Megaphone, Newspaper, Route, Truck, Waves, type LucideIcon } from "lucide-react";
+import { ArrowLeftRight, BookOpen, CalendarClock, GlassWater, Info, LayoutDashboard, LayoutGrid, LogIn, LogOut, Map, Megaphone, Newspaper, Route, Truck, Waves, type LucideIcon } from "lucide-react";
 import { Logo, ROLE_LABEL, SideWaves, readRole, type Role } from "@/components/ui/brand";
 import { useUser } from "@/components/home/shared";
 import { signOut } from "@/lib/queries";
@@ -20,11 +20,12 @@ const tourId = (href: string) => `nav-${href.split("?tab=")[1] ?? href.slice(1)}
 const NAV: Record<Role, Item[]> = {
   resident: [
     { href: "/resident", label: "Overview", short: "Home", Icon: LayoutGrid },
+    { href: "/resident?tab=drink", label: "Is my tap water safe?", short: "Drink", Icon: GlassWater },
     { href: "/resident?tab=schedule", label: "Water schedule", short: "Schedule", Icon: CalendarClock },
     { href: "/resident?tab=report", label: "Report water", short: "Report", Icon: Megaphone },
     { href: "/resident?tab=request", label: "Request a tanker", short: "Tanker", Icon: Truck },
     { href: "/map", label: "Live tanker map", short: "Map", Icon: Map, wideOnly: true }, // phones: from the Tanker tab
-    { href: "/resident?tab=news", label: "CWA notices", short: "Notices", Icon: Newspaper },
+    { href: "/resident?tab=news", label: "CWA notices", short: "Notices", Icon: Newspaper, wideOnly: true }, // phones: "All notices" on the Overview
     { href: "/resident?tab=reservoirs", label: "Reservoirs", short: "Reservoirs", Icon: Waves, wideOnly: true }, // phones: from the Overview card
     { href: "/guide", label: "How to use", short: "Guide", Icon: BookOpen, wideOnly: true }, // phones: the drop in the header
   ],

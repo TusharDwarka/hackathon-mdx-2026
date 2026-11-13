@@ -24,6 +24,7 @@ import { minOfDay, toMin, windowStatus } from "@/components/home/time";
 import { ForecastCard, Planner, SaveWaterCard } from "@/components/home/WaterDay";
 import { NoticeFeed, RiverCard, SafeToDrink, SupplyCard } from "@/components/home/Locality";
 import { OnboardingTour } from "@/components/home/Guide";
+import { DrinkingWater } from "@/components/home/DrinkingWater";
 import { loadWaterPoints, type WaterPoint } from "@/components/map/data";
 import { likelyWaterTime, streetStatus } from "@/components/home/rules";
 import {
@@ -38,6 +39,7 @@ import { supabase } from "@/lib/supabase";
 
 const TABS = [
   { id: "overview", label: "Overview" },
+  { id: "drink", label: "Is my tap water safe?" },
   { id: "schedule", label: "Water schedule" },
   { id: "report", label: "Report water" },
   { id: "request", label: "Request a tanker" },
@@ -872,6 +874,7 @@ export function Resident({ info }: { info: PublicData }) {
     <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
       <div className={col}>
         {base ? placeCard : loading}
+        {spot && <SupplyCard name={spot.l} />}
         {area && todayCard(true)}
         {area && likelyCard}
       </div>
@@ -921,6 +924,14 @@ export function Resident({ info }: { info: PublicData }) {
         </section>
       )}
       {area && guest && !street && needStreet(what)}
+      {spot && (
+        <p className={`${card} text-sm`}>
+          <span className={`block ${title}`}>Not live in {spot.l} yet</span>
+          <span className="mt-1 block text-muted-foreground">
+            To {what}, we need the streets of your locality. They are in for {areas.map((a) => a.name).join(", ")}. Tap Change above to pick one.
+          </span>
+        </p>
+      )}
     </>
   );
 
@@ -1069,6 +1080,15 @@ export function Resident({ info }: { info: PublicData }) {
 
   const sections: Record<Tab, React.ReactNode> = {
     overview,
+    drink: (
+      <div className="flex flex-col gap-4 lg:gap-6">
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:items-start lg:gap-6">
+          <SafeToDrink quality={quality} locality={localityName} more={false} />
+          {centre ? <RiverCard name={localityName} lat={centre.lat} lng={centre.lng} /> : spot ? <RiverCard name={spot.l} lat={spot.lat} lng={spot.lng} /> : base ? placeCard : loading}
+        </div>
+        <DrinkingWater />
+      </div>
+    ),
     schedule,
     report: reportSection,
     request: requestSection,
