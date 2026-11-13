@@ -12,6 +12,13 @@ Prompt source: docs/BUILD-PROMPT.md (wins over the playbook on the product).
 - [ ] 1b. By hand (P1): create Supabase project, run `sql/schema.sql`, put keys in `.env.local` + Vercel env vars, deploy to Vercel
 - [ ] 1c. (P5 -> P1) data files `data/schedule.csv` + `data/streets.csv`, then `npm run load-data` (BLOCKED: files missing)
 
+## Fri 14:45 — clickable mockup on main (mock data in lib/mock.ts, live at the Vercel URL)
+3 builders, 3 branches, no shared files. Each swaps their screen from `lib/mock.ts` to real Supabase calls.
+- **P2 — branch `feat/home`** — owns app/page.tsx, components/home/: steps 2, 3, 4 (UI), 7, 8 (UI). Reports + requests insert via `lib/queries.ts` from P3.
+- **P3 — branch `feat/data`** — owns sql/, scripts/, lib/queries.ts: load-data once CSVs land, queries for ops 1, 2, 3, 10, 11, `scripts/seed-demo.ts` (7 days, is_demo=true). Ship `lib/queries.ts` FIRST (by 16:00) so P2 can swap.
+- **P4 — branch `feat/driver-map`** — owns app/driver/, app/map/, lib/eta.ts: steps 5 + 6 (the WOW). Ops 4-9 written inline in the driver/map pages.
+- P1 merges every ~90 min (PR → review → merge → Vercel redeploys main). P5 = data CSVs + pitch on `feat/data-files`.
+
 Owners: P2 steps 2, 3, 4 (UI), 7, 8 (UI) · P3 queries, seed, reliability and heat-map data · P4 steps 5, 6 · P5 data files + pitch · P1 merges. Details in `team/*/TODO.md`.
 - [ ] 2. Home: street picker + today's official window
 - [ ] 3. One-tap reports: "Delo inn vini" / "Pena delo"
