@@ -6,6 +6,9 @@ Prompt source: docs/BUILD-PROMPT.md (wins over the playbook on the product).
 
 Water-day planner, reminders (must work), tomorrow forecast, reservoir tank diagrams, cloudy-water caution (official notices only for health), save-water + nearby help, prediction model. Owners, shapes (ops 24 to 27) and copy/paste messages: [WATER-DAY-SPLIT.md](docs/WATER-DAY-SPLIT.md). Everyone pulls main first.
 
+## V5 (Fri night) — current split
+Owners, order, real/demo data table and messages: [docs/SPLIT-V5.md](docs/SPLIT-V5.md). Rules: contracts/api.md "V5". Replaces the open parts of NEXT-TASK-SPLIT.md.
+
 ## Next requested work — planning only (13 November 2026)
 
 The user requested a task split, with implementation delegated to teammates and merging later. See [NEXT-TASK-SPLIT.md](docs/NEXT-TASK-SPLIT.md) for the source audit, P1–P5 ownership, copy/paste briefs, dependencies and acceptance checks. This does not mark the proposed features implemented or change the frozen API contract. P1's first implementation prerequisite is to reconcile the new scope and contract.
