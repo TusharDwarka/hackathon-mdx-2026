@@ -253,9 +253,29 @@
 @keyframes word-up { from { transform: translateY(110%); } }
 @keyframes bob { 50% { transform: translateY(-8px) rotate(-3deg); } }
 @keyframes flow-x { to { transform: translateX(-50%); } }
+@keyframes tank-flow { to { transform: translateX(-60px); } }
+@keyframes tank-rise { from { transform: translateY(var(--rise)); } }
+@keyframes wave-load { to { transform: translateX(100%); } }
 @keyframes flow-svg { to { transform: translateX(-400px); } }
 @keyframes spot-pulse { 50% { outline-offset: 10px; outline-color: oklch(1 0 0 / 0); } }
 
+@utility wave-load {
+  /* Loading placeholder for every section: a pale water band sweeping across (transform only). */
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in oklch, var(--primary) 9%, var(--muted));
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(100deg, transparent 20%, oklch(1 0 0 / 0.7) 45%, oklch(0.85 0.08 230 / 0.5) 55%, transparent 80%);
+    animation: wave-load 1.6s var(--ease-snap) infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &::after { display: none; }
+  }
+}
 @utility reveal {
   /* Fades and rises into place as it scrolls into view. Cards already on screen at load show at once. */
   @supports (animation-timeline: view()) {

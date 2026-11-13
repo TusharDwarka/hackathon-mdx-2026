@@ -19,11 +19,12 @@ const NAV: Record<Role, Item[]> = {
   resident: [
     { href: "/resident", label: "Overview", short: "Home", Icon: LayoutGrid },
     { href: "/resident?tab=schedule", label: "Water schedule", short: "Schedule", Icon: CalendarClock },
-    { href: "/resident?tab=report", label: "Report & request", short: "Report", Icon: Megaphone },
-    { href: "/map", label: "Live tanker", short: "Tanker", Icon: Truck },
+    { href: "/resident?tab=report", label: "Report water", short: "Report", Icon: Megaphone },
+    { href: "/resident?tab=request", label: "Request a tanker", short: "Tanker", Icon: Truck },
+    { href: "/map", label: "Live tanker map", short: "Map", Icon: Map, wideOnly: true }, // phones: from the Tanker tab
     { href: "/resident?tab=news", label: "CWA notices", short: "Notices", Icon: Newspaper },
     { href: "/resident?tab=reservoirs", label: "Reservoirs", short: "Reservoirs", Icon: Waves, wideOnly: true }, // phones: from the Overview card
-    { href: "/guide", label: "How to use", short: "Guide", Icon: BookOpen, wideOnly: true }, // phones: "How it works" in the header
+    { href: "/guide", label: "How to use", short: "Guide", Icon: BookOpen, wideOnly: true }, // phones: the drop in the header
   ],
   driver: [
     { href: "/driver", label: "My round", short: "Round", Icon: Route },

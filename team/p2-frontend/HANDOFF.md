@@ -1,6 +1,30 @@
-# HANDOFF (p2-frontend) — spotlight tutorial, glossy glass, flowing water
+# HANDOFF (p2-frontend) — V5 items 1-7
 
-## Latest
+## Latest (docs/SPLIT-V5.md P2 1-7, one commit each)
+1. **Tagline** on `/`: "Know when water comes, and if it's safe to drink." Words wrap freely (fits 360 px).
+2. **Guide hint**: the drop logo (landing header, /resident and /guide headers) is the guide button. First visit: it pulses with a blue "Tap the drop for a quick guide" tip; gone after the first tap or ×. The tour no longer opens by itself; Skip stays. Keys `kotdelo.tour.landing`, `kotdelo.onboarded`.
+3. **Report / Request split**: tabs `?tab=report` (Water is here / No water + complaint) and `?tab=request` ("I need a tanker", no litres, link to the live map). Litres picker and the 1,000 L bar are gone; calls `postRequest(street.id)` (V5 shape). Phone bar keeps 5 slots: Home, Schedule, Report, Tanker (= Request tab), Notices; the sidebar has both plus the live map.
+4. **Tier chip**: "Watch" is a button; it opens "Watch = 30 to 59% full. Cuts more likely, plan ahead." + reading date + "Demo limits". Limits are read from P3's `reservoirTier`, so they follow any change there.
+5. **Tanks**: water rises to the real `level_pct` once, then the surface flows (transform only). **Loading**: one shared wave shimmer, utility `wave-load` (Skeleton uses it). Note: `tw-animate-css` already owns `.shimmer` (text effect), do not use that name.
+6. **Text cut** across Overview, Report, Request, Reservoirs, Notices (one-line search hint), Login, Landing, Guide, demo banner. One line per disclaimer.
+7. **Reminder**: button "Remind me 30 min before". Android opens Google Calendar's new-event page (the Google Calendar Android app cannot import .ics; the reminder there is the account default, 30 min unless changed). Others download the .ics with a 30 min VALARM. Small links offer the other way. Fixed: .ics lines were over 75 bytes (RFC 5545 folding), self-check now asserts it.
+
+## Not checked on a real phone (needs P1/P5)
+- I checked everything at 360 px in headless Chrome, not on a physical phone. Please tap on a real **iPhone (Safari)**: Remind me 30 min before -> the file should open in Calendar with "Add". And on **Android (Chrome)**: it should open Google Calendar with the right date and time.
+
+## Needs from others
+- P3: `postRequest(streetId)` without litres on /api/requests (V5). Today, without litres it does the legacy anon insert.
+- P4: ops/map loaders still use `animate-pulse`; `wave-load` is there if you want the same shimmer.
+
+## How to test (latest)
+1. `npm run build`, `npx eslint components app`, `npx tsx components/home/water-day.ts`.
+2. Private window at 360 px: `/` shows the new tagline and the pulsing drop tip; tap the drop -> tour; reload -> no tip.
+3. `/resident` -> pick Mock Village + Street 1, Continue as guest. Report tab: two buttons + complaint. Tanker tab: "I need a tanker" -> "Tanker requested".
+4. Overview: tap "Watch" -> explanation; Reservoirs tab: tanks fill and flow. Reduce motion: static.
+5. Overview -> Remind me 30 min before (desktop downloads `kot-delo-water-<day>.ics`).
+
+## Previous (spotlight tutorial, glossy glass, flowing water)
+### Latest then
 - **Tutorial at the start.** The tour is now a spotlight: the screen dims, the real element is lit with a pulsing ring, and a glass card says what to tap (Skip / Back / Next, step dots). Landing `/`: Welcome -> today's window -> Just browse -> Open the app (key `kotdelo.tour.landing`). Resident: Welcome -> locality -> water day -> Add to calendar -> Report tab -> Tanker tab -> Notices tab -> How it works (key `kotdelo.onboarded`). Anchors are `data-tour="..."` attributes; nav links get `nav-<tab>` automatically, the visible copy (tab bar or sidebar) is picked. The card goes on the half of the screen away from the lit element, so phones work. Replay: "Take the 30-second tour" on the landing, "How it works" on /resident and /guide.
 - **Glossy glass** (recipe from teamblackreef.com's nav): `glass` = sheen gradients + bright inner top/bottom edges + blur(20) saturate(1.8). Needs a `shadow-card`/`shadow-nav` class for the inner edges. `surface` cards are 86% white (no blur, cheap on phones) with a top sheen. Primary buttons have a gloss highlight. Reduced transparency = solid white.
 - **Water flow.** Two wave layers drift along the bottom of every screen (CSS only, transform, GPU), visible through the glass tab bar. `BottomWaves` (CTA band, tanker card, sign-in) now flows; flowing water under the landing hero.

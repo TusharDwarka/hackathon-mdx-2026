@@ -133,7 +133,7 @@ export function Login({ asked }: { asked: Role }) {
                 <div>
                   <h2 className="text-lg font-bold tracking-[-0.01em]">Continue as a guest</h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    No account, no name, no phone number. Reports and tanker requests are stored by street only. Reading the schedule, reservoirs and notices never needs this.
+                    No account, no name. Saved by street only.
                   </p>
                 </div>
                 <Button type="submit" size="tap" disabled={busy}>

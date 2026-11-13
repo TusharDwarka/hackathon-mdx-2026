@@ -32,7 +32,7 @@ const STEPS = [
   { title: "Follow the tanker", text: "No water for too long? Request the tanker for your street and watch it come on the map.", Icon: Truck },
 ];
 const MARQUEE = ["Official CWA timetables", "Plan your water day", "Reminder 30 min before", "Live tanker tracking", "One-tap street reports", "Every reservoir, dated"];
-const HEADLINE = [["A", "small", "app"], ["that", "tells", "you"], ["when", "water", "comes."]];
+const HEADLINE = "Know when water comes, and if it's safe to drink.".split(" ");
 const long = { day: "numeric", month: "short", year: "numeric" } as const;
 const h2 = "text-3xl leading-tight font-bold tracking-[-0.03em] sm:text-4xl lg:text-5xl";
 const cta = cn(buttonVariants({ size: "tap" }), "h-14 px-7");
@@ -72,7 +72,11 @@ export function Landing({ info }: { info: PublicData }) {
       {/* Top bar: see-through at the top, frosted once the page scrolls. */}
       <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 lg:px-6">
         <div className="glass bar-on-scroll mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 rounded-full pr-2 pl-3 shadow-card sm:pl-4">
-          <Link href="/" aria-label="Kot Delo? home"><Logo /></Link>
+          {/* The drop opens the quick guide (and pulses with a tip on the first visit). */}
+          <span className="flex items-center gap-2.5 text-lg font-bold tracking-[-0.02em]">
+            <OnboardingTour tour="landing" drop />
+            Kot Delo?
+          </span>
           <nav aria-label="Sections" className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
             <a href="#how" className="hover:text-foreground">How it works</a>
             <a href="#features" className="hover:text-foreground">Features</a>
@@ -100,26 +104,23 @@ export function Landing({ info }: { info: PublicData }) {
               </span>
               Made for Mauritius · CWA water rationing
             </p>
-            <h1 className="mt-6 text-[2.6rem] leading-[1.02] font-bold tracking-[-0.045em] sm:text-6xl lg:text-7xl">
-              {/* Each word slides up into place once, on load. */}
-              {HEADLINE.map((line, l) => (
-                <span key={l} className="block">
-                  {line.map((w, n) => (
-                    <span key={n} className="inline-block overflow-hidden pb-[0.08em] align-bottom">
-                      <span
-                        className={`inline-block animate-[word-up_0.9s_cubic-bezier(.2,.7,.2,1)_both] ${w === "water" ? "text-primary" : ""}`}
-                        style={{ animationDelay: `${(l * 3 + n) * 70}ms` }}
-                      >
-                        {w}
-                      </span>
-                      {n < line.length - 1 && "\u00a0"}
+            <h1 aria-label="Know when water comes, and if it's safe to drink." className="mt-6 text-[2.5rem] leading-[1.04] font-bold tracking-[-0.035em] sm:text-6xl lg:text-7xl">
+              {/* Each word slides up into place once, on load. Words wrap freely, so it fits 360 px. */}
+              {HEADLINE.map((w, n) => (
+                <span key={n}>
+                  <span className="inline-block overflow-hidden pb-[0.08em] align-bottom">
+                    <span
+                      className={`inline-block animate-[word-up_0.9s_cubic-bezier(.2,.7,.2,1)_both] ${w === "water" || w === "safe" ? "text-primary" : ""}`}
+                      style={{ animationDelay: `${n * 60}ms` }}
+                    >
+                      {w}
                     </span>
-                  ))}
+                  </span>{" "}
                 </span>
               ))}
             </h1>
             <p className="mt-6 max-w-[44ch] text-lg text-muted-foreground">
-              Official CWA timetables, what your neighbours see right now, and the tanker truck live on a map. All in one place, in English, on any phone.
+              Official CWA timetables, your neighbours&apos; reports and the tanker live on a map.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/login" className={cta}>
@@ -224,7 +225,7 @@ export function Landing({ info }: { info: PublicData }) {
         {/* How it works */}
         <section id="how" className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-16 lg:px-6 lg:pb-24">
           <h2 className={h2}>How does it work?</h2>
-          <p className="mt-3 max-w-[52ch] text-lg text-muted-foreground">During rationing, the timetable says one thing and the tap says another. Kot Delo? puts both side by side.</p>
+          <p className="mt-3 max-w-[52ch] text-lg text-muted-foreground">The timetable says one thing, the tap another. See both.</p>
           <ol className="mt-8 grid gap-4 md:grid-cols-3 lg:gap-6">
             {STEPS.map(({ title, text, Icon }, i) => (
               <li key={title} className="tilt reveal surface overflow-hidden p-6" {...tilt}>
@@ -240,8 +241,7 @@ export function Landing({ info }: { info: PublicData }) {
         </section>
 
         <div className="mx-auto -mt-8 flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 pb-16 lg:-mt-16 lg:px-6 lg:pb-24">
-          {/* Opens by itself on the first visit; this button replays it. */}
-          <OnboardingTour tour="landing" auto label="Take the 30-second tour" className="chip min-h-11 shadow-card" />
+                    <OnboardingTour tour="landing" label="Take the 30-second tour" className="chip min-h-11 shadow-card" />
           <Link href="/guide" className="inline-flex min-h-11 items-center gap-1.5 font-semibold text-primary">
             Read the full guide for residents, drivers and CWA staff <ArrowRight aria-hidden className="size-4" />
           </Link>
@@ -252,7 +252,7 @@ export function Landing({ info }: { info: PublicData }) {
           <Feature
             kicker="Schedule"
             title="Know your water window"
-            text="The official CWA supply time for your locality, today and for the next 7 days, with the communiqué it comes from. Then see if it matched reality on your street."
+            text="Today and the next 7 days, from the CWA communiqué. Then see if your street got it."
           >
             <div className="surface w-full max-w-md p-6">
               <div className="flex items-center justify-between gap-2">
@@ -274,7 +274,7 @@ export function Landing({ info }: { info: PublicData }) {
             flip
             kicker="Tanker"
             title="Follow the tanker live"
-            text="Request water for your street in two taps. The driver's position moves on the map in real time, and you see how many stops are left before yours."
+            text="One tap requests the tanker. Watch it move and count the stops before yours."
           >
             <MapPicture />
           </Feature>
@@ -282,7 +282,7 @@ export function Landing({ info }: { info: PublicData }) {
           <Feature
             kicker="Neighbours"
             title="Tell your street in one tap"
-            text="“Water is here” or “No water”. One report is a signal, not a fact: Kot Delo? only says “confirmed” when neighbours agree."
+            text="“Water is here” or “No water”. It says “confirmed” only when neighbours agree."
           >
             <div aria-hidden className="surface flex w-full max-w-md flex-col gap-4 p-6">
               <p className="font-semibold">Is water running at your place now?</p>
@@ -301,7 +301,7 @@ export function Landing({ info }: { info: PublicData }) {
             flip
             kicker="Reservoirs"
             title="Every reservoir at a glance"
-            text="The latest published fill level of the island's reservoirs, each with its date and source. Old readings are marked as stale, never passed off as today's."
+            text="Latest published level of each reservoir, dated and sourced. Old readings say so."
           >
             <div className="surface w-full max-w-md p-6">
               <ul className="grid grid-cols-3 gap-x-3 gap-y-5">
@@ -352,7 +352,7 @@ export function Landing({ info }: { info: PublicData }) {
         <section className="px-4 pb-10 lg:px-6">
           <div className="wave-panel relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] px-6 pt-10 pb-28 text-center sm:px-10 lg:pt-14 lg:pb-36">
             <h2 className={h2}>Ready when the water is.</h2>
-            <p className="mx-auto mt-3 max-w-[44ch] text-lg text-white/85">Open Kot Delo? as a resident in one tap. Tanker drivers and CWA staff sign in with their access code.</p>
+            <p className="mx-auto mt-3 max-w-[44ch] text-lg text-white/85">One tap for residents. Drivers and CWA staff sign in with a code.</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/login" className={cn(buttonVariants({ size: "tap" }), "h-14 bg-white px-7 text-primary hover:bg-white/90")}>
                 Open the app <ArrowRight aria-hidden />
@@ -369,7 +369,7 @@ export function Landing({ info }: { info: PublicData }) {
       <footer className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-10 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between lg:px-6">
         <Logo className="text-base text-foreground" />
         <p className="max-w-[60ch]">
-          Built in 24 hours at the MDX Hackathon 2026, Mauritius. Data: CWA communiqués and public reservoir bulletins. Reports are stored by street, never by house or person.
+          Built in 24 hours at MDX Hackathon 2026, Mauritius. Data: CWA communiqués and reservoir bulletins.
         </p>
       </footer>
     </div>
