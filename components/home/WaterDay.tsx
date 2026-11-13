@@ -14,7 +14,7 @@ type WaterPoint = { name: string; kind: string; lat: number; lng: number; source
 import { fmtDate } from "@/components/home/shared";
 import { toMin } from "@/components/home/time";
 
-const card = "surface p-5";
+const card = "surface reveal p-5";
 const title = "text-lg leading-snug font-bold tracking-[-0.01em]";
 const tag = "chip min-h-6 px-2 text-xs";
 const enter = "transition-[opacity,translate] duration-200 ease-snap starting:translate-y-1 starting:opacity-0 motion-reduce:starting:translate-y-0";

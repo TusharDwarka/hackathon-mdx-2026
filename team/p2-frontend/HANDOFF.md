@@ -1,4 +1,18 @@
-# HANDOFF (p2-frontend) — water-day split (docs/WATER-DAY-SPLIT.md)
+# HANDOFF (p2-frontend) — P3 swap, onboarding guide, motion pass
+
+## Latest
+- **Swapped to P3 (water-day).** `planDay` now comes from `lib/queries.ts`. Next water + Water quality call `getForecast(areaId)` / `getWaterQuality(areaId)`; if the API is not reachable (or demo mode) the page runs P3's `computeForecast` / `computeWaterQuality` on the timetable it already has. My stand-in rules are deleted; `components/home/water-day.ts` keeps only the calendar file, step offsets and distances. Save water reads P3's `water_points` table (P4's `loadWaterPoints`) plus `data/water_points.csv` if it exists.
+- **Onboarding.** First visit to `/resident` opens a 7-step tour (native `<dialog>`, glass, Skip / Back / Next, dots). It is remembered on the phone (`kotdelo.onboarded`) and reopens with "How it works" in the header. New page `/guide` (route created by P2, inside the app shell): numbered steps for Resident, Tanker driver and CWA staff, each with a link to the screen. "How to use" is in the sidebar for every role and in the driver/ops phone bars; the landing nav has "Guide".
+- **Motion + transparency** (ideas from the reference site, our colours only): scroll progress bar, landing bar see-through at the top and frosted after 100 px, cards rise into view (`reveal`), drifting aurora behind the hero, headline words slide up, the drop bobs with water ripples, marquee band, count-up numbers, 3D tilt + light spot on cards (mouse only). Scroll effects are pure CSS scroll timelines (no JS on scroll); browsers without them just show everything. Reduced motion turns all of it off. New utilities in `app/globals.css`: `reveal`, `scroll-progress`, `bar-on-scroll`, `tilt`; helpers in `components/ui/motion.tsx` (`tilt` handlers, `CountUp`).
+
+## How to test (latest)
+1. `npm run build`, `npm run lint`, `npx tsx components/home/water-day.ts` (and public-data, rules, time).
+2. Private window -> `/resident`: the tour opens; Next through 7 steps; reload: it stays closed; "How it works" reopens it.
+3. `/guide` at 390 and 1440: three sections, links work, cards rise in as you scroll.
+4. `/` on a laptop: progress bar fills, top bar turns frosted, numbers count up, cards tilt under the mouse. With "reduce motion" on: everything static.
+5. Note: a full-page screenshot tool shows below-the-fold cards blank (they fade in on scroll). Real scrolling shows them.
+
+## Water-day split (previous)
 
 ## Water-day split (latest)
 - **Changed.** Resident Overview now opens with **Your water day**: a vertical timeline for the next window (reminder at start - 30 min, water arrives, fill the tank, washing machine at +3 h if it fits, finish laundry at end - 30 min, water ends) with "Now" highlighted. It plans around today's window while it is still ahead, else the next official window, else the forecast (tagged Estimate). No locality = "Sample day" tag.

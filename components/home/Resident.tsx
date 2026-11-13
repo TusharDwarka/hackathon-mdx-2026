@@ -22,6 +22,7 @@ import { MoreLink, News, ReadingDate, Reservoirs, Source } from "@/components/ho
 import type { PublicData } from "@/components/home/public-data";
 import { minOfDay, toMin, windowStatus } from "@/components/home/time";
 import { ForecastCard, Planner, QualityCard, SaveWaterCard } from "@/components/home/WaterDay";
+import { OnboardingTour } from "@/components/home/Guide";
 import { loadWaterPoints, type WaterPoint } from "@/components/map/data";
 import { likelyWaterTime, streetStatus } from "@/components/home/rules";
 import {
@@ -73,7 +74,7 @@ const TANKER_L = 1000; // demo tanker capacity (sql/v3.sql "Demo tanker 1/2"), f
 const hhmm = (t: number) => new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
-const card = "surface p-5";
+const card = "surface reveal p-5";
 const title = "text-lg leading-snug font-bold tracking-[-0.01em]";
 const col = "flex min-w-0 flex-col gap-4 lg:gap-6";
 // New content eases in instead of popping (CSS @starting-style: opacity + a 4px move, none with reduced motion).
@@ -943,6 +944,8 @@ export function Resident({ info }: { info: PublicData }) {
   return (
     <main className="mx-auto w-full max-w-md px-4 pt-5 pb-6 md:max-w-3xl lg:max-w-7xl lg:px-8 lg:pt-8">
       <PageHeader eyebrow={`${hello}${today ? ` · ${today}` : ""}`} title={heading}>
+        <div className="flex flex-wrap gap-2">
+        <OnboardingTour auto />
         <Link
           href={tabHref("report")}
           className={`chip shrink-0 shadow-card ${guest ? "bg-card" : "bg-primary text-primary-foreground"}`}
@@ -950,6 +953,7 @@ export function Resident({ info }: { info: PublicData }) {
           <UserRound aria-hidden className="size-4" />
           {guest ? (street ? street.name : "Guest") : "Continue as guest"}
         </Link>
+        </div>
       </PageHeader>
       <div className="mt-5 lg:mt-7">
         {demo && (
