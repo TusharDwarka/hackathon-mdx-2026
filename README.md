@@ -53,7 +53,9 @@ Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres + R
 - Claude Code (Anthropic) — planning, code generation, review
 - Codex CLI (OpenAI) — code review, bug hunting
 - Skills/plugins: Ponytail, Karpathy guidelines
-- AI features inside the app: none in the core (rule-based ETA and reliability score)
+- AI features inside the app: Claude reads pasted CWA notices (places, dates, times) for staff to check; the core ETA and reliability score are rule-based
+- French and Kreol Morisien translations of the whole UI were drafted with Claude (components/ui/i18n-dict-*.ts) and reviewed by the team
+- Every data source and how it was collected is listed in the app at /sources
 
 ## Surprise card
 TBD (revealed during the event). The Home/Resident screen has an empty `<SurpriseCard />` slot for it.
