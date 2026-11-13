@@ -8,7 +8,11 @@ Prompt source: docs/BUILD-PROMPT.md (wins over the playbook on the product).
 - [ ] BLOCKER: `/data/schedule.csv` and `/data/streets.csv` exist (real CWA timetable + streets for [LOCALITY]). If missing, STOP, do not invent data.
 
 ## Build order (demo path first)
-- [ ] 1. Next.js + TypeScript + Tailwind + shadcn app, Supabase project, tables created, Vercel deploy; load `/data/schedule.csv` and `/data/streets.csv`
+- [x] 1a. Code (P1): Next.js + TypeScript + Tailwind + shadcn app, Supabase clients, `sql/schema.sql`, `scripts/load-data.ts`; `npm run build` passes
+- [ ] 1b. By hand (P1): create Supabase project, run `sql/schema.sql`, put keys in `.env.local` + Vercel env vars, deploy to Vercel
+- [ ] 1c. (P5 -> P1) data files `data/schedule.csv` + `data/streets.csv`, then `npm run load-data` (BLOCKED: files missing)
+
+Owners: P2 steps 2, 3, 4 (UI), 7, 8 (UI) · P3 queries, seed, reliability and heat-map data · P4 steps 5, 6 · P5 data files + pitch · P1 merges. Details in `team/*/TODO.md`.
 - [ ] 2. Home: street picker + today's official window
 - [ ] 3. One-tap reports: "Delo inn vini" / "Pena delo"
 - [ ] 4. "I need water" request -> stop list grouped by street

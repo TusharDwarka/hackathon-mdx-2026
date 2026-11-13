@@ -19,11 +19,12 @@ Stack: Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postg
 ## Ownership — edit ONLY your own folder
 | Person | Role | Owns |
 |---|---|---|
-| P1 Dwarka | lead / integrator | main, CLAUDE.md, AGENTS.md, SPEC.md, TASKS.md, TRACKER.md, docs/, contracts/ |
-| P2 | front end | /web, team/p2-frontend/ |
-| P3 | back end / data | /api (not /api/ai), team/p3-backend/ |
-| P4 | AI + research | /api/ai, team/p4-ai/ |
-| P5 | pitch / QA | team/p5-pitch/ |
+| P1 Dwarka | lead / integrator | main, package.json, next.config.ts, lib/supabase*.ts, CLAUDE.md, AGENTS.md, SPEC.md, TASKS.md, TRACKER.md, docs/, contracts/ |
+| P2 | Home screen + polish | app/page.tsx, app/layout.tsx, app/globals.css, components/home/, components/ui/, team/p2-frontend/ (branch feat/home) |
+| P3 | data + queries | sql/, scripts/, lib/queries.ts, app/api/, team/p3-backend/ (branch feat/data) |
+| P4 | driver + map + ETA | app/driver/, app/map/, components/map/, lib/eta.ts, team/p4-ai/ (branch feat/driver-map) |
+| P5 | data files + pitch | data/*.csv, README.md, team/p5-pitch/ (branch feat/data-files) |
+- Open a pull request into `main` from your branch; P1 merges.
 - `contracts/` is frozen: only P1 edits it. Need a change? Ask P1 (2 minutes saves 2 hours).
 - Need something from another folder? Write it in your HANDOFF.md under "Needs from others".
 
