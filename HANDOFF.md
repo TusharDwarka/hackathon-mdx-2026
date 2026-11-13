@@ -17,3 +17,25 @@ Format per step: **Step N — done / changed / blocked** + 5 beginner bullets. P
   3. Supabase is the hosted Postgres database; `lib/supabase.ts` is how the browser talks to it with the public anon key.
   4. `sql/schema.sql` creates the 8 tables and the rules (RLS) that say what the anon key may read or write.
   5. `scripts/load-data.ts` reads the real CSVs and fills the database; the service key it uses must never reach the browser.
+
+## Step 5 — /driver wired to Supabase (P4)
+- Done: Start round (ops 4), position every 5 s + Wake Lock (op 5), Served (op 6), End round (op 7). `components/map/data.ts` shared reads. Demo fallbacks: no requests -> all streets; no GPS -> simulated drive; no DB -> demo mode banner.
+- Changed: `app/driver/page.tsx`, `components/map/data.ts`, `team/p4-ai/*`.
+- Blocked: real-phone GPS test needs the Vercel https URL; Home must insert `requests` for the stop list to be real. Details in `team/p4-ai/HANDOFF.md`.
+- 5 beginner bullets:
+  1. `navigator.geolocation.watchPosition` asks the phone for its GPS position and calls us every time it changes; we keep only the latest fix.
+  2. A `setInterval` every 5 s inserts that latest fix into `truck_positions` with the round id. Only while a round is active, so nobody is tracked outside a round.
+  3. The Wake Lock API (`navigator.wakeLock.request("screen")`) keeps the phone screen on so the browser keeps sending GPS; we re-ask for it when the tab comes back to the front.
+  4. Start round = one row in `rounds` + one row per street in `round_stops`, in `streets.order_index` order, built from the streets that have `waiting` requests.
+  5. Served writes `served_at` on the stop and flips that street's requests to `served`; End round writes `status = done` and the React effect cleanup stops GPS and releases the lock.
+
+## Step 6 — /map live via Supabase Realtime (P4)
+- Done: truck marker moves on `truck_positions` inserts (op 8), "N stops away, about X min" from `lib/eta.ts` with the 2-minute stale rule (op 9), Served status flips live, new or ended rounds reload. Demo fallback: simulated truck when the DB is unreachable.
+- Changed: `app/map/page.tsx`, `components/map/TruckMap.tsx`, `team/p4-ai/*`.
+- Blocked: real two-phone test needs Supabase keys + Vercel URL. Home should link to `/map?street=<id>`.
+- 5 beginner bullets:
+  1. Supabase Realtime pushes database changes to the browser over a websocket, so the map never polls; `supabase.channel(...).on("postgres_changes", ...)` is the subscription.
+  2. Each new `truck_positions` row for the active round calls `setFix`, React re-renders, and the Leaflet marker's `setLatLng` moves the 🚚.
+  3. "Stops away" = my stop plus every unserved stop before it in `stop_order`; 1 means I am next, 0 means served.
+  4. ETA = distance at 20 km/h from the truck to the next stop + 10 min per stop before mine. If the last fix is older than 2 min the map shows stops × 10 min and says the signal was lost.
+  5. Leaflet needs `window`, so it is imported inside a `useEffect` (never at the top of the file), otherwise the server-side build breaks.
