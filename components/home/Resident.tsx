@@ -48,6 +48,13 @@ const TIER: Record<ReservoirTier, { label: string; style: string }> = {
   watch: { label: "Watch", style: "bg-amber-100 text-amber-950" },
   critical: { label: "Critical", style: "bg-red-50 text-red-900" },
 };
+// Tier limits read from P3's reservoirTier, so the explanation can never drift from the rule.
+const from = (t: ReservoirTier) => [...Array(101).keys()].find((p) => reservoirTier(p) === t)!;
+const TIER_MEANS: Record<ReservoirTier, string> = {
+  normal: `${from("normal")}% full or more. Usual supply.`,
+  watch: `${from("watch")} to ${from("normal") - 1}% full. Cuts more likely, plan ahead.`,
+  critical: `Under ${from("watch")}% full. Longer cuts likely.`,
+};
 type Tab = (typeof TABS)[number]["id"];
 const tabHref = (t: Tab) => `/resident?tab=${t}`;
 
@@ -98,6 +105,7 @@ export function Resident({ info }: { info: PublicData }) {
   // Complaint: closed -> open (pick a category) -> the category that was sent.
   const [complaint, setComplaint] = useState<"closed" | "open" | ComplaintCategory>("closed");
   const [sendError, setSendError] = useState<"report" | "request" | "complaint" | null>(null);
+  const [tierOpen, setTierOpen] = useState(false);
 
   // localStorage is only read once the base data is here (base is null on the server), so the first render matches.
   const areas = base ? Object.entries(base.areaNames).map(([id, name]) => ({ id: Number(id), name })).filter((a) => base.streets.some((s) => s.area_id === a.id)) : [];
@@ -469,8 +477,29 @@ export function Resident({ info }: { info: PublicData }) {
           <h2 id="mav-title" className={title}>Reservoir level</h2>
           <p className="text-sm text-muted-foreground">{mav.name}</p>
         </div>
-        {mav.pct !== null && <span className={`${tag} ${TIER[reservoirTier(mav.pct)].style}`}>{TIER[reservoirTier(mav.pct)].label}</span>}
+        {mav.pct !== null && (
+          <button
+            type="button"
+            aria-expanded={tierOpen}
+            aria-controls="tier-help"
+            onClick={() => setTierOpen((o) => !o)}
+            className={`${tag} min-h-9 shrink-0 gap-1 font-semibold transition-[scale] duration-150 ease-snap active:scale-[0.96] ${TIER[reservoirTier(mav.pct)].style}`}
+          >
+            {TIER[reservoirTier(mav.pct)].label}
+            <CircleHelp aria-hidden className="size-3.5" />
+          </button>
+        )}
       </div>
+      {mav.pct !== null && tierOpen && (
+        <p id="tier-help" className={`mt-3 rounded-2xl bg-muted px-4 py-3 text-sm ${enter}`}>
+          <span className="block">
+            <b className="font-semibold">{TIER[reservoirTier(mav.pct)].label}</b> = {TIER_MEANS[reservoirTier(mav.pct)]}
+          </span>
+          <span className="block text-muted-foreground">
+            {mav.date ? `Reading of ${fmtDate(mav.date, { day: "numeric", month: "short", year: "numeric" })}. ` : ""}Demo limits, not official CWA ones.
+          </span>
+        </p>
+      )}
       {mav.pct === null ? (
         <p className="mt-3 text-sm text-muted-foreground">No verified reading yet. Kot Delo? does not guess a number.</p>
       ) : (
@@ -482,7 +511,6 @@ export function Resident({ info }: { info: PublicData }) {
             </span>
           </Gauge>
           <ReadingDate r={mav} now={now} />
-          <p className="mt-1 text-xs text-muted-foreground">Supply tiers use demo thresholds: normal from 60%, watch from 30%.</p>
         </>
       )}
       <div className="mt-auto">
