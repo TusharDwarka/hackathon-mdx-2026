@@ -13,6 +13,8 @@
   Deletes old `is_demo` rows first, keeps real reports. `npm run seed-demo`.
 - `sql/v2.sql` (V2 step 2): tables `complaints` and `reservoir_levels`, RLS (anon reads all, inserts complaints,
   updates complaints.status), Realtime on `complaints`. No payment or fee columns. Re-runnable.
+- `scripts/load-data.ts` (V2 step 3): also upserts `data/reservoir.csv` into `reservoir_levels` when the file exists
+  (key reservoir+day); prints a notice and skips when it is missing.
 
 ## Needs from others
 - P1: run `sql/v2.sql` in the Supabase SQL editor (after `sql/schema.sql`).
