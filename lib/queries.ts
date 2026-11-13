@@ -1,6 +1,7 @@
 // Supabase queries for the demo path (contracts/api.md ops 1, 2, 3, 10, 11) + V2 (12-17)
 // + V3 (docs/NEXT-TASK-SPLIT.md, P3): sessions, litres, tanker capacity, dispatch, trust reasons,
-// all reservoirs, notices. Everything is stored by street, never by house or person.
+// all reservoirs, notices. V5 (docs/SPLIT-V5.md): accounts, requests without litres, places,
+// notices + AI parser, rivers, safe-to-drink. Everything is stored by street, never by house or person.
 //
 // Reads use the anon client (RLS: public read). WRITES go through /api/* route handlers, which check
 // the session role and the guest limits on the server (sql/v3.sql). Until sql/v3.sql + the service key
@@ -76,20 +77,20 @@ export async function postReport(streetId: number, type: ReportType): Promise<vo
 }
 
 /**
- * "I need water" for `litres` (1..1000) through POST /api/requests. Returns the request id.
- * A repeat click returns the SAME id (one waiting request per session per street).
- * Without `litres` (old Home screen): legacy anon insert with no volume, which dispatch cannot plan
- * (it is listed as "requests without litres"). P2 passes litres from the new request form.
+ * "I need a tanker" for the street (V5: one request = one household, no litres) through
+ * POST /api/requests. Returns the request id; a repeat click returns the SAME id.
+ * Guests may request. The second argument is ignored (old callers that still pass litres).
  */
-export async function postRequest(streetId: number, litres?: number): Promise<number> {
-  if (litres !== undefined) {
+export async function postRequest(streetId: number, _ignoredLitres?: number): Promise<number> {
+  try {
     await ensureGuestSession();
-    const r = await api<{ id: number; duplicate: boolean }>("/api/requests", { method: "POST", body: { street_id: streetId, litres } });
-    return r.id;
+    return (await api<{ id: number; duplicate: boolean }>("/api/requests", { method: "POST", body: { street_id: streetId } })).id;
+  } catch (e) {
+    if (!apiNotDeployed(e)) throw e;
+    const { data, error } = await supabase.from("requests").insert({ street_id: streetId, status: "waiting" }).select("id").single();
+    if (error) throw error;
+    return data.id;
   }
-  const { data, error } = await supabase.from("requests").insert({ street_id: streetId, status: "waiting" }).select("id").single();
-  if (error) throw error;
-  return data.id;
 }
 
 export type MyRequest = {
@@ -220,18 +221,18 @@ export type Complaint = { id: number; street_id: number; category: ComplaintCate
 
 export const COMPLAINT_CATEGORIES: ComplaintCategory[] = ["no_water", "dirty_water", "tanker_no_show", "other"];
 
-/** Through POST /api/complaints; a repeat (same street + category within 6 h) returns the same id. */
+/**
+ * V5: signed-in users only (POST /api/complaints with the access token). A guest gets
+ * ApiError "sign_in_required" (401) without a network call: show the login.
+ * A repeat (same street + category within 6 h) returns the same id.
+ */
 export async function postComplaint(streetId: number, category: ComplaintCategory): Promise<number> {
-  try {
-    await ensureGuestSession();
-    return (await api<{ id: number }>("/api/complaints", { method: "POST", body: { street_id: streetId, category } })).id;
-  } catch (e) {
-    if (!apiNotDeployed(e)) throw e;
-    const { data, error } = await supabase.from("complaints").insert({ street_id: streetId, category }).select("id").single();
-    if (error) throw error;
-    return data.id;
-  }
+  return (await api<{ id: number }>("/api/complaints", { method: "POST", body: { street_id: streetId, category }, auth: true })).id;
 }
+
+/** The signed-in user's own complaints, newest first. */
+export const getMyComplaints = () =>
+  api<{ records: Complaint[] }>("/api/complaints?mine=1", { auth: true }).then((r) => r.records);
 
 /** Open complaints, newest first (Ops). */
 export async function getOpenComplaints(): Promise<Complaint[]> {
@@ -465,7 +466,6 @@ export async function getLikelyWaterTime(streetId: number, now = new Date()): Pr
 export type PriorityAction = "send tanker" | "place a static tank" | "watch";
 export type PriorityRow = {
   street_id: number; name: string; hours_dry: number | null; waiting: number; score: number; action: PriorityAction;
-  waiting_litres: number;       // litres of the street's waiting requests (requests without litres add 0)
   dry_known: boolean;           // false = no water_on report on record: NOT the same as 0 h dry
   reasons: string[];            // why this rank and this action, in plain words for /ops
 };
@@ -474,12 +474,12 @@ export type PriorityRow = {
  * Pure: score = hours dry + 12 x waiting requests (contract op 17). A street that never reported
  * water adds 0 h to the score, and the reasons say "dryness unknown" instead of showing 0 h.
  */
-export function explainPriority(hoursDry: number | null, waiting: number, waitingLitres = 0) {
+export function explainPriority(hoursDry: number | null, waiting: number) {
   const dry = hoursDry ?? 0;
   const score = Math.round(dry + 12 * waiting);
   const action: PriorityAction = waiting > 0 ? "send tanker" : dry > 48 ? "place a static tank" : "watch";
   const reasons: string[] = [];
-  if (waiting > 0) reasons.push(`${waiting} waiting request${waiting > 1 ? "s" : ""}${waitingLitres ? `, ${waitingLitres} L` : ""}`);
+  if (waiting > 0) reasons.push(`${waiting} household${waiting > 1 ? "s" : ""} waiting for a tanker`);
   if (hoursDry === null) reasons.push("no water report on record: dryness unknown (adds 0 to the score)");
   else reasons.push(`last water reported ${Math.round(hoursDry)} h ago`);
   if (action === "place a static tank") reasons.push("dry for more than 48 h with no request waiting");
@@ -496,27 +496,24 @@ export function computePriority(hoursDry: number | null, waiting: number): { sco
 export function priorityRows(
   streets: Pick<Street, "id" | "name">[],
   hoursDry: Record<number, number | null>,
-  waiting: { street_id: number; litres: number | null }[]
+  waiting: { street_id: number }[]
 ): PriorityRow[] {
-  const count: Record<number, number> = {}, litres: Record<number, number> = {};
-  for (const r of waiting) {
-    count[r.street_id] = (count[r.street_id] ?? 0) + 1;
-    litres[r.street_id] = (litres[r.street_id] ?? 0) + (r.litres ?? 0);
-  }
+  const count: Record<number, number> = {};
+  for (const r of waiting) count[r.street_id] = (count[r.street_id] ?? 0) + 1;
   return streets
     .map((s) => {
-      const h = hoursDry[s.id] ?? null, w = count[s.id] ?? 0, l = litres[s.id] ?? 0;
-      return { street_id: s.id, name: s.name, hours_dry: h, waiting: w, waiting_litres: l, ...explainPriority(h, w, l) };
+      const h = hoursDry[s.id] ?? null, w = count[s.id] ?? 0;
+      return { street_id: s.id, name: s.name, hours_dry: h, waiting: w, ...explainPriority(h, w) };
     })
     .sort((a, b) => b.score - a.score);
 }
 
-/** All streets sorted by score, highest first (anon read; needs sql/v3.sql for litres). */
+/** All streets sorted by score, highest first (anon read). waiting = households. */
 export async function getPriorityList(areaId?: number, now = new Date()): Promise<PriorityRow[]> {
   const streets = await getStreets(areaId);
   const [hours, { data: waiting, error }] = await Promise.all([
     getHoursDry(areaId, now),
-    supabase.from("requests").select("street_id,litres").eq("status", "waiting").in("street_id", streets.map((s) => s.id)),
+    supabase.from("requests").select("street_id").eq("status", "waiting").in("street_id", streets.map((s) => s.id)),
   ]);
   if (error) throw error;
   return priorityRows(streets, hours, waiting ?? []);
@@ -529,7 +526,8 @@ export async function getPriorityList(areaId?: number, now = new Date()): Promis
 // ---------- input validation (same rules on the client and in /api/*) ----------
 
 export const LITRES_PER_M3 = 1000;
-export const MAX_REQUEST_LITRES = 1000; // DEMO cap per household request
+/** DEMO, ops-side: litres planned per waiting household. Same as kd_household_litres() in sql/v5.sql. */
+export const HOUSEHOLD_L = 20;
 export type Valid<T> = { ok: true; value: T } | { ok: false; error: string };
 
 const isId = (v: unknown): v is number => typeof v === "number" && Number.isSafeInteger(v) && v > 0;
@@ -542,14 +540,11 @@ export function validateReportInput(body: unknown): Valid<{ street_id: number; t
   return { ok: true, value: { street_id: b.street_id, type: b.type } };
 }
 
-/** Litres: a whole number from 1 to MAX_REQUEST_LITRES. */
-export function validateRequestInput(body: unknown): Valid<{ street_id: number; litres: number }> {
+/** V5: only the street. Any `litres` a resident sends is ignored (tank size is an ops value). */
+export function validateRequestInput(body: unknown): Valid<{ street_id: number }> {
   const b = obj(body);
   if (!b || !isId(b.street_id)) return { ok: false, error: "invalid_street_id" };
-  if (typeof b.litres !== "number" || !Number.isInteger(b.litres) || b.litres < 1 || b.litres > MAX_REQUEST_LITRES) {
-    return { ok: false, error: "invalid_litres" };
-  }
-  return { ok: true, value: { street_id: b.street_id, litres: b.litres } };
+  return { ok: true, value: { street_id: b.street_id } };
 }
 
 export function validateComplaintInput(body: unknown): Valid<{ street_id: number; category: ComplaintCategory }> {
@@ -686,7 +681,7 @@ export type RoundView = {
   litres: number;
   stops: { id: number; street_id: number; street_name: string; stop_order: number; served_at: string | null; litres: number }[];
 };
-export type DispatchPreview = { plan: DispatchPlan; tankers: (Tanker & { busy: boolean })[]; requests_without_litres: number };
+export type DispatchPreview = { plan: DispatchPlan; tankers: (Tanker & { busy: boolean })[]; households: number; household_litres: number };
 
 export async function getTankers(): Promise<Tanker[]> {
   const { data, error } = await supabase.from("tankers").select("id,name,capacity_litres,active").order("id");
@@ -1031,17 +1026,49 @@ export async function reservoirTrends(reservoir?: string, now = new Date(), clie
 
 export type QualityLevel = "none" | "cloudy_possible" | "official_notice";
 export type QualityNotice = { title: string; day: string; category: "boil" | "quality"; source_url: string };
-export type Quality = { level: QualityLevel; message: string; notice?: { title: string; day: string; source_url: string } };
+export type QualityReason = "official_notice" | "heavy_rain" | "low_reservoir";
+/**
+ * V5 "Is my tap water safe to drink?" Never says safe. reasons = every reason that holds;
+ * source_url / date = what the status rests on (notice, reservoir reading or rainfall check).
+ */
+export type Quality = {
+  level: QualityLevel; message: string; notice?: { title: string; day: string; source_url: string };
+  reasons: QualityReason[];
+  advice: string; advice_source_url: string;
+  source_url: string | null; date: string | null;
+  rain_mm_48h: number | null; level_pct: number | null;
+};
 export const QUALITY_NOTICE_DAYS = 14; // an official quality notice counts as current for 14 days after its date
-export const QUALITY_MESSAGES = {
-  none: "No official water quality notice for this area. Follow official CWA and Ministry of Health advice.",
-  cloudy_possible: "When reservoirs are low, tap water can look cloudy. Report dirty water. Follow official CWA / Ministry of Health advice.",
-  boil: "An official notice asks residents of this area to boil water before drinking. Read the notice for details.",
-  quality: "An official notice about water quality covers this area. Read the notice and follow its advice.",
+export const LOW_RESERVOIR_PCT = 20;    // contract V5: reservoir < 20 %
+export const HEAVY_RAIN_MM_48H = 50;    // DEMO threshold for "heavy rain in the last 48 h" (rainfall from Open-Meteo)
+export const OPEN_METEO_URL = "https://open-meteo.com/";
+/** WHO technical brief "Boil water" (WHO/FWC/WSH/15.02). P5 may swap in a CWA / Ministry of Health text. */
+export const WHO_BOIL_URL = "https://www.who.int/publications/i/item/WHO-FWC-WSH-15.02";
+export const QUALITY_ADVICE = {
+  notice: "Do what the notice says. To boil: bring water to a rolling boil, let it cool, keep it covered.",
+  caution: "If the water looks cloudy or smells, boil it before drinking: bring it to a rolling boil, let it cool, keep it covered.",
 } as const;
+export const QUALITY_MESSAGES = {
+  none: "No official advisory found for this area. If the water looks cloudy or smells, boil it before drinking.",
+  cloudy_possible: "Tap water can turn cloudy now. If it looks cloudy or smells, boil it before drinking.",
+  boil: "An official notice asks residents to boil water before drinking.",
+  quality: "An official notice about water quality covers this area.",
+} as const;
+export const noAdvisoryMessage = (locality?: string | null) =>
+  `No official advisory found for ${locality?.trim() || "this area"}. If the water looks cloudy or smells, boil it before drinking.`;
 
-/** Pure: a current official notice wins (boil first, then newest); else a low reservoir tier -> cloudy caution. */
-export function computeWaterQuality(notices: QualityNotice[], tier: ReservoirTier | null, now = new Date()): Quality {
+export type QualityContext = {
+  locality?: string | null;
+  levelPct?: number | null; levelDay?: string | null; levelSource?: string | null; // latest reading of the area's reservoir
+  rainMm48h?: number | null;                                                      // null = rainfall unknown
+};
+
+/**
+ * Pure (op 26, V5). official_notice: a current boil / quality notice (boil first, then newest).
+ * cloudy_possible: heavy rain in the last 48 h, or the reservoir below 20 %. Else none.
+ * Old callers without ctx.levelPct: a critical tier (< 30 %) stands in for the reservoir reading.
+ */
+export function computeWaterQuality(notices: QualityNotice[], tier: ReservoirTier | null, now = new Date(), ctx: QualityContext = {}): Quality {
   const today = midnight(now).getTime();
   const current = notices
     .filter((n) => {
@@ -1049,20 +1076,57 @@ export function computeWaterQuality(notices: QualityNotice[], tier: ReservoirTie
       return age >= 0 && age <= QUALITY_NOTICE_DAYS && !!n.source_url;
     })
     .sort((a, b) => (a.category === b.category ? b.day.localeCompare(a.day) : a.category === "boil" ? -1 : 1));
+  const rain = ctx.rainMm48h ?? null;
+  const level = ctx.levelPct ?? null;
+  const lowReservoir = ctx.levelPct !== undefined ? level !== null && level < LOW_RESERVOIR_PCT : tier === "critical";
+  const heavyRain = rain !== null && rain >= HEAVY_RAIN_MM_48H;
   const n = current[0];
-  if (n) return { level: "official_notice", message: QUALITY_MESSAGES[n.category], notice: { title: n.title, day: n.day, source_url: n.source_url } };
-  if (tier === "watch" || tier === "critical") return { level: "cloudy_possible", message: QUALITY_MESSAGES.cloudy_possible };
-  return { level: "none", message: QUALITY_MESSAGES.none };
+  const reasons: QualityReason[] = [];
+  if (n) reasons.push("official_notice");
+  if (heavyRain) reasons.push("heavy_rain");
+  if (lowReservoir) reasons.push("low_reservoir");
+  const base = { reasons, rain_mm_48h: rain, level_pct: level, advice_source_url: WHO_BOIL_URL };
+  if (n) {
+    return { ...base, level: "official_notice", message: QUALITY_MESSAGES[n.category], notice: { title: n.title, day: n.day, source_url: n.source_url },
+      advice: QUALITY_ADVICE.notice, source_url: n.source_url, date: n.day };
+  }
+  if (heavyRain || lowReservoir) {
+    const why = [
+      heavyRain ? `Heavy rain in the last 48 h (${Math.round(rain!)} mm).` : null,
+      lowReservoir ? (level !== null ? `Reservoir at ${Math.round(level)} %.` : "Reservoir very low.") : null,
+    ].filter(Boolean).join(" ");
+    return { ...base, level: "cloudy_possible", message: `${why} ${QUALITY_MESSAGES.cloudy_possible}`, advice: QUALITY_ADVICE.caution,
+      source_url: heavyRain ? OPEN_METEO_URL : ctx.levelSource ?? null, date: heavyRain ? isoDate(now) : ctx.levelDay ?? null };
+  }
+  return { ...base, level: "none", message: noAdvisoryMessage(ctx.locality), advice: QUALITY_ADVICE.caution, source_url: null, date: isoDate(now) };
+}
+
+/** Pure: millimetres of rain in the 48 h before `now` from Open-Meteo hourly data (times in UTC). null = no usable data. */
+export function rainLast48h(hourly: { time: string[]; precipitation: (number | null)[] } | null | undefined, now = new Date()): number | null {
+  if (!hourly?.time?.length) return null;
+  const to = now.getTime(), from = to - 48 * 3_600_000;
+  let sum = 0, seen = 0;
+  hourly.time.forEach((t, i) => {
+    const at = Date.parse(`${t}:00Z`);
+    const mm = hourly.precipitation[i];
+    if (at > from && at <= to && typeof mm === "number") { sum += mm; seen++; }
+  });
+  return seen ? Math.round(sum * 10) / 10 : null;
 }
 
 /** Needs sql/v4.sql (quality_notices). Island-wide notices apply to every area. */
-export async function waterQuality(areaId: number, now = new Date(), client: SupabaseClient = supabase): Promise<Quality> {
-  const [{ data, error }, tier] = await Promise.all([
+export async function waterQuality(areaId: number, now = new Date(), client: SupabaseClient = supabase, ctx: QualityContext = {}): Promise<Quality> {
+  const reservoir = await areaReservoir(areaId, client);
+  const [{ data, error }, latest] = await Promise.all([
     client.from("quality_notices").select("title,day,category,source_url").or(`area_id.eq.${areaId},island_wide.eq.true`),
-    areaTier(areaId, now, client),
+    client.from("reservoir_levels").select("day,level_pct,source_url").eq("reservoir", reservoir).order("day", { ascending: false }).limit(1),
   ]);
   if (error) throw error;
-  return computeWaterQuality((data ?? []) as QualityNotice[], tier, now);
+  if (latest.error) throw latest.error;
+  const r = latest.data?.[0] ?? null;
+  return computeWaterQuality((data ?? []) as QualityNotice[], currentTier(r, now), now, {
+    levelPct: r?.level_pct ?? null, levelDay: r?.day ?? null, levelSource: r?.source_url ?? null, ...ctx,
+  });
 }
 
 // ---------- op 27: water-day planner (pure, no IO) ----------
@@ -1113,8 +1177,11 @@ export const getForecast = (areaId?: number) =>
 export const getReservoirTrend = (reservoir = DEFAULT_RESERVOIR) =>
   api<(Trend & { demo: boolean }) | null>(`/api/reservoirs/trend?reservoir=${encodeURIComponent(reservoir)}`);
 export const getReservoirTrendsAll = () => api<{ trends: Trend[]; demo: boolean }>("/api/reservoirs/trend?reservoir=all");
-export const getWaterQuality = (areaId?: number) =>
-  api<Quality & { demo: boolean }>(`/api/quality${areaId ? `?area_id=${areaId}` : ""}`);
+/** Op 26 by area, or by any locality of Mauritius (V5: `locality` wins; 404 unknown_locality). */
+export const getWaterQuality = (areaId?: number, locality?: string) =>
+  api<Quality & { demo: boolean }>(
+    `/api/quality${locality ? `?locality=${encodeURIComponent(locality)}` : areaId ? `?area_id=${areaId}` : ""}`
+  );
 
 // ---------- sessions (guest / driver / ops) ----------
 
@@ -1135,6 +1202,265 @@ export async function ensureGuestSession(): Promise<SessionInfo> {
   return s.role ? s : startGuestSession();
 }
 
+// ---------- V5 places: every locality and named street of Mauritius (OSM) ----------
+// public/places.json and data/localities.csv come from scripts/fetch-osm.ts (run once, not at runtime).
+
+/** One search entry. A locality has l === n; a street has l = its nearest locality. */
+export type Place = { n: string; l: string; d: string; lat: number; lng: number };
+export type Locality = { name: string; kind: string; district: string; lat: number; lng: number; source: string };
+
+/** Pure: lower case, no accents, no apostrophes, punctuation as spaces. "L’Escalier" -> "lescalier", "Rose-Belle" -> "rose belle". */
+export function foldName(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/['’‘`´]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+const foldCache = new WeakMap<Place[], { full: string; compact: string }[]>();
+
+/**
+ * Pure: best matches first. Exact name > name starts with the query > a word starts with it >
+ * contains it (spaces ignored, so "rosebelle" finds "Rose Belle"). Localities before streets on a tie.
+ */
+export function searchPlaces(index: Place[], query: string, limit = 8): Place[] {
+  const q = foldName(query), qc = q.replace(/ /g, "");
+  if (!qc) return [];
+  let folded = foldCache.get(index);
+  if (!folded) {
+    folded = index.map((p) => { const full = foldName(p.n); return { full, compact: full.replace(/ /g, "") }; });
+    foldCache.set(index, folded);
+  }
+  const hits: { p: Place; rank: number }[] = [];
+  index.forEach((p, i) => {
+    const { full, compact } = folded[i];
+    const rank = compact === qc ? 0 : full.startsWith(q) || compact.startsWith(qc) ? 1 : (" " + full).includes(" " + q) ? 2 : compact.includes(qc) ? 3 : -1;
+    if (rank >= 0) hits.push({ p, rank: rank * 2 + (p.l === p.n ? 0 : 1) });
+  });
+  return hits
+    .sort((a, b) => a.rank - b.rank || a.p.n.length - b.p.n.length || a.p.n.localeCompare(b.p.n))
+    .slice(0, limit)
+    .map((h) => h.p);
+}
+
+/** "Street, Locality" for a street, "Locality, District" for a locality. */
+export const placeLabel = (p: Place) => (p.l === p.n ? `${p.n}, ${p.d}` : `${p.n}, ${p.l}`);
+
+let placesPromise: Promise<Place[]> | null = null;
+/** Browser: the island-wide search index (public/places.json, ~0.5 MB, fetched once). */
+export function loadPlaces(): Promise<Place[]> {
+  placesPromise ??= fetch("/places.json").then((r) => {
+    if (!r.ok) throw new Error(`places.json: HTTP ${r.status}`);
+    return r.json() as Promise<Place[]>;
+  }).catch((e) => { placesPromise = null; throw e; });
+  return placesPromise;
+}
+
+/** Localities table (needs sql/v5.sql + load-data), optionally one district. */
+export async function getLocalities(district?: string): Promise<Locality[]> {
+  let q = supabase.from("localities").select("name,kind,district,lat,lng,source").order("name");
+  if (district) q = q.eq("district", district);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as Locality[];
+}
+
+// ---------- V5 rivers: "near a river?" (computed on the phone, never sent or stored) ----------
+
+export type RiverFeature = { properties: { name: string | null; waterway: string }; geometry: { coordinates: [number, number][] } }; // [lng, lat]
+export type Rivers = { features: RiverFeature[] };
+export const NEAR_RIVER_M = 200;
+const EARTH_M_PER_DEG = 111_320;
+
+/**
+ * Pure: the nearest river or stream to (lat, lng) and its distance in metres. Flat projection
+ * around the point (error well under 1 % at island scale). null when there are no rivers.
+ */
+export function nearestRiver(lat: number, lng: number, rivers: Rivers): { distance_m: number; name: string | null; waterway: string } | null {
+  const kx = EARTH_M_PER_DEG * Math.cos((lat * Math.PI) / 180), ky = EARTH_M_PER_DEG;
+  let best: { distance_m: number; name: string | null; waterway: string } | null = null;
+  for (const f of rivers.features) {
+    const pts = f.geometry.coordinates;
+    for (let i = 0; i < pts.length; i++) {
+      const ax = (pts[i][0] - lng) * kx, ay = (pts[i][1] - lat) * ky;
+      let d = Math.hypot(ax, ay);
+      if (i + 1 < pts.length) {
+        const bx = (pts[i + 1][0] - lng) * kx, by = (pts[i + 1][1] - lat) * ky;
+        const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+        const t = len2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
+        d = Math.min(d, Math.hypot(ax + t * dx, ay + t * dy));
+      }
+      if (!best || d < best.distance_m) best = { distance_m: d, name: f.properties.name, waterway: f.properties.waterway };
+    }
+  }
+  return best && { ...best, distance_m: Math.round(best.distance_m) };
+}
+
+/** Pure: metres to the nearest river or stream, or null when there are none. */
+export const distanceToRiverM = (lat: number, lng: number, rivers: Rivers): number | null => nearestRiver(lat, lng, rivers)?.distance_m ?? null;
+
+/** Browser: public/rivers.geojson (fetched on demand by the map layer / "near a river?"). */
+export const loadRivers = (): Promise<Rivers> =>
+  fetch("/rivers.geojson").then((r) => {
+    if (!r.ok) throw new Error(`rivers.geojson: HTTP ${r.status}`);
+    return r.json() as Promise<Rivers>;
+  });
+
+// ---------- V5 notices feed + AI notice parser ----------
+// Notices come from scripts/scrape-notices.ts (CWA site, news RSS) and from ops pasting text
+// (Facebook posts are pasted, never scraped). The parser reads localities, times, dates and kind;
+// every result goes through validateParsedNotice before it is shown or stored.
+
+export type FeedKind = "interruption" | "rationing" | "advisory" | "other";
+export const FEED_KINDS: FeedKind[] = ["interruption", "rationing", "advisory", "other"];
+/** Parser output after validation. Times "HH:MM" (24 h), dates "YYYY-MM-DD"; unknown = null / []. */
+export type ParsedNotice = {
+  localities: string[];           // matched to the localities list (canonical spelling)
+  unmatched_localities: string[]; // named in the notice, not in our list: shown, never placed on a guessed locality
+  start: string | null; end: string | null;
+  dates: string[];
+  kind: FeedKind;
+  summary: string;
+};
+/** One row of the notices feed (table notices, V5 columns). */
+export type FeedNotice = {
+  id: number | null; url: string | null; published_on: string | null; source: string;
+  localities: string[]; start_time: string | null; end_time: string | null; dates: string[];
+  kind: FeedKind; summary: string; ai_extracted: boolean; demo: boolean;
+};
+export const AI_NOTICE_LABEL = "AI-read from the notice. Check the source.";
+
+const MONTHS: Record<string, number> = {
+  janvier: 1, january: 1, fevrier: 2, february: 2, mars: 3, march: 3, avril: 4, april: 4, mai: 5, may: 5, juin: 6, june: 6,
+  juillet: 7, july: 7, aout: 8, august: 8, septembre: 9, september: 9, octobre: 10, october: 10, novembre: 11, november: 11, decembre: 12, december: 12,
+};
+const realDay = (y: number, m: number, d: number) => {
+  const t = new Date(Date.UTC(y, m - 1, d));
+  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d ? `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}` : null;
+};
+/** "3:00" / "03h00" / "3h" -> "03:00"; anything else (or 24:00+) -> null. */
+function normTime(v: unknown): string | null {
+  const m = typeof v === "string" ? /^\s*(\d{1,2})\s*[:hH]\s*(\d{2})?\s*$/.exec(v) : null;
+  if (!m || +m[1] > 23 || +(m[2] ?? 0) > 59) return null;
+  return `${m[1].padStart(2, "0")}:${m[2] ?? "00"}`;
+}
+
+/**
+ * Pure: checks a parser result (AI JSON or the rule fallback). Localities are matched to `known`
+ * by folded name; bad times / impossible dates are dropped, never repaired by guessing.
+ */
+export function validateParsedNotice(raw: unknown, known: string[]): Valid<ParsedNotice> {
+  const b = obj(raw);
+  if (!b) return { ok: false, error: "invalid_notice" };
+  if (!FEED_KINDS.includes(b.kind as FeedKind)) return { ok: false, error: "invalid_kind" };
+  if (!Array.isArray(b.localities) || b.localities.length > 200 || !b.localities.every((l) => typeof l === "string")) return { ok: false, error: "invalid_localities" };
+  if (!Array.isArray(b.dates)) return { ok: false, error: "invalid_dates" };
+  const summary = typeof b.summary === "string" ? b.summary.replace(/\s+/g, " ").trim().slice(0, 280) : "";
+  if (!summary) return { ok: false, error: "invalid_summary" };
+  const byFold = new Map(known.map((k) => [foldName(k), k]));
+  const localities: string[] = [], unmatched: string[] = [];
+  for (const l of b.localities as string[]) {
+    const hit = byFold.get(foldName(l));
+    if (hit) { if (!localities.includes(hit)) localities.push(hit); }
+    else if (l.trim() && !unmatched.includes(l.trim())) unmatched.push(l.trim());
+  }
+  const dates = [...new Set((b.dates as unknown[]).flatMap((d) => {
+    const m = typeof d === "string" ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(d) : null;
+    const day = m && realDay(+m[1], +m[2], +m[3]);
+    return day ? [day] : [];
+  }))].sort();
+  return { ok: true, value: { localities, unmatched_localities: unmatched, start: normTime(b.start), end: normTime(b.end), dates, kind: b.kind as FeedKind, summary } };
+}
+
+/**
+ * Pure rule-based reader, used when the AI is not configured or fails (ai_extracted = false).
+ * Localities: known names found as whole words. Times: the first two "3h" / "05:00" style times.
+ * Dates: dd/mm/yyyy or "12 octobre 2026". Kind from keywords. Summary: the first sentence.
+ */
+export function extractNoticeRules(text: string, known: string[]): ParsedNotice {
+  const ft = ` ${foldName(text)} `;
+  const localities = known.filter((k) => { const f = foldName(k); return f.length >= 4 && ft.includes(` ${f} `); });
+  const times = [...text.matchAll(/(?<![\d/])(\d{1,2})\s*(?:h|H|:)\s*(\d{2})?(?!\d)/g)].map((m) => normTime(`${m[1]}:${m[2] ?? "00"}`)).filter((t): t is string => !!t);
+  const dates: string[] = [];
+  for (const m of text.matchAll(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/g)) dates.push(`${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`);
+  for (const m of foldName(text).matchAll(/\b(\d{1,2}) ([a-z]+) (\d{4})\b/g)) {
+    const mo = MONTHS[m[2]];
+    if (mo) dates.push(`${m[3]}-${String(mo).padStart(2, "0")}-${m[1].padStart(2, "0")}`);
+  }
+  const kind: FeedKind = /coupure|interruption|suspension|travaux|repair|panne/.test(ft) ? "interruption"
+    : /bouillir|boil|qualite|quality|turbid|trouble/.test(ft) ? "advisory"
+    : /horaire|distribution|un jour sur deux|every second day|rationn|approvisionnement|supply/.test(ft) ? "rationing" : "other";
+  const summary = (text.replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s/)[0] ?? "").slice(0, 200) || "Water notice";
+  const v = validateParsedNotice({ localities, start: times[0] ?? null, end: times[1] ?? null, dates, kind, summary }, known);
+  return v.ok ? v.value : { localities, unmatched_localities: [], start: null, end: null, dates: [], kind, summary };
+}
+
+/** Notices feed, newest first; `locality` keeps notices naming it plus island-wide ones (no locality). */
+export const getNoticeFeed = (locality?: string) =>
+  api<{ notices: FeedNotice[]; demo: boolean }>(`/api/notices/feed${locality ? `?locality=${encodeURIComponent(locality)}` : ""}`);
+
+/** Ops: read a pasted notice (AI, cached). save = true stores it in the feed. */
+export const parseNotice = (text: string, url?: string, save = false) =>
+  api<{ notice: ParsedNotice; ai_extracted: boolean; cached: boolean; saved_id: number | null; note: string | null }>("/api/notices/parse", {
+    method: "POST", body: { text, url, save },
+  });
+
+// ---------- V5 accounts: Supabase Auth, email + password ----------
+// Guests report and request; a complaint needs sign-in. No profile, no name. The email is shown
+// only to its owner. Errors are ApiError with Supabase's code, e.g. "invalid_credentials",
+// "user_already_exists", "weak_password", "email_address_invalid", "over_request_rate_limit".
+
+export type User = { id: string; email: string | null };
+export const MIN_PASSWORD = 6; // Supabase default
+
+/** Pure: same checks the form shows before calling Supabase. */
+export function validateCredentials(email: string, password: string): Valid<{ email: string; password: string }> {
+  const e = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return { ok: false, error: "email_address_invalid" };
+  if (password.length < MIN_PASSWORD) return { ok: false, error: "weak_password" };
+  return { ok: true, value: { email: e, password } };
+}
+
+function authFail(e: { status?: number; code?: string; message?: string }): never {
+  throw new ApiError(e.status ?? 400, e.code ?? "auth_error", { message: e.message });
+}
+const toUser = (u: { id: string; email?: string | null } | null | undefined): User | null => (u ? { id: u.id, email: u.email ?? null } : null);
+
+/**
+ * Creates the account and signs in. Returns null when Supabase still wants the email confirmed
+ * (P1 turns "Confirm email" off for the demo, so this should not happen).
+ */
+export async function signUp(email: string, password: string): Promise<User | null> {
+  const v = validateCredentials(email, password);
+  if (!v.ok) throw new ApiError(400, v.error);
+  const { data, error } = await supabase.auth.signUp(v.value);
+  if (error) authFail(error);
+  // An existing email comes back as a user with no identities and no error (Supabase hides who exists).
+  if (data.user && data.user.identities?.length === 0) throw new ApiError(400, "user_already_exists");
+  return data.session ? toUser(data.user) : null;
+}
+
+export async function signIn(email: string, password: string): Promise<User> {
+  const v = validateCredentials(email, password);
+  if (!v.ok) throw new ApiError(400, v.error === "weak_password" ? "invalid_credentials" : v.error);
+  const { data, error } = await supabase.auth.signInWithPassword(v.value);
+  if (error) authFail(error);
+  return toUser(data.user)!;
+}
+
+export async function signOut(): Promise<void> {
+  const { error } = await supabase.auth.signOut();
+  if (error) authFail(error);
+}
+
+/** The signed-in user from this browser's stored session, or null for a guest. No network call. */
+export async function getUser(): Promise<User | null> {
+  return toUser((await supabase.auth.getSession()).data.session?.user);
+}
+
+/** Calls `cb` now and on every sign-in / sign-out. Returns the unsubscribe function (nav "Signed in" + Log out). */
+export function onAuthChange(cb: (user: User | null) => void): () => void {
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => cb(toUser(session?.user)));
+  return () => data.subscription.unsubscribe();
+}
+
 // ---------- fetch helper for /api/* ----------
 
 export class ApiError extends Error {
@@ -1143,10 +1469,18 @@ export class ApiError extends Error {
   }
 }
 
-async function api<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
+/** auth: true sends the Supabase access token; without a signed-in user it throws sign_in_required. */
+async function api<T>(path: string, init: { method?: string; body?: unknown; auth?: boolean } = {}): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (init.body !== undefined) headers["content-type"] = "application/json";
+  if (init.auth) {
+    const token = (await supabase.auth.getSession()).data.session?.access_token;
+    if (!token) throw new ApiError(401, "sign_in_required");
+    headers.authorization = `Bearer ${token}`;
+  }
   const res = await fetch(path, {
     method: init.method ?? "GET",
-    headers: init.body === undefined ? undefined : { "content-type": "application/json" },
+    headers,
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
     credentials: "same-origin",
     cache: "no-store",
@@ -1257,9 +1591,51 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
   ok(sp.loads.every((l) => l.litres <= 100) && ns.loads.every((l) => l.litres <= 100), "no load above capacity");
 
   // Validation
-  ok(validateRequestInput({ street_id: 1, litres: 20 }).ok, "valid request");
-  ok(!validateRequestInput({ street_id: 1, litres: 0 }).ok && !validateRequestInput({ street_id: 1, litres: 1.5 }).ok && !validateRequestInput({ street_id: 1, litres: 1001 }).ok, "bad litres rejected");
-  ok(!validateRequestInput({ street_id: "1", litres: 20 }).ok && !validateRequestInput(null).ok, "bad street id rejected");
+  ok(validateRequestInput({ street_id: 1 }).ok, "valid request");
+  const withLitres = validateRequestInput({ street_id: 1, litres: 5000 });
+  ok(withLitres.ok && !("litres" in withLitres.value), "V5: litres from a resident are ignored, not stored");
+  ok(!validateRequestInput({ street_id: "1" }).ok && !validateRequestInput(null).ok, "bad street id rejected");
+  // V5 places: accent / apostrophe tolerant search
+  ok(foldName("L’Escalier") === "lescalier" && foldName("L'Escalier") === "lescalier" && foldName("Rose-Belle") === "rose belle", "foldName");
+  const idx: Place[] = [
+    { n: "L’Escalier", l: "L’Escalier", d: "Grand Port", lat: -20.47, lng: 57.62 },
+    { n: "Chemin Chamarel", l: "Case Noyale", d: "Black River", lat: -20.4, lng: 57.38 },
+    { n: "Chamarel", l: "Chamarel", d: "Black River", lat: -20.42, lng: 57.39 },
+    { n: "Rose Belle", l: "Rose Belle", d: "Grand Port", lat: -20.4, lng: 57.6 },
+    { n: "Royal Road", l: "Rose Belle", d: "Grand Port", lat: -20.41, lng: 57.6 },
+  ];
+  ok(searchPlaces(idx, "lescalier")[0]?.n === "L’Escalier" && searchPlaces(idx, "l'escalier")[0]?.n === "L’Escalier", "lescalier finds L’Escalier");
+  ok(searchPlaces(idx, "rose-belle")[0]?.n === "Rose Belle" && searchPlaces(idx, "rosebelle")[0]?.n === "Rose Belle", "Rose-Belle / rosebelle find Rose Belle");
+  const cham = searchPlaces(idx, "chamarel");
+  ok(cham[0]?.n === "Chamarel" && cham[1]?.n === "Chemin Chamarel", "locality before the street that contains its name");
+  ok(searchPlaces(idx, "  ").length === 0 && searchPlaces(idx, "zzz").length === 0, "empty / no match -> []");
+  ok(placeLabel(idx[4]) === "Royal Road, Rose Belle" && placeLabel(idx[2]) === "Chamarel, Black River", "labels");
+  // V5 rivers: a 2 km east-west river at lat -20.30
+  const riv: Rivers = { features: [{ properties: { name: "Rivière Test", waterway: "river" }, geometry: { coordinates: [[57.50, -20.30], [57.52, -20.30]] } }] };
+  const south = nearestRiver(-20.301, 57.51, riv);
+  ok(south !== null && Math.abs(south.distance_m - 111) <= 1 && south.name === "Rivière Test", "111 m south of the river");
+  ok(Math.abs((distanceToRiverM(-20.30, 57.53, riv) ?? 0) - 1044) <= 5, "past the end: distance to the end point");
+  ok(distanceToRiverM(-20.30, 57.51, riv) === 0 && distanceToRiverM(-20.3, 57.5, { features: [] }) === null, "on the river = 0; no rivers = null");
+  // V5 notice parser: validation + rule fallback
+  const known = ["Vacoas", "Phoenix", "Curepipe", "Forest Side", "Floréal", "L’Escalier", "Mon Trésor"];
+  const pv = validateParsedNotice({ localities: ["vacoas", "FLOREAL", "Atlantis"], start: "3h", end: "08:00", dates: ["2026-10-12", "2026-02-30", "x"], kind: "rationing", summary: "  New  hours. " }, known);
+  ok(pv.ok && pv.value.localities.join() === "Vacoas,Floréal" && pv.value.unmatched_localities.join() === "Atlantis", "localities matched by folded name, unknown kept apart");
+  ok(pv.ok && pv.value.start === "03:00" && pv.value.end === "08:00" && pv.value.dates.join() === "2026-10-12" && pv.value.summary === "New hours.", "times normalised, impossible dates dropped");
+  ok(!validateParsedNotice({ localities: [], start: null, end: null, dates: [], kind: "safe", summary: "x" }, known).ok, "unknown kind rejected");
+  ok(!validateParsedNotice({ localities: [], start: null, end: null, dates: [], kind: "other", summary: " " }, known).ok, "empty summary rejected");
+  const bad = validateParsedNotice({ localities: [], start: "25:00", end: "noon", dates: [], kind: "other", summary: "s" }, known);
+  ok(bad.ok && bad.value.start === null && bad.value.end === null, "bad times become null, never guessed");
+  const ruleNotice = extractNoticeRules("Nouveaux horaires de distribution d'eau pour Vacoas, Phoenix et Forest-Side: de 3h à 8h, un jour sur deux, à partir du 12 octobre 2026.", known);
+  ok(ruleNotice.localities.join() === "Vacoas,Phoenix,Forest Side" && ruleNotice.start === "03:00" && ruleNotice.end === "08:00", "rules: localities + times");
+  ok(ruleNotice.dates.join() === "2026-10-12" && ruleNotice.kind === "rationing", "rules: French date + kind");
+  const cut = extractNoticeRules("Coupure d'eau le 14/11/2026 de 09:00 à 15:30 à L'Escalier et Mon Trésor.", known);
+  ok(cut.kind === "interruption" && cut.dates.join() === "2026-11-14" && cut.end === "15:30" && cut.localities.join() === "L’Escalier,Mon Trésor", "rules: interruption, dd/mm/yyyy, apostrophes");
+  // V5 accounts: form checks before Supabase
+  const cred = validateCredentials("  Ana@Example.MU ", "secret1");
+  ok(cred.ok && cred.value.email === "ana@example.mu", "email trimmed + lower-cased");
+  ok(!validateCredentials("ana@", "secret1").ok && !validateCredentials("ana example.mu", "secret1").ok, "bad email rejected");
+  const short = validateCredentials("ana@example.mu", "12345");
+  ok(!short.ok && short.error === "weak_password", "password under 6 characters rejected");
   ok(validateReportInput({ street_id: 3, type: "water_off" }).ok && !validateReportInput({ street_id: 3, type: "maybe" }).ok, "report type checked");
   ok(validateComplaintInput({ street_id: 3, category: "dirty_water" }).ok && !validateComplaintInput({ street_id: 3, category: "rude" }).ok, "complaint category checked");
   ok(validatePositionInput({ round_id: 1, lat: -20.3, lng: 57.5 }).ok && !validatePositionInput({ round_id: 1, lat: 91, lng: 0 }).ok, "position range checked");
@@ -1288,10 +1664,10 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
   ok(all[2].suspect && !all[1].suspect && !all[3].suspect, "computeAllStreetTrust uses neighbours in route order");
 
   // Priority explanation
-  const unknown = explainPriority(null, 1, 200);
-  ok(!unknown.dry_known && unknown.score === 12 && unknown.reasons.some((r) => r.includes("dryness unknown")) && unknown.reasons[0].includes("200 L"), "unknown dryness is said, not shown as 0 h");
-  const rows = priorityRows([{ id: 1, name: "A" }, { id: 2, name: "B" }], { 1: 10, 2: null }, [{ street_id: 2, litres: 100 }, { street_id: 2, litres: null }]);
-  ok(rows[0].street_id === 2 && rows[0].waiting === 2 && rows[0].waiting_litres === 100 && rows[0].hours_dry === null, "priority rows: litres + unknown kept null");
+  const unknown = explainPriority(null, 1);
+  ok(!unknown.dry_known && unknown.score === 12 && unknown.reasons.some((r) => r.includes("dryness unknown")) && unknown.reasons[0] === "1 household waiting for a tanker", "unknown dryness is said, not shown as 0 h");
+  const rows = priorityRows([{ id: 1, name: "A" }, { id: 2, name: "B" }], { 1: 10, 2: null }, [{ street_id: 2 }, { street_id: 2 }]);
+  ok(rows[0].street_id === 2 && rows[0].waiting === 2 && rows[0].hours_dry === null && !rows[0].reasons.join().includes(" L"), "priority rows: households, no litres, unknown kept null");
 
   // Complaints grouped
   const cs: Complaint[] = [
@@ -1374,9 +1750,21 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
   const boilN: QualityNotice = { title: "Boil water notice", day: "2026-11-12", category: "boil", source_url: "https://cwa" };
   const qN: QualityNotice = { title: "Turbidity", day: "2026-11-12", category: "quality", source_url: "https://cwa" };
   ok(computeWaterQuality([qN, boilN], "normal", now).message === QUALITY_MESSAGES.boil, "boil notice wins, even at normal level");
-  ok(computeWaterQuality([{ ...boilN, day: "2026-10-01" }], "watch", now).level === "cloudy_possible", "old notice expired -> low tier caution");
-  ok(computeWaterQuality([], "critical", now).level === "cloudy_possible" && computeWaterQuality([], "normal", now).level === "none" && computeWaterQuality([], null, now).level === "none", "tier rule");
+  ok(computeWaterQuality([{ ...boilN, day: "2026-10-01" }], "watch", now).level === "none", "old notice expired; watch tier alone is not a reason (V5: < 20 %)");
+  ok(computeWaterQuality([], "critical", now).level === "cloudy_possible" && computeWaterQuality([], "normal", now).level === "none" && computeWaterQuality([], null, now).level === "none", "old callers: critical tier stands in");
+  const boilQ = computeWaterQuality([boilN], "normal", now, { levelPct: 15, rainMm48h: 80 });
+  ok(boilQ.level === "official_notice" && boilQ.reasons.join() === "official_notice,heavy_rain,low_reservoir" && boilQ.source_url === boilN.source_url && boilQ.date === boilN.day, "notice wins, every reason listed, source = notice");
+  const rainQ = computeWaterQuality([], null, now, { levelPct: 33, rainMm48h: 62.4, locality: "Chamarel" });
+  ok(rainQ.level === "cloudy_possible" && rainQ.reasons.join() === "heavy_rain" && rainQ.message.startsWith("Heavy rain in the last 48 h (62 mm).") && rainQ.source_url === OPEN_METEO_URL, "heavy rain -> cloudy possible");
+  const lowQ = computeWaterQuality([], "critical", now, { levelPct: 18, levelDay: "2026-11-05", levelSource: "u", rainMm48h: 3 });
+  ok(lowQ.level === "cloudy_possible" && lowQ.reasons.join() === "low_reservoir" && lowQ.date === "2026-11-05" && lowQ.source_url === "u", "reservoir < 20 % -> cloudy possible, dated by the reading");
+  const noneQ = computeWaterQuality([], "watch", now, { levelPct: 33, rainMm48h: null, locality: "L’Escalier" });
+  ok(noneQ.level === "none" && noneQ.reasons.length === 0 && noneQ.message === "No official advisory found for L’Escalier. If the water looks cloudy or smells, boil it before drinking.", "nothing known -> no advisory found, never 'safe'");
+  ok([boilQ, rainQ, lowQ, noneQ].every((q) => !/\bsafe\b|\bunsafe\b|\bdrinkable\b/i.test(q.message + q.advice)), "no status claims safe / unsafe water");
   ok(Object.values(QUALITY_MESSAGES).every((m) => !/\bsafe\b|\bunsafe\b|\bdrinkable\b/i.test(m)), "no message claims safe / unsafe water");
+  const rainNow = new Date(Date.UTC(2026, 10, 13, 12));
+  ok(rainLast48h({ time: ["2026-11-11T11:00", "2026-11-11T13:00", "2026-11-13T12:00", "2026-11-13T13:00"], precipitation: [100, 10, 5.5, 99] }, rainNow) === 15.5, "rain sums only the last 48 h");
+  ok(rainLast48h({ time: [], precipitation: [] }, rainNow) === null && rainLast48h(null, rainNow) === null, "no rain data -> null");
 
   // op 27 planner
   const plan = planDay({ start_time: "03:00", end_time: "08:00" });

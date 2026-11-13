@@ -1,4 +1,4 @@
-// Runs sql/schema.sql + v2.sql + v3.sql (twice: re-run safety) + v3-lockdown.sql in an in-memory
+// Runs sql/schema.sql + v2.sql + v3.sql (twice: re-run safety) + v3-lockdown.sql + v4 + v5 in an in-memory
 // Postgres (PGlite, no Supabase needed) and checks the V3 rules: guest limits, capacity allocation,
 // split delivery, idempotent dispatch/serve, driver ownership, release on end, anon permissions.
 //
@@ -169,6 +169,84 @@ async function main() {
   await db.exec("reset role");
   await db.exec("set role service_role");
   check((await fn("kd_guest_report($1, 2, 'water_off')", [B])).ok, "service role can call the functions");
+  await db.exec("reset role");
+
+  console.log("V5: accounts + requests without litres");
+  // Supabase Auth stand-in: auth.users + auth.uid() from the request JWT claim.
+  await db.exec(`
+    create schema auth;
+    create table auth.users (id uuid primary key);
+    create function auth.uid() returns uuid language sql stable as $f$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $f$;
+    grant usage on schema auth to anon, authenticated, service_role;
+    insert into auth.users values ('00000000-0000-0000-0000-0000000000f1'::uuid), ('00000000-0000-0000-0000-0000000000f2'::uuid);
+  `);
+  for (const f of ["sql/v5.sql", "sql/v5.sql"]) await db.exec(readFileSync(f, "utf8"));
+  const U1 = "00000000-0000-0000-0000-0000000000f1", U2 = "00000000-0000-0000-0000-0000000000f2";
+  check((await fn("kd_user_complaint(null, 1, 'no_water')")).error === "sign_in_required", "complaint without a user refused");
+  const uc1 = await fn("kd_user_complaint($1, 1, 'no_water')", [U1]);
+  const uc2 = await fn("kd_user_complaint($1, 1, 'no_water')", [U1]);
+  check(uc1.ok && uc2.id === uc1.id && uc2.duplicate === true, "signed-in complaint; repeat returns the same id");
+  check((await one<{ u: string }>("select user_id::text u from complaints where id = $1", [uc1.id])).u === U1, "complaint stores the user id");
+  for (const c of ["dirty_water", "tanker_no_show", "other"]) await fn(`kd_user_complaint($1, 2, '${c}')`, [U1]);
+  await fn("kd_user_complaint($1, 3, 'no_water')", [U1]);
+  check((await fn("kd_user_complaint($1, 4, 'no_water')", [U1])).error === "throttled", "6th complaint in an hour throttled");
+  check((await fn("kd_user_complaint($1, 4, 'no_water')", [U2])).ok, "another user is not throttled");
+  await db.exec("set role service_role");
+  check((await fails("select kd_guest_complaint('" + A + "', 1, 'no_water')"))?.includes("permission denied") ?? false, "guest complaint function closed");
+  await db.exec("reset role");
+
+  await db.exec("set role anon");
+  check((await fails("select user_id from complaints"))?.includes("permission denied") ?? false, "anon cannot read complaints.user_id");
+  check((await db.query("select id, category from complaints")).rows.length > 0, "anon still reads complaints without user_id (ops)");
+  check((await fails("insert into complaints (street_id, category) values (1, 'other')")) !== null, "anon cannot insert complaints");
+  check((await fails("select kd_user_complaint('" + U1 + "', 1, 'other')"))?.includes("permission denied") ?? false, "anon cannot call kd_user_complaint");
+  await db.exec("reset role");
+  await db.exec(`set role authenticated; set request.jwt.claim.sub = '${U2}'`);
+  const own = (await db.query<{ user_id: string }>("select user_id::text from complaints")).rows;
+  check(own.length === 1 && own[0].user_id === U2, "a signed-in user reads only their own complaints");
+  check((await fails("insert into complaints (street_id, category, user_id) values (1, 'other', '" + U1 + "')")) !== null, "cannot file a complaint as someone else");
+  check((await fails("insert into complaints (street_id, category, user_id) values (1, 'other', '" + U2 + "')")) === null, "can file as self (RLS)");
+  await db.exec("reset role; reset request.jwt.claim.sub");
+
+  await db.exec("update rounds set status = 'done' where status in ('planned','active')");
+  await db.exec("update allocations set released_at = now() where delivered_at is null");
+  await db.exec("update requests set status = 'served'");
+  await db.exec("update tankers set capacity_litres = 100");
+  const D = "00000000-0000-0000-0000-00000000000d";
+  await db.exec(`insert into sessions (id, token_hash, role, expires_at) values ('${D}', 'h4', 'guest', now() + interval '1 day')`);
+  const nl = await fn("kd_guest_request($1, 1, 5000)", [D]);
+  check(nl.ok && (await one<{ l: number | null }>("select litres l from requests where id = $1", [nl.id])).l === null, "request stores no litres (5000 from the client ignored)");
+  await fn("kd_guest_request($1, 2, null)", [D]);
+  await fn("kd_guest_request($1, 3, null)", [D]);
+  check((await one<{ n: number }>("select count(*)::int n from requests where status = 'waiting'")).n === 3, "3 households waiting");
+  const H1 = await fn("kd_allocate_load_max($1, 'v5-key', true, 50)", [T1]);
+  check(H1.ok && H1.litres === 50 && H1.stops === 3, "households planned at 20 L each: 50 L cap covers 2.5 households over 3 stops");
+  const H2 = await fn("kd_allocate_load($1, 'v5-key-2', true)", [T2]);
+  check(H2.ok && H2.litres === 10 && H2.stops === 1, "the half household left goes on the next load");
+  await fn("kd_start_round($1)", [T1]);
+  const hs = (await db.query<{ id: number }>("select id from round_stops where round_id = $1 order by stop_order", [H1.round_id])).rows;
+  check((await fn("kd_serve_stop($1, $2)", [T1, hs[0].id])).served_requests === 1, "a fully delivered household is served");
+  check((await fn("kd_serve_stop($1, $2)", [T1, hs[2].id])).served_requests === 0, "a half-delivered household stays waiting");
+
+  await db.exec("insert into localities (name, kind, district, lat, lng, source) values ('Chamarel', 'village', 'Black River', -20.42, 57.39, 'OSM')");
+  check((await fails("insert into localities (name, kind, district, lat, lng, source) values ('Chamarel', 'village', 'Black River', -20.42, 57.39, 'OSM')")) !== null, "locality unique per district (upsert key)");
+  await db.exec("set role anon");
+  check((await db.query("select name from localities")).rows.length === 1, "anon reads localities");
+  check((await fails("insert into localities (name, kind, district, lat, lng, source) values ('X', 'village', 'Moka', -20.2, 57.5, 'OSM')")) !== null, "anon cannot write localities");
+  await db.exec("reset role");
+
+  console.log("V5: notices feed");
+  const ins = (url: string, kind = "rationing") =>
+    `insert into notices (url, published_on, source, raw_text, localities, start_time, end_time, dates, kind, summary, ai_extracted, source_url)
+     values ('${url}', '2026-10-10', 'cwa', 'raw', '{Vacoas,Phoenix}', '03:00', '08:00', '{2026-10-12}', '${kind}', 'New hours', true, '${url}')`;
+  check((await fails(ins("https://cwa.govmu.org/cwa/?p=5001"))) === null, "V5 notice without locality/title/source_date accepted");
+  check((await fails(ins("https://cwa.govmu.org/cwa/?p=5001"))) !== null, "same url twice rejected (dedupe key)");
+  check((await fails(ins("paste:abc", "other"))) === null, "kind other accepted");
+  check((await fails(ins("paste:def", "safe"))) !== null, "unknown kind rejected");
+  check((await fails("insert into notices (kind, locality, title, source_url, source_date) values ('advisory', 'Vacoas', 't', 'u', '2026-10-01')")) === null, "v3-style notice still accepted");
+  await db.exec("set role anon");
+  check((await db.query("select summary from notices where url is not null")).rows.length === 2, "anon reads the feed");
+  check((await fails(ins("https://x.test/1"))) !== null, "anon cannot write notices");
   await db.exec("reset role");
 
   if (failures) {

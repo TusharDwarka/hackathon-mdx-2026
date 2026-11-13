@@ -1,11 +1,20 @@
 // GET ?status=open|all: complaints grouped by category + area + status (everyone); the individual
-//   records too for an ops session. POST {street_id, category}: a session files one (op 14).
-// PATCH {id, status: 'resolved'|'open'}: ops only.
+//   records too for an ops session (never user_id). GET ?mine=1 + Bearer token: the user's own.
+// POST {street_id, category} + Bearer token: a signed-in user files one (op 14, V5).
+//   A guest gets 401 sign_in_required. PATCH {id, status: 'resolved'|'open'}: ops only.
 import { groupComplaints, validateComplaintInput, type Complaint } from "@/lib/queries";
-import { currentSession, db, dbError, handle, HttpError, readJson, requireSession, rpc, valid } from "../_lib/server";
+import { currentSession, db, dbError, handle, HttpError, readJson, requireSession, requireUser, rpc, valid } from "../_lib/server";
 
 export const GET = handle(async (req) => {
-  const status = new URL(req.url).searchParams.get("status") ?? "open";
+  const params = new URL(req.url).searchParams;
+  if (params.get("mine") === "1") {
+    const user = await requireUser(req);
+    const { data, error } = await db().from("complaints").select("id,street_id,category,created_at,status")
+      .eq("user_id", user.id).order("created_at", { ascending: false }).limit(100);
+    dbError(error);
+    return Response.json({ records: (data ?? []) as Complaint[] });
+  }
+  const status = params.get("status") ?? "open";
   if (status !== "open" && status !== "all") throw new HttpError(400, "invalid_status");
   const client = db();
   let q = client.from("complaints").select("id,street_id,category,created_at,status").order("created_at", { ascending: false }).limit(500);
@@ -22,9 +31,9 @@ export const GET = handle(async (req) => {
 });
 
 export const POST = handle(async (req) => {
-  const s = await requireSession();
+  const user = await requireUser(req);
   const v = valid(validateComplaintInput(await readJson(req)));
-  const r = await rpc("kd_guest_complaint", { p_session: s.id, p_street: v.street_id, p_category: v.category });
+  const r = await rpc("kd_user_complaint", { p_user: user.id, p_street: v.street_id, p_category: v.category });
   return Response.json({ id: r.id, duplicate: r.duplicate }, { status: r.duplicate ? 200 : 201 });
 });
 
