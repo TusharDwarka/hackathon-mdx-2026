@@ -44,7 +44,7 @@ const enter = "transition-[opacity,translate] duration-200 ease-snap starting:tr
 
 export default function Resident() {
   const now = useNow();
-  const { base, setBase } = useBase();
+  const { base, setBase, retry } = useBase();
   const [picked, setPicked] = useState<number | null>(null);
   const [loaded, setLoaded] = useState<StreetData | null>(null);
   // My report in this session, per street. It wins over what localStorage says (null = the save failed, forget it).
@@ -193,7 +193,7 @@ export default function Resident() {
             </label>
           </section>
 
-          {demo && <DemoBanner />}
+          {demo && <DemoBanner onRetry={retry} />}
 
           {!base ? (
             <div className={card}>

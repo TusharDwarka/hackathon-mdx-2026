@@ -52,11 +52,12 @@ export function useNow(): Date | null {
 
 // ---------- streets, area names, heat map numbers ----------
 const DEMO: Base = { streets: MOCK_STREETS, areaNames: { [MOCK_AREA.id]: MOCK_AREA.name }, hoursDry: MOCK_HOURS_DRY, demo: true };
-const DB_WAIT_MS = 4000; // a dead network can hang for a long time before it fails
+const DB_WAIT_MS = 8000; // a dead network can hang for a long time before it fails; slow mobile data gets 8 s
 
-/** null while loading. */
+/** `base` is null while loading. `retry` asks the database again (the "Try again" button in demo mode). */
 export function useBase() {
   const [base, setBase] = useState<Base | null>(null);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let current = true;
     const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error(`database did not answer in ${DB_WAIT_MS / 1000} s`)), DB_WAIT_MS));
@@ -75,8 +76,12 @@ export function useBase() {
     return () => {
       current = false;
     };
-  }, []);
-  return { base, setBase };
+  }, [attempt]);
+  const retry = () => {
+    setBase(null);
+    setAttempt((a) => a + 1);
+  };
+  return { base, setBase, retry };
 }
 
 // ---------- one street ----------
@@ -146,10 +151,14 @@ export function Skeleton({ className }: { className: string }) {
   return <div className={`animate-pulse rounded-lg bg-muted motion-reduce:animate-none ${className}`} />;
 }
 
-export function DemoBanner() {
+/** Shown in demo mode. Not a dead end: "Try again" asks the database once more. */
+export function DemoBanner({ onRetry }: { onRetry: () => void }) {
   return (
-    <p className="rounded-2xl bg-amber-100 px-4 py-3 text-sm text-amber-950">
-      Demo mode: sample data. The real CWA timetable is not loaded or the database is not reachable.
-    </p>
+    <div className="flex items-center gap-3 rounded-3xl bg-amber-100 py-2 pr-2 pl-5 text-sm text-amber-950">
+      <p className="flex-1 py-1">Demo mode: sample data. The database did not answer, or the timetable is not loaded yet.</p>
+      <button type="button" onClick={onRetry} className="min-h-12 shrink-0 rounded-full bg-amber-950 px-4 font-semibold text-amber-50 transition-[scale] duration-150 ease-snap active:scale-[0.97]">
+        Try again
+      </button>
+    </div>
   );
 }

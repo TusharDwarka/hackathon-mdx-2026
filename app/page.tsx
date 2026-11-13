@@ -28,9 +28,9 @@ const ENTRIES = [
 
 export default function Landing() {
   const now = useNow();
-  const { base } = useBase();
+  const { base, retry } = useBase();
   const [reservoir, setReservoir] = useState<(ReservoirStatus & { sample: boolean }) | null>(null);
-  const [win, setWin] = useState<Window | null | "failed" | undefined>(undefined); // undefined = loading, null = no window today
+  const [loadedWin, setLoadedWin] = useState<{ base: object; win: Window | null | "failed" } | null>(null);
 
   useEffect(() => {
     let current = true;
@@ -52,19 +52,26 @@ export default function Landing() {
         return "failed";
       })
       .then((w) => {
-        if (current) setWin(w);
+        if (current) setLoadedWin({ base, win: w });
       });
     return () => {
       current = false;
     };
   }, [base]);
 
+  // undefined = loading (also while "Try again" reloads), null = no window today
+  const win = base && loadedWin?.base === base ? loadedWin.win : undefined;
   const areaName = base ? (base.areaNames[base.streets[0].area_id] ?? "") : "";
   const today = now?.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
   const status = win && win !== "failed" && now ? windowStatus(win.start_time, win.end_time, minOfDay(now)) : null;
 
   return (
     <main className="mx-auto w-full max-w-md px-4 pt-5 pb-6 lg:max-w-6xl lg:px-6 lg:pt-8">
+      {base?.demo && (
+        <div className="mb-4 lg:mb-6">
+          <DemoBanner onRetry={retry} />
+        </div>
+      )}
       <div className="grid gap-4 lg:grid-cols-[1.15fr_1fr] lg:items-start lg:gap-6">
         <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
           <section className="surface relative overflow-hidden p-6 pb-28 lg:p-10 lg:pb-40">
@@ -116,8 +123,6 @@ export default function Landing() {
         </div>
 
         <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
-          {base?.demo && <DemoBanner />}
-
           <section className="surface p-5" aria-labelledby="reservoir-title">
             <div className="flex items-center gap-5">
               {reservoir ? (
