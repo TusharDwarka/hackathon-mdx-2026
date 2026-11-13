@@ -4,8 +4,8 @@
 //   reports     7 past days + today, is_demo = true (mix of on time / late / no water, later streets worse),
 //               plus the last 2 hours: confirmed "no water" on some streets, unconfirmed on others, and ONE lone
 //               water_on report that contradicts both its neighbours (shows as "suspect" in Ops, op 15).
-//   complaints  a few open ones + one resolved (op 14). The complaints table is RESET on every seed
-//               (the contract gives it no is_demo flag), so run this before the demo, not during it.
+//   complaints  a few open ones + one resolved (op 14), is_demo = true (sql/v3.sql). Only demo complaints
+//               are replaced on a re-seed; real complaints are kept. Without sql/v3.sql complaints are skipped.
 //
 // Run:      npm run seed-demo        (node --env-file=.env.local --import tsx scripts/seed-demo.ts)
 // Dry run:  npx tsx scripts/seed-demo.ts --dry-run   (no database; prints what would be inserted)
@@ -196,12 +196,13 @@ async function main() {
   const { error: ie } = await db.from("reports").insert(rows);
   if (ie) throw ie;
 
-  // Complaints: reset the table (no is_demo flag in the contract), then insert the demo ones.
-  const { error: cde } = await db.from("complaints").delete().gte("id", 0);
+  // Complaints: replace the DEMO complaints only (complaints.is_demo, sql/v3.sql). Real ones are never
+  // touched. Without sql/v3.sql there is no is_demo column: skip seeding rather than wipe the table.
+  const { error: cde } = await db.from("complaints").delete().eq("is_demo", true);
   if (cde) {
-    console.warn(`complaints not seeded (${cde.message}). Has sql/v2.sql been run in Supabase?`);
+    console.warn(`complaints not seeded (${cde.message}). Run sql/v2.sql and sql/v3.sql in Supabase first.`);
   } else {
-    const { error: cie } = await db.from("complaints").insert(complaints);
+    const { error: cie } = await db.from("complaints").insert(complaints.map((c) => ({ ...c, is_demo: true })));
     if (cie) throw cie;
   }
   summary(rows, cde ? [] : complaints, streets, now);
