@@ -1,7 +1,8 @@
 # Hackathon MDX 2026 — shared rules (read by every Claude)
 
 24h hackathon, "Life Powered by Tech", Mauritius. Team of 5, fully vibe-coded. Goal: a working mobile-first app that solves a real Mauritian problem, uses AI in a non-obvious way, has ONE wow moment, pitched in 10 minutes.
-Stack: Next.js + Tailwind + shadcn · Supabase · Vercel · LLM API called server-side only.
+**Product: "Kot Delo?"** (Live Better: CWA water rationing + live tanker tracking). Read **docs/BUILD-PROMPT.md** (wins on product), SPEC.md, contracts/api.md, TASKS.md. Real rules/times: docs/CHALLENGE.md. How the team works: docs/PLAYBOOK.md.
+Stack: Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres + Realtime) · Leaflet + OpenStreetMap · Vercel. Secrets in .env.local, service key server-side only.
 
 ## Golden rules
 - Build only what the demo needs. Judges see the demo: polish the visible 20%, fake or skip the invisible 80%.
