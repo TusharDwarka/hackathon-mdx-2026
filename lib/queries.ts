@@ -1026,17 +1026,49 @@ export async function reservoirTrends(reservoir?: string, now = new Date(), clie
 
 export type QualityLevel = "none" | "cloudy_possible" | "official_notice";
 export type QualityNotice = { title: string; day: string; category: "boil" | "quality"; source_url: string };
-export type Quality = { level: QualityLevel; message: string; notice?: { title: string; day: string; source_url: string } };
+export type QualityReason = "official_notice" | "heavy_rain" | "low_reservoir";
+/**
+ * V5 "Is my tap water safe to drink?" Never says safe. reasons = every reason that holds;
+ * source_url / date = what the status rests on (notice, reservoir reading or rainfall check).
+ */
+export type Quality = {
+  level: QualityLevel; message: string; notice?: { title: string; day: string; source_url: string };
+  reasons: QualityReason[];
+  advice: string; advice_source_url: string;
+  source_url: string | null; date: string | null;
+  rain_mm_48h: number | null; level_pct: number | null;
+};
 export const QUALITY_NOTICE_DAYS = 14; // an official quality notice counts as current for 14 days after its date
-export const QUALITY_MESSAGES = {
-  none: "No official water quality notice for this area. Follow official CWA and Ministry of Health advice.",
-  cloudy_possible: "When reservoirs are low, tap water can look cloudy. Report dirty water. Follow official CWA / Ministry of Health advice.",
-  boil: "An official notice asks residents of this area to boil water before drinking. Read the notice for details.",
-  quality: "An official notice about water quality covers this area. Read the notice and follow its advice.",
+export const LOW_RESERVOIR_PCT = 20;    // contract V5: reservoir < 20 %
+export const HEAVY_RAIN_MM_48H = 50;    // DEMO threshold for "heavy rain in the last 48 h" (rainfall from Open-Meteo)
+export const OPEN_METEO_URL = "https://open-meteo.com/";
+/** WHO technical brief "Boil water" (WHO/FWC/WSH/15.02). P5 may swap in a CWA / Ministry of Health text. */
+export const WHO_BOIL_URL = "https://www.who.int/publications/i/item/WHO-FWC-WSH-15.02";
+export const QUALITY_ADVICE = {
+  notice: "Do what the notice says. To boil: bring water to a rolling boil, let it cool, keep it covered.",
+  caution: "If the water looks cloudy or smells, boil it before drinking: bring it to a rolling boil, let it cool, keep it covered.",
 } as const;
+export const QUALITY_MESSAGES = {
+  none: "No official advisory found for this area. If the water looks cloudy or smells, boil it before drinking.",
+  cloudy_possible: "Tap water can turn cloudy now. If it looks cloudy or smells, boil it before drinking.",
+  boil: "An official notice asks residents to boil water before drinking.",
+  quality: "An official notice about water quality covers this area.",
+} as const;
+export const noAdvisoryMessage = (locality?: string | null) =>
+  `No official advisory found for ${locality?.trim() || "this area"}. If the water looks cloudy or smells, boil it before drinking.`;
 
-/** Pure: a current official notice wins (boil first, then newest); else a low reservoir tier -> cloudy caution. */
-export function computeWaterQuality(notices: QualityNotice[], tier: ReservoirTier | null, now = new Date()): Quality {
+export type QualityContext = {
+  locality?: string | null;
+  levelPct?: number | null; levelDay?: string | null; levelSource?: string | null; // latest reading of the area's reservoir
+  rainMm48h?: number | null;                                                      // null = rainfall unknown
+};
+
+/**
+ * Pure (op 26, V5). official_notice: a current boil / quality notice (boil first, then newest).
+ * cloudy_possible: heavy rain in the last 48 h, or the reservoir below 20 %. Else none.
+ * Old callers without ctx.levelPct: a critical tier (< 30 %) stands in for the reservoir reading.
+ */
+export function computeWaterQuality(notices: QualityNotice[], tier: ReservoirTier | null, now = new Date(), ctx: QualityContext = {}): Quality {
   const today = midnight(now).getTime();
   const current = notices
     .filter((n) => {
@@ -1044,20 +1076,57 @@ export function computeWaterQuality(notices: QualityNotice[], tier: ReservoirTie
       return age >= 0 && age <= QUALITY_NOTICE_DAYS && !!n.source_url;
     })
     .sort((a, b) => (a.category === b.category ? b.day.localeCompare(a.day) : a.category === "boil" ? -1 : 1));
+  const rain = ctx.rainMm48h ?? null;
+  const level = ctx.levelPct ?? null;
+  const lowReservoir = ctx.levelPct !== undefined ? level !== null && level < LOW_RESERVOIR_PCT : tier === "critical";
+  const heavyRain = rain !== null && rain >= HEAVY_RAIN_MM_48H;
   const n = current[0];
-  if (n) return { level: "official_notice", message: QUALITY_MESSAGES[n.category], notice: { title: n.title, day: n.day, source_url: n.source_url } };
-  if (tier === "watch" || tier === "critical") return { level: "cloudy_possible", message: QUALITY_MESSAGES.cloudy_possible };
-  return { level: "none", message: QUALITY_MESSAGES.none };
+  const reasons: QualityReason[] = [];
+  if (n) reasons.push("official_notice");
+  if (heavyRain) reasons.push("heavy_rain");
+  if (lowReservoir) reasons.push("low_reservoir");
+  const base = { reasons, rain_mm_48h: rain, level_pct: level, advice_source_url: WHO_BOIL_URL };
+  if (n) {
+    return { ...base, level: "official_notice", message: QUALITY_MESSAGES[n.category], notice: { title: n.title, day: n.day, source_url: n.source_url },
+      advice: QUALITY_ADVICE.notice, source_url: n.source_url, date: n.day };
+  }
+  if (heavyRain || lowReservoir) {
+    const why = [
+      heavyRain ? `Heavy rain in the last 48 h (${Math.round(rain!)} mm).` : null,
+      lowReservoir ? (level !== null ? `Reservoir at ${Math.round(level)} %.` : "Reservoir very low.") : null,
+    ].filter(Boolean).join(" ");
+    return { ...base, level: "cloudy_possible", message: `${why} ${QUALITY_MESSAGES.cloudy_possible}`, advice: QUALITY_ADVICE.caution,
+      source_url: heavyRain ? OPEN_METEO_URL : ctx.levelSource ?? null, date: heavyRain ? isoDate(now) : ctx.levelDay ?? null };
+  }
+  return { ...base, level: "none", message: noAdvisoryMessage(ctx.locality), advice: QUALITY_ADVICE.caution, source_url: null, date: isoDate(now) };
+}
+
+/** Pure: millimetres of rain in the 48 h before `now` from Open-Meteo hourly data (times in UTC). null = no usable data. */
+export function rainLast48h(hourly: { time: string[]; precipitation: (number | null)[] } | null | undefined, now = new Date()): number | null {
+  if (!hourly?.time?.length) return null;
+  const to = now.getTime(), from = to - 48 * 3_600_000;
+  let sum = 0, seen = 0;
+  hourly.time.forEach((t, i) => {
+    const at = Date.parse(`${t}:00Z`);
+    const mm = hourly.precipitation[i];
+    if (at > from && at <= to && typeof mm === "number") { sum += mm; seen++; }
+  });
+  return seen ? Math.round(sum * 10) / 10 : null;
 }
 
 /** Needs sql/v4.sql (quality_notices). Island-wide notices apply to every area. */
-export async function waterQuality(areaId: number, now = new Date(), client: SupabaseClient = supabase): Promise<Quality> {
-  const [{ data, error }, tier] = await Promise.all([
+export async function waterQuality(areaId: number, now = new Date(), client: SupabaseClient = supabase, ctx: QualityContext = {}): Promise<Quality> {
+  const reservoir = await areaReservoir(areaId, client);
+  const [{ data, error }, latest] = await Promise.all([
     client.from("quality_notices").select("title,day,category,source_url").or(`area_id.eq.${areaId},island_wide.eq.true`),
-    areaTier(areaId, now, client),
+    client.from("reservoir_levels").select("day,level_pct,source_url").eq("reservoir", reservoir).order("day", { ascending: false }).limit(1),
   ]);
   if (error) throw error;
-  return computeWaterQuality((data ?? []) as QualityNotice[], tier, now);
+  if (latest.error) throw latest.error;
+  const r = latest.data?.[0] ?? null;
+  return computeWaterQuality((data ?? []) as QualityNotice[], currentTier(r, now), now, {
+    levelPct: r?.level_pct ?? null, levelDay: r?.day ?? null, levelSource: r?.source_url ?? null, ...ctx,
+  });
 }
 
 // ---------- op 27: water-day planner (pure, no IO) ----------
@@ -1108,8 +1177,11 @@ export const getForecast = (areaId?: number) =>
 export const getReservoirTrend = (reservoir = DEFAULT_RESERVOIR) =>
   api<(Trend & { demo: boolean }) | null>(`/api/reservoirs/trend?reservoir=${encodeURIComponent(reservoir)}`);
 export const getReservoirTrendsAll = () => api<{ trends: Trend[]; demo: boolean }>("/api/reservoirs/trend?reservoir=all");
-export const getWaterQuality = (areaId?: number) =>
-  api<Quality & { demo: boolean }>(`/api/quality${areaId ? `?area_id=${areaId}` : ""}`);
+/** Op 26 by area, or by any locality of Mauritius (V5: `locality` wins; 404 unknown_locality). */
+export const getWaterQuality = (areaId?: number, locality?: string) =>
+  api<Quality & { demo: boolean }>(
+    `/api/quality${locality ? `?locality=${encodeURIComponent(locality)}` : areaId ? `?area_id=${areaId}` : ""}`
+  );
 
 // ---------- sessions (guest / driver / ops) ----------
 
@@ -1678,9 +1750,21 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
   const boilN: QualityNotice = { title: "Boil water notice", day: "2026-11-12", category: "boil", source_url: "https://cwa" };
   const qN: QualityNotice = { title: "Turbidity", day: "2026-11-12", category: "quality", source_url: "https://cwa" };
   ok(computeWaterQuality([qN, boilN], "normal", now).message === QUALITY_MESSAGES.boil, "boil notice wins, even at normal level");
-  ok(computeWaterQuality([{ ...boilN, day: "2026-10-01" }], "watch", now).level === "cloudy_possible", "old notice expired -> low tier caution");
-  ok(computeWaterQuality([], "critical", now).level === "cloudy_possible" && computeWaterQuality([], "normal", now).level === "none" && computeWaterQuality([], null, now).level === "none", "tier rule");
+  ok(computeWaterQuality([{ ...boilN, day: "2026-10-01" }], "watch", now).level === "none", "old notice expired; watch tier alone is not a reason (V5: < 20 %)");
+  ok(computeWaterQuality([], "critical", now).level === "cloudy_possible" && computeWaterQuality([], "normal", now).level === "none" && computeWaterQuality([], null, now).level === "none", "old callers: critical tier stands in");
+  const boilQ = computeWaterQuality([boilN], "normal", now, { levelPct: 15, rainMm48h: 80 });
+  ok(boilQ.level === "official_notice" && boilQ.reasons.join() === "official_notice,heavy_rain,low_reservoir" && boilQ.source_url === boilN.source_url && boilQ.date === boilN.day, "notice wins, every reason listed, source = notice");
+  const rainQ = computeWaterQuality([], null, now, { levelPct: 33, rainMm48h: 62.4, locality: "Chamarel" });
+  ok(rainQ.level === "cloudy_possible" && rainQ.reasons.join() === "heavy_rain" && rainQ.message.startsWith("Heavy rain in the last 48 h (62 mm).") && rainQ.source_url === OPEN_METEO_URL, "heavy rain -> cloudy possible");
+  const lowQ = computeWaterQuality([], "critical", now, { levelPct: 18, levelDay: "2026-11-05", levelSource: "u", rainMm48h: 3 });
+  ok(lowQ.level === "cloudy_possible" && lowQ.reasons.join() === "low_reservoir" && lowQ.date === "2026-11-05" && lowQ.source_url === "u", "reservoir < 20 % -> cloudy possible, dated by the reading");
+  const noneQ = computeWaterQuality([], "watch", now, { levelPct: 33, rainMm48h: null, locality: "L’Escalier" });
+  ok(noneQ.level === "none" && noneQ.reasons.length === 0 && noneQ.message === "No official advisory found for L’Escalier. If the water looks cloudy or smells, boil it before drinking.", "nothing known -> no advisory found, never 'safe'");
+  ok([boilQ, rainQ, lowQ, noneQ].every((q) => !/\bsafe\b|\bunsafe\b|\bdrinkable\b/i.test(q.message + q.advice)), "no status claims safe / unsafe water");
   ok(Object.values(QUALITY_MESSAGES).every((m) => !/\bsafe\b|\bunsafe\b|\bdrinkable\b/i.test(m)), "no message claims safe / unsafe water");
+  const rainNow = new Date(Date.UTC(2026, 10, 13, 12));
+  ok(rainLast48h({ time: ["2026-11-11T11:00", "2026-11-11T13:00", "2026-11-13T12:00", "2026-11-13T13:00"], precipitation: [100, 10, 5.5, 99] }, rainNow) === 15.5, "rain sums only the last 48 h");
+  ok(rainLast48h({ time: [], precipitation: [] }, rainNow) === null && rainLast48h(null, rainNow) === null, "no rain data -> null");
 
   // op 27 planner
   const plan = planDay({ start_time: "03:00", end_time: "08:00" });
