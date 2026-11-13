@@ -298,7 +298,7 @@ export default function MapPage() {
           ))}
         </section>
 
-        <Link href="/resident" className="text-sm text-primary underline">← Back to my street</Link>
+        <Link href="/resident" className="inline-flex min-h-11 items-center text-sm text-primary underline">← Back to my street</Link>
       </aside>
     </main>
   );
