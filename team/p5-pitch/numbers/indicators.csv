@@ -1,0 +1,16 @@
+﻿"National water indicators, Island of Mauritius"
+"Source: Statistics Mauritius, Digest of Environment Statistics 2017 (Nov 2018). Blue = data from the report; black = formula."
+
+Indicator,Unit,2016,2017,Change,% change
+Mean annual rainfall,mm,1895,2140,245,0.1293
+Annual fresh water abstraction,Mm³,620,610,-10,-0.0161
+Daily per capita domestic water consumption,litres,166,174,8,0.0482
+Irrigated land,ha,16807,16455,-352,-0.0209
+Rainfall (water received),Mm³,3536,3991,455,0.1287
+Total water utilisation,Mm³,967,928,-39,-0.0403
+
+Context figures
+Item,Unit,Value,Reference year
+Resident population (as at 31 December),people,1222217,2017
+Population with piped water inside the house,%,0.958,Census 2011
+Long-term mean rainfall (1981-2010),mm,2003,1981-2010

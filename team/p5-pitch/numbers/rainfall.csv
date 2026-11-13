@@ -1,0 +1,28 @@
+﻿Rainfall
+"Source: Statistics Mauritius, Digest of Environment Statistics 2017 (data from Mauritius Meteorological Services). Long-term mean (LTM) = 1981-2010."
+
+Year,Whole island mean rainfall (mm),% of LTM (published)
+2008,2381,1.2
+2009,2383,1.2
+2010,1806,0.91
+2011,1948,0.97
+2012,1621,0.81
+2013,2126,1.06
+2014,2094,1.05
+2015,2377,1.19
+2016,1895,0.95
+2017,2140,1.07
+Average 2008-2017,2077.1
+Long-term mean,2003
+Driest year (min),1621,2012
+
+
+Region,2017 rainfall (mm),Long-term mean (mm),% of LTM (calculated),% of LTM (published)
+West,677,912,0.7423,0.74
+North,1330,1294,1.0278,1.03
+South,2550,2572,0.9914,0.99
+East,3033,2568,1.1811,1.18
+Centre,3026,2568,1.1783,1.18
+Whole island,2140,2003,1.0684,1.07
+
+Calculated and published % can differ by about 1 point because the published figure is based on station-level data.
