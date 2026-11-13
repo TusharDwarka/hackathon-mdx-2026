@@ -15,6 +15,7 @@ const NOTICES = "data/notices.csv"; // kind,topic,areas,starts_at,ends_at,title,
 const SUPPLY = "data/supply.csv"; // locality,volume_m3,period_start,period_end,source_url
 // V4, optional (needs sql/v4.sql): OFFICIAL quality / boil notices only.
 const QUALITY = "data/quality_notices.csv"; // area,day,title,category,source_url (category boil | quality)
+const WATER_POINTS = "data/water_points.csv"; // name,kind,lat,lng,source_url (sourced points only)
 
 for (const f of [SCHEDULE, STREETS]) {
   if (!existsSync(f)) {
@@ -72,6 +73,31 @@ async function main() {
   await loadNotices(db, allAreas ?? []);
   await loadSupply(db, allAreas ?? []);
   await loadQualityNotices(db, allAreas ?? []);
+  await loadWaterPoints(db);
+}
+
+/** Tanker stops / standpipes / static tanks for P4's map layer. Rows without a source or with bad coordinates are skipped. */
+async function loadWaterPoints(db: Db) {
+  if (!existsSync(WATER_POINTS)) {
+    console.log(`No ${WATER_POINTS}: water points not loaded (P5 adds sourced points only).`);
+    return;
+  }
+  let bad = 0;
+  const out = rows(WATER_POINTS).flatMap((r) => {
+    const name = r.name?.trim(), kind = r.kind?.trim(), source_url = r.source_url?.trim();
+    const lat = +r.lat, lng = +r.lng;
+    if (!name || !kind || !source_url || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+      bad++;
+      return [];
+    }
+    return [{ name, kind, lat, lng, source_url }];
+  });
+  if (bad) console.warn(`${WATER_POINTS}: ${bad} row(s) skipped (need name, kind, lat, lng, source_url).`);
+  if (!out.length) return;
+  const { error } = await db.from("water_points").upsert(out, { onConflict: "name,kind" });
+  if (isMissingColumnOrTable(error)) return console.warn("water_points not loaded: run sql/v4.sql first.");
+  if (error) throw error;
+  console.log(`Loaded ${out.length} water points.`);
 }
 
 /** Official quality / boil notices. "island-wide" / "all" / "Mauritius" applies to every area; other unmatched areas stay unmapped. */

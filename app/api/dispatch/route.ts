@@ -3,6 +3,7 @@
 //   Defaults: capacity = smallest free tanker, tankers = free tankers, max_trips = 1, split = true.
 //   Overrides are "what if" (e.g. capacity=100&tankers=1 shows the 120 L / 100 L two-load case).
 // POST {tanker_id, dispatch_key, split?}  put ONE load on that tanker (kd_allocate_load):
+//   (or P4 plan body {key, capacity_l, loads} -> {rounds, deferred}: see confirmPlan below)
 //   street order, never above capacity, same dispatch_key -> same round, busy tanker refused.
 import { planDispatch, type DemandItem, type Tanker } from "@/lib/queries";
 import { db, dbError, handle, HttpError, readJson, requireSession, rpc } from "../_lib/server";
@@ -62,9 +63,70 @@ export const GET = handle(async (req) => {
   return Response.json({ plan, tankers, requests_without_litres: waiting.filter((r) => r.litres === null).length });
 });
 
+type PlanLoad = { tanker: string | number; trip: number };
+type Deferred = { tanker: string; trip: number; reason: "refill_trip" | "no_such_tanker" | "tanker_busy" | "no_outstanding_demand" };
+
+/**
+ * P4's Dispatch panel body: {key, capacity_l, loads: [{tanker: "Tanker A" | <tanker id>, trip, deliveries}]}.
+ * The server does NOT trust the client's litres: each trip-1 load is allocated from the real outstanding
+ * demand in street order (kd_allocate_load_max), capped at capacity_l and at the tanker's own capacity.
+ * "Tanker A" = the 1st active tanker by id, "Tanker B" the 2nd, ... (a number = that tanker id).
+ * Trip 2+ loads are refills: they are allocated when the driver ends trip 1 and taps Start again.
+ * Idempotent: key + tanker label -> the same round on a retry.
+ */
+async function confirmPlan(b: Record<string, unknown>): Promise<Response> {
+  const key = b.key;
+  if (typeof key !== "string" || key.length < 8 || key.length > 80) throw new HttpError(400, "invalid_key");
+  const cap = b.capacity_l;
+  if (typeof cap !== "number" || !Number.isInteger(cap) || cap <= 0 || cap > 100_000) throw new HttpError(400, "invalid_capacity");
+  if (!Array.isArray(b.loads) || b.loads.length === 0 || b.loads.length > 50) throw new HttpError(400, "invalid_loads");
+  const loads = b.loads as PlanLoad[];
+  if (!loads.every((l) => l && (typeof l.tanker === "string" || typeof l.tanker === "number") && Number.isInteger(l.trip) && l.trip >= 1)) {
+    throw new HttpError(400, "invalid_loads");
+  }
+
+  const { data: tankers, error } = await db().from("tankers").select("id,name").eq("active", true).order("id");
+  dbError(error);
+  const byLabel = (label: string | number): number | null => {
+    if (typeof label === "number") return tankers?.some((t) => t.id === label) ? label : null;
+    const letter = /^Tanker ([A-Z])$/.exec(label.trim())?.[1];
+    const i = letter ? letter.charCodeAt(0) - 65 : -1;
+    return tankers?.[i]?.id ?? tankers?.find((t) => t.name === label)?.id ?? null;
+  };
+
+  const rounds: { round_id: number; tanker: string; tanker_id: number; litres: number; duplicate: boolean; round: Awaited<ReturnType<typeof roundView>> }[] = [];
+  const deferred: Deferred[] = [];
+  for (const l of loads) {
+    const label = String(l.tanker);
+    if (l.trip > 1) {
+      deferred.push({ tanker: label, trip: l.trip, reason: "refill_trip" });
+      continue;
+    }
+    const tankerId = byLabel(l.tanker);
+    if (tankerId === null) {
+      deferred.push({ tanker: label, trip: l.trip, reason: "no_such_tanker" });
+      continue;
+    }
+    try {
+      const r = await rpc("kd_allocate_load_max", { p_tanker: tankerId, p_key: `${key}:${label}`, p_split: true, p_max: cap });
+      const round = await roundView(Number(r.round_id));
+      rounds.push({ round_id: Number(r.round_id), tanker: label, tanker_id: round?.tanker?.id ?? tankerId, litres: round?.litres ?? Number(r.litres ?? 0), duplicate: !!r.duplicate, round });
+    } catch (e) {
+      if (e instanceof HttpError && (e.code === "tanker_busy" || e.code === "no_outstanding_demand")) {
+        deferred.push({ tanker: label, trip: l.trip, reason: e.code });
+        continue;
+      }
+      throw e;
+    }
+  }
+  if (!rounds.length) throw new HttpError(409, "nothing_allocated", { deferred });
+  return Response.json({ rounds, deferred }, { status: rounds.some((r) => !r.duplicate) ? 201 : 200 });
+}
+
 export const POST = handle(async (req) => {
   await requireSession("ops");
   const b = (await readJson(req)) as Record<string, unknown> | null;
+  if (b && Array.isArray(b.loads)) return confirmPlan(b);
   const tankerId = b?.tanker_id;
   if (typeof tankerId !== "number" || !Number.isSafeInteger(tankerId) || tankerId <= 0) throw new HttpError(400, "invalid_tanker_id");
   const key = b?.dispatch_key;
