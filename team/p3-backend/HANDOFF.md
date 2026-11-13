@@ -1,5 +1,18 @@
 # HANDOFF (p3-backend)
 
+## V6 (Sat 14 Nov, P3) — duplicate streets fix, feat/data
+Live bug from the Sat 02:00 test: every Vacoas street exists twice (ids 1-21 and 22-42). Cause: `scripts/load-data.ts` did "delete all streets, insert all streets" and ignored the delete error. Once a report pointed at a street the delete failed silently and every street was inserted again.
+
+### For P1 (run before the demo, in this order)
+1. Run `sql/v6.sql` in the Supabase SQL editor (after v5). It merges each duplicate street into the oldest copy, re-points reports, requests, round_stops, complaints and session_actions, drops the second stop a round got for the same street, removes duplicate schedule slots, and adds unique keys on streets (area_id, name) and schedule (area_id, day, start_time, end_time). Safe to re-run.
+2. `npm run load-data`. Streets are now UPSERTED on (area_id, name): no delete, no copies, coordinates and order refreshed in place. Expect "... streets (0 new, N updated, 0 ... kept)". Without v6 the loader still never duplicates (it inserts only missing streets) and tells you to run v6.
+3. End the stale active Round 4 (test report item 3). Not done by v6 on purpose: it only touches duplicates.
+
+### How to test
+- `npm i --no-save @electric-sql/pglite && npx tsx scripts/test-sql.ts` prints `sql ok`. The new v6 block recreates the two-copies bug, applies v6 twice, and checks the merge, the re-pointing, one stop per street per round, the refused duplicate and the upsert.
+- `npx tsc --noEmit` and `npx eslint scripts/load-data.ts scripts/test-sql.ts` pass.
+
+
 ## V5 (docs/SPLIT-V5.md, P3) — feat/data, commits fc3aa0d, ca917c8, 811cbc3, 709e8a5
 Shapes are in `lib/queries.ts` (import types from `@/lib/queries`). Every new route answers without a database (`demo: true`).
 

@@ -12,3 +12,5 @@ One line per finished task: what, files, commit hash.
 - Round 3 water day: forecastNext / reservoirTrend / waterQuality / planDay (ops 24-27) in lib/queries.ts, routes /api/forecast, /api/reservoirs/trend, /api/quality with demo fallback, sql/v4.sql quality_notices + loader, self-checks + SQL checks — bb82343
 - After merge 8: /api/dispatch accepts P4's plan body (capped, server-allocated, idempotent), kd_allocate_load_max, water_points table + loader, planDay offset, districtOf — 4bbce48
 - V5: accounts (complaints need sign-in, sql/v5.sql RLS), requests without litres (household dispatch), OSM places + rivers for all Mauritius (scripts/fetch-osm.ts, localities table, search, river distance), CWA/news scraper + AI notice parser + feed, safe-to-drink op 26 with reasons — fc3aa0d, ca917c8, 811cbc3, 709e8a5
+- Sat 14 Nov: data/localities.csv committed (305 OSM places with district, ODbL source line; from scripts/fetch-osm.ts, asked by P5) — see commit
+- Sat 14 Nov: duplicate streets fix: sql/v6.sql (merge copies, re-point FKs, unique keys), load-data upserts streets on (area_id, name) instead of delete+insert, v6 checks in scripts/test-sql.ts — see commit

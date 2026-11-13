@@ -249,6 +249,28 @@ async function main() {
   check((await fails(ins("https://x.test/1"))) !== null, "anon cannot write notices");
   await db.exec("reset role");
 
+  console.log("v6: duplicate streets merged, unique keys added");
+  // Recreate the live bug: a second copy of two streets, with rows pointing at both copies.
+  await db.exec(`
+    insert into streets (area_id, name, lat, lng, order_index) values (1, 'Street 1', -20.3, 57.48, 1), (1, 'Street 2', -20.3, 57.48, 2);
+    insert into reports (street_id, type) select id, 'water_off' from streets where name = 'Street 1' and id > 6;
+    insert into requests (street_id, status) select id, 'waiting' from streets where name = 'Street 2' and id > 6;
+    insert into rounds (status, started_at, ended_at) values ('done', now(), now());
+    insert into round_stops (round_id, street_id, stop_order)
+      select (select max(id) from rounds), id, row_number() over (order by id) from streets where name = 'Street 1';
+    insert into schedule (area_id, day, start_time, end_time) values (1, '2026-11-15', '03:00', '08:00'), (1, '2026-11-15', '03:00', '08:00');
+  `);
+  check((await one<{ n: number }>("select count(*)::int n from streets")).n === 8, "8 streets before v6 (2 copies)");
+  for (const f of ["sql/v6.sql", "sql/v6.sql"]) await db.exec(readFileSync(f, "utf8"));
+  check((await one<{ n: number }>("select count(*)::int n from streets")).n === 6, "6 streets after v6 (copies removed, re-run safe)");
+  check((await one<{ n: number }>("select count(*)::int n from reports where street_id = 1 and type = 'water_off'")).n === 1, "report re-pointed to the kept street");
+  check((await one<{ s: number }>("select street_id s from requests where id = (select max(id) from requests)")).s === 2, "request re-pointed to the kept street");
+  check((await one<{ n: number }>("select count(*)::int n from round_stops where round_id = (select max(id) from rounds)")).n === 1, "round keeps one stop per street");
+  check((await one<{ n: number }>("select count(*)::int n from schedule where area_id = 1 and day = '2026-11-15'")).n === 1, "duplicate schedule slot removed");
+  check((await fails("insert into streets (area_id, name, lat, lng, order_index) values (1, 'Street 1', 0, 0, 1)")) !== null, "a second 'Street 1' in the same area is refused");
+  check((await fails("insert into streets (area_id, name, lat, lng, order_index) values (1, 'Street 1', -20.31, 57.49, 9) on conflict (area_id, name) do update set lat = excluded.lat, order_index = excluded.order_index")) === null, "load-data upsert on (area_id, name) works");
+  check((await one<{ o: number }>("select order_index o from streets where area_id = 1 and name = 'Street 1'")).o === 9, "upsert refreshed order_index in place");
+
   if (failures) {
     console.error(`\n${failures} check(s) FAILED`);
     process.exit(1);
