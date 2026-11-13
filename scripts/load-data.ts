@@ -13,6 +13,8 @@ const RESERVOIR = "data/reservoir.csv"; // reservoir,day,level_pct,source_url (V
 const RESERVOIR_LEVELS = "data/reservoir_levels.csv"; // date,date_basis,reservoir,fill_pct,source_url,note
 const NOTICES = "data/notices.csv"; // kind,topic,areas,starts_at,ends_at,title,source_url,source_date (areas split by ';')
 const SUPPLY = "data/supply.csv"; // locality,volume_m3,period_start,period_end,source_url
+// V4, optional (needs sql/v4.sql): OFFICIAL quality / boil notices only.
+const QUALITY = "data/quality_notices.csv"; // area,day,title,category,source_url (category boil | quality)
 
 for (const f of [SCHEDULE, STREETS]) {
   if (!existsSync(f)) {
@@ -69,6 +71,32 @@ async function main() {
   if (aae) throw aae;
   await loadNotices(db, allAreas ?? []);
   await loadSupply(db, allAreas ?? []);
+  await loadQualityNotices(db, allAreas ?? []);
+}
+
+/** Official quality / boil notices. "island-wide" / "all" / "Mauritius" applies to every area; other unmatched areas stay unmapped. */
+async function loadQualityNotices(db: Db, areas: Area[]) {
+  if (!existsSync(QUALITY)) {
+    console.log(`No ${QUALITY}: quality notices not loaded (P5 adds official ones only; an empty file is fine).`);
+    return;
+  }
+  const ISLAND = ["island wide", "island-wide", "all", "mauritius"];
+  let bad = 0;
+  const out = rows(QUALITY).flatMap((r) => {
+    const area = r.area?.trim(), day = r.day?.trim(), title = r.title?.trim(), category = r.category?.trim(), source_url = r.source_url?.trim();
+    if (!area || !/^\d{4}-\d{2}-\d{2}$/.test(day ?? "") || !title || (category !== "boil" && category !== "quality") || !source_url) {
+      bad++;
+      return [];
+    }
+    const island = ISLAND.includes(area.toLowerCase());
+    return [{ area, area_id: island ? null : matchArea(area, areas), island_wide: island, day, title, category, source_url }];
+  });
+  if (bad) console.warn(`${QUALITY}: ${bad} row(s) skipped (need area, day YYYY-MM-DD, title, category boil|quality, source_url).`);
+  if (!out.length) return;
+  const { error } = await db.from("quality_notices").upsert(out, { onConflict: "area,day,title" });
+  if (isMissingColumnOrTable(error)) return console.warn("quality_notices not loaded: run sql/v4.sql first.");
+  if (error) throw error;
+  console.log(`Loaded ${out.length} quality notices (${out.filter((n) => !n.island_wide && n.area_id === null).length} with an area we do not map).`);
 }
 
 type Db = ReturnType<typeof supabaseAdmin>;

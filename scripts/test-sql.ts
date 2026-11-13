@@ -37,10 +37,10 @@ async function main() {
     alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;
     create publication supabase_realtime;
   `);
-  for (const f of ["sql/schema.sql", "sql/v2.sql", "sql/v3.sql", "sql/v3.sql", "sql/v3-lockdown.sql"]) {
+  for (const f of ["sql/schema.sql", "sql/v2.sql", "sql/v3.sql", "sql/v3.sql", "sql/v3-lockdown.sql", "sql/v4.sql", "sql/v4.sql"]) {
     await db.exec(readFileSync(f, "utf8"));
   }
-  console.log("migrations applied (v3 twice)");
+  console.log("migrations applied (v3 and v4 twice)");
 
   await db.exec(`
     insert into areas (name) values ('Vacoas');
@@ -131,6 +131,11 @@ async function main() {
   const noSplit = await fn("kd_allocate_load($1, null, false)", [T2]);
   check(noSplit.ok && noSplit.litres === 50, "no-split load takes the 50 L that fit");
 
+  console.log("quality notices (v4)");
+  check((await fails("insert into quality_notices (area, day, title, category, source_url) values ('Vacoas', '2026-11-12', 'x', 'safe', 'u')")) !== null, "category other than boil/quality rejected");
+  await db.exec("insert into quality_notices (area, area_id, day, title, category, source_url) values ('Vacoas', 1, '2026-11-12', 'Boil water notice', 'boil', 'https://cwa')");
+  check((await fails("insert into quality_notices (area, day, title, category, source_url) values ('Vacoas', '2026-11-12', 'Boil water notice', 'boil', 'https://cwa')")) !== null, "duplicate notice rejected (upsert key)");
+
   console.log("permissions (Supabase roles)");
   await db.exec("set role anon");
   check((await fails("select kd_allocate_load(1, null, true)"))?.includes("permission denied") ?? false, "anon cannot call kd_allocate_load");
@@ -141,6 +146,8 @@ async function main() {
   check((await fails("insert into rounds default values")) !== null, "anon cannot create rounds after lockdown");
   check((await db.query("update requests set status = 'served' returning id")).rows.length === 0, "anon update of requests touches no rows");
   check((await db.query("select id from allocations")).rows.length > 0, "anon can still read allocations");
+  check((await db.query("select id from quality_notices")).rows.length === 1, "anon can read quality notices");
+  check((await fails("insert into quality_notices (area, day, title, category, source_url) values ('X', '2026-11-12', 't', 'boil', 'u')")) !== null, "anon cannot write quality notices");
   await db.exec("reset role");
   await db.exec("set role service_role");
   check((await fn("kd_guest_report($1, 2, 'water_off')", [B])).ok, "service role can call the functions");

@@ -26,3 +26,13 @@ Branch: feat/data. Own: sql/, scripts/, lib/queries.ts, app/api/*. Contract: con
 - [ ] P1 confirms the contract proposal; runs sql/v3.sql; sets DRIVER_ACCESS_CODE / OPS_ACCESS_CODE on Vercel
 - [ ] Run against real Supabase (needs .env.local): load-data, seed-demo, then the API checks in HANDOFF
 - [ ] sql/v3-lockdown.sql once P2 + P4 write through /api/*
+
+## Round 3 water day (docs/WATER-DAY-SPLIT.md, P3)
+- [x] 1. forecastNext (op 24): official > every second day > history, with confidence + tier note
+- [x] 2. reservoirTrend (op 25): least squares, 30-day projection, days to 30% / 20%, every reservoir
+- [x] 3. waterQuality (op 26): official notice > cloudy caution on low tier > none, fixed strings (sql/v4.sql quality_notices)
+- [x] 4. planDay (op 27): reminder, tasks, midnight-crossing windows
+- [x] 5. Routes /api/forecast, /api/reservoirs/trend, /api/quality with demo fallback
+- [x] 6. Self-checks per function in npx tsx lib/queries.ts; shapes published in HANDOFF
+- [ ] P1: ops 24-27 in contracts/api.md, run sql/v4.sql; P5: quality_notices.csv + more reservoir readings
+- [ ] Surprise card: if the constraint needs data, it goes here first

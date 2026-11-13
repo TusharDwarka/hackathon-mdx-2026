@@ -11,6 +11,7 @@
 //
 // Self-check of the pure rules (no database needed): npx tsx lib/queries.ts
 
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "./supabase";
 
 export type Area = { id: number; name: string };
@@ -790,6 +791,327 @@ export function matchArea(locality: string, areas: Area[]): number | null {
   return areas.find((a) => norm(a.name) === key)?.id ?? null;
 }
 
+// =====================================================================================
+// V4 water day (docs/WATER-DAY-SPLIT.md, P3): op 24 forecast, 25 reservoir trend, 26 quality, 27 planner.
+// Every forecast is an ESTIMATE, says what it is based on, and never overrides an official CWA window.
+// Nothing here says tap water is safe or unsafe to drink.
+// Each op: a pure rule + an async loader taking a Supabase client (anon by default; routes pass db()).
+// =====================================================================================
+
+const DAY_MS = 86_400_000;
+const isIsoDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+/** "YYYY-MM-DD" -> local midnight of that day. */
+function parseDay(s: string): Date {
+  const [y, m, d] = s.slice(0, 10).split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+function addDays(d: Date, n: number): Date {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+function midnight(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+const shortDate = (s: string) => parseDay(s).toLocaleDateString("en-GB", { day: "numeric", month: "short" }); // "10 Oct"
+
+/**
+ * Mauritius wall-clock time as a Date whose LOCAL fields read Mauritius time (UTC+4, no DST).
+ * Servers (Vercel) run in UTC: without this, "tomorrow" is wrong between 00:00 and 04:00 in Mauritius.
+ */
+export function mauritiusNow(at = new Date()): Date {
+  return new Date(at.getTime() + (240 + at.getTimezoneOffset()) * 60_000);
+}
+
+/** Which reservoir feeds an area. Demo: Vacoas (and any area we do not know) -> Mare aux Vacoas. */
+export const AREA_RESERVOIR: Record<string, string> = { Vacoas: "Mare aux Vacoas" };
+export const DEFAULT_RESERVOIR = "Mare aux Vacoas";
+
+/** Pure: tier of the latest reading, or null when there is none or it is stale (> 14 days). */
+export function currentTier(latest: { day: string; level_pct: number } | null, now = new Date()): ReservoirTier | null {
+  if (!latest) return null;
+  const age = Math.round((midnight(now).getTime() - parseDay(latest.day).getTime()) / DAY_MS);
+  return age > RESERVOIR_STALE_DAYS ? null : reservoirTier(latest.level_pct);
+}
+
+async function areaReservoir(areaId: number, client: SupabaseClient): Promise<string> {
+  const { data, error } = await client.from("areas").select("name").eq("id", areaId).maybeSingle();
+  if (error) throw error;
+  return AREA_RESERVOIR[data?.name ?? ""] ?? DEFAULT_RESERVOIR;
+}
+
+export async function areaTier(areaId: number, now = new Date(), client: SupabaseClient = supabase): Promise<ReservoirTier | null> {
+  const reservoir = await areaReservoir(areaId, client);
+  const { data, error } = await client.from("reservoir_levels").select("day,level_pct").eq("reservoir", reservoir).order("day", { ascending: false }).limit(1);
+  if (error) throw error;
+  return currentTier(data?.[0] ?? null, now);
+}
+
+// ---------- op 24: next water window forecast ----------
+
+export type ForecastBasis = "official" | "every_second_day" | "history";
+export type Forecast = {
+  next: { day: string; start_time: string; end_time: string }; // day = "YYYY-MM-DD"
+  basis: ForecastBasis;
+  confidence: "high" | "medium" | "low"; // official = high
+  tier: ReservoirTier | null;
+  note: string;
+  source_url: string | null;
+};
+type ScheduleRow = Pick<Window, "day" | "start_time" | "end_time" | "source_url" | "source_date">;
+
+function tierNote(tier: ReservoirTier | null): string | null {
+  return tier === "critical" ? "reservoir critical, cuts may get longer"
+    : tier === "watch" ? "reservoir at watch level"
+    : tier === "normal" ? "reservoir at normal level" : null;
+}
+
+/**
+ * Pure. In order:
+ * 1. official: the earliest timetable window on or after tomorrow (dated row, or the next weekday
+ *    for a "Mon".."Sun" row) -> high.
+ * 2. every_second_day: the last 3 dated windows are 2 days apart -> last day + 2, + 2 ... until after
+ *    today, same times -> medium (low when the reservoir tier is critical).
+ * 3. history: op 16 likely time, for tomorrow -> low.
+ * null when none applies.
+ */
+export function computeForecast(rows: ScheduleRow[], tier: ReservoirTier | null, likely: LikelyWaterTime | null, now = new Date()): Forecast | null {
+  const today = midnight(now);
+  const tomorrow = addDays(today, 1);
+  const note = (s: string) => [s, tierNote(tier)].filter(Boolean).join("; ");
+  const at = (day: Date, r: Pick<ScheduleRow, "start_time" | "end_time">) => ({ day: isoDate(day), start_time: hhmm(r.start_time), end_time: hhmm(r.end_time) });
+
+  let best: { date: Date; row: ScheduleRow } | null = null;
+  for (const r of rows) {
+    let date: Date | null = null;
+    if (isIsoDay(r.day)) {
+      const d = parseDay(r.day);
+      if (d >= tomorrow) date = d;
+    } else if (DAY_NAMES.includes(r.day)) {
+      date = addDays(tomorrow, (DAY_NAMES.indexOf(r.day) - tomorrow.getDay() + 7) % 7);
+    }
+    if (!date) continue;
+    if (!best || date < best.date || (date.getTime() === best.date.getTime() && hhmm(r.start_time) < hhmm(best.row.start_time))) best = { date, row: r };
+  }
+  if (best) {
+    const published = best.row.source_date ? ` (published ${shortDate(best.row.source_date)})` : "";
+    return { next: at(best.date, best.row), basis: "official", confidence: "high", tier, note: note(`Official CWA timetable${published}`), source_url: best.row.source_url };
+  }
+
+  const dated = rows.filter((r) => isIsoDay(r.day)).sort((a, b) => a.day.localeCompare(b.day));
+  const gap = (a: ScheduleRow, b: ScheduleRow) => Math.round((parseDay(b.day).getTime() - parseDay(a.day).getTime()) / DAY_MS);
+  const n = dated.length;
+  if (n >= 3 && gap(dated[n - 3], dated[n - 2]) === 2 && gap(dated[n - 2], dated[n - 1]) === 2) {
+    let first = n - 1;
+    while (first > 0 && gap(dated[first - 1], dated[first]) === 2) first--;
+    const last = dated[n - 1];
+    let d = parseDay(last.day);
+    while (d <= today) d = addDays(d, 2);
+    return {
+      next: at(d, last),
+      basis: "every_second_day",
+      confidence: tier === "critical" ? "low" : "medium",
+      tier,
+      note: note(`Estimate: every second day since ${shortDate(dated[first].day)}, last official day ${shortDate(last.day)}`),
+      source_url: last.source_url,
+    };
+  }
+
+  if (likely) {
+    return {
+      next: { day: isoDate(tomorrow), start_time: likely.from, end_time: likely.to },
+      basis: "history",
+      confidence: "low",
+      tier,
+      note: note(`Estimate from resident reports: water came in this slot on ${likely.days_hit} of ${likely.days_total} days`),
+      source_url: null,
+    };
+  }
+  return null;
+}
+
+/** Op 16 for a whole area: water_on reports of its streets over the last 14 days. */
+async function areaLikelyTime(areaId: number, now: Date, client: SupabaseClient): Promise<LikelyWaterTime | null> {
+  const { data: streets, error: se } = await client.from("streets").select("id").eq("area_id", areaId);
+  if (se) throw se;
+  const { data, error } = await client
+    .from("reports")
+    .select("created_at")
+    .eq("type", "water_on")
+    .in("street_id", (streets ?? []).map((s) => s.id))
+    .gte("created_at", addDays(now, -14).toISOString());
+  if (error) throw error;
+  return computeLikelyWaterTime((data ?? []).map((r) => new Date(r.created_at)));
+}
+
+export async function forecastNext(areaId: number, now = new Date(), client: SupabaseClient = supabase): Promise<Forecast | null> {
+  const [{ data: rows, error }, tier] = await Promise.all([
+    client.from("schedule").select("day,start_time,end_time,source_url,source_date").eq("area_id", areaId),
+    areaTier(areaId, now, client),
+  ]);
+  if (error) throw error;
+  return computeForecast(rows ?? [], tier, null, now) ?? computeForecast([], tier, await areaLikelyTime(areaId, now, client), now);
+}
+
+// ---------- op 25: reservoir trend (least squares) ----------
+
+export type TrendPoint = { day: string; level_pct: number };
+export type Trend = {
+  reservoir: string; latest_pct: number; latest_day: string;
+  pct_per_day: number;                                    // negative = falling (least-squares slope)
+  days_to_30: number | null; days_to_20: number | null;  // from today; null if rising or < 3 points
+  reaches_30_on: string | null; reaches_20_on: string | null;
+  points: TrendPoint[];                                   // readings used, oldest first
+  projection: TrendPoint[];                               // today + next 30 days, on the fitted line
+};
+export const TREND_WINDOW_DAYS = 90; // readings older than this are left out (another season)
+
+/**
+ * Pure: least-squares line through the readings (one per day), projected from today for 30 days.
+ * days_to_X = whole days from today until the line reaches X% (0 if already there).
+ * An ESTIMATE: a straight line ignores rain, so the UI shows it next to the press figures.
+ */
+export function reservoirTrend(points: TrendPoint[], now = new Date(), reservoir = ""): Trend | null {
+  const byDay = new Map<string, number>();
+  for (const p of points) if (Number.isFinite(p.level_pct)) byDay.set(p.day.slice(0, 10), p.level_pct);
+  const pts = [...byDay].sort(([a], [b]) => a.localeCompare(b)).map(([day, level_pct]) => ({ day, level_pct }));
+  if (!pts.length) return null;
+  const t0 = parseDay(pts[0].day).getTime();
+  const xs = pts.map((p) => Math.round((parseDay(p.day).getTime() - t0) / DAY_MS));
+  const ys = pts.map((p) => p.level_pct);
+  const n = pts.length;
+  const mx = xs.reduce((s, x) => s + x, 0) / n, my = ys.reduce((s, y) => s + y, 0) / n;
+  const sxx = xs.reduce((s, x) => s + (x - mx) ** 2, 0);
+  const slope = n >= 2 && sxx > 0 ? xs.reduce((s, x, i) => s + (x - mx) * (ys[i] - my), 0) / sxx : 0;
+  const intercept = my - slope * mx;
+  const today = midnight(now);
+  const xNow = Math.round((today.getTime() - t0) / DAY_MS);
+  const reach = (target: number) => (n < 3 || slope >= 0 ? null : Math.max(0, Math.ceil((target - intercept) / slope - xNow)));
+  const d30 = reach(30), d20 = reach(20);
+  const last = pts[n - 1];
+  return {
+    reservoir,
+    latest_pct: last.level_pct,
+    latest_day: last.day,
+    pct_per_day: Math.round(slope * 1000) / 1000,
+    days_to_30: d30,
+    days_to_20: d20,
+    reaches_30_on: d30 === null ? null : isoDate(addDays(today, d30)),
+    reaches_20_on: d20 === null ? null : isoDate(addDays(today, d20)),
+    points: pts,
+    projection: n >= 2
+      ? Array.from({ length: 31 }, (_, i) => ({ day: isoDate(addDays(today, i)), level_pct: Math.round(Math.min(100, Math.max(0, intercept + slope * (xNow + i))) * 10) / 10 }))
+      : [],
+  };
+}
+
+/** Trend of one reservoir, or of every single reservoir when `reservoir` is omitted (aggregate left out). */
+export async function reservoirTrends(reservoir?: string, now = new Date(), client: SupabaseClient = supabase): Promise<Trend[]> {
+  let q = client
+    .from("reservoir_levels")
+    .select("reservoir,day,level_pct")
+    .eq("is_aggregate", false)
+    .gte("day", isoDate(addDays(now, -TREND_WINDOW_DAYS)))
+    .order("day");
+  if (reservoir) q = q.eq("reservoir", reservoir);
+  const { data, error } = await q;
+  if (error) throw error;
+  const by = new Map<string, TrendPoint[]>();
+  for (const r of data ?? []) by.set(r.reservoir, [...(by.get(r.reservoir) ?? []), { day: r.day, level_pct: r.level_pct }]);
+  return [...by].map(([name, pts]) => reservoirTrend(pts, now, name)).filter((t): t is Trend => t !== null);
+}
+
+// ---------- op 26: water quality caution (fixed strings, no drinkability claim) ----------
+
+export type QualityLevel = "none" | "cloudy_possible" | "official_notice";
+export type QualityNotice = { title: string; day: string; category: "boil" | "quality"; source_url: string };
+export type Quality = { level: QualityLevel; message: string; notice?: { title: string; day: string; source_url: string } };
+export const QUALITY_NOTICE_DAYS = 14; // an official quality notice counts as current for 14 days after its date
+export const QUALITY_MESSAGES = {
+  none: "No official water quality notice for this area. Follow official CWA and Ministry of Health advice.",
+  cloudy_possible: "When reservoirs are low, tap water can look cloudy. Report dirty water. Follow official CWA / Ministry of Health advice.",
+  boil: "An official notice asks residents of this area to boil water before drinking. Read the notice for details.",
+  quality: "An official notice about water quality covers this area. Read the notice and follow its advice.",
+} as const;
+
+/** Pure: a current official notice wins (boil first, then newest); else a low reservoir tier -> cloudy caution. */
+export function computeWaterQuality(notices: QualityNotice[], tier: ReservoirTier | null, now = new Date()): Quality {
+  const today = midnight(now).getTime();
+  const current = notices
+    .filter((n) => {
+      const age = (today - parseDay(n.day).getTime()) / DAY_MS;
+      return age >= 0 && age <= QUALITY_NOTICE_DAYS && !!n.source_url;
+    })
+    .sort((a, b) => (a.category === b.category ? b.day.localeCompare(a.day) : a.category === "boil" ? -1 : 1));
+  const n = current[0];
+  if (n) return { level: "official_notice", message: QUALITY_MESSAGES[n.category], notice: { title: n.title, day: n.day, source_url: n.source_url } };
+  if (tier === "watch" || tier === "critical") return { level: "cloudy_possible", message: QUALITY_MESSAGES.cloudy_possible };
+  return { level: "none", message: QUALITY_MESSAGES.none };
+}
+
+/** Needs sql/v4.sql (quality_notices). Island-wide notices apply to every area. */
+export async function waterQuality(areaId: number, now = new Date(), client: SupabaseClient = supabase): Promise<Quality> {
+  const [{ data, error }, tier] = await Promise.all([
+    client.from("quality_notices").select("title,day,category,source_url").or(`area_id.eq.${areaId},island_wide.eq.true`),
+    areaTier(areaId, now, client),
+  ]);
+  if (error) throw error;
+  return computeWaterQuality((data ?? []) as QualityNotice[], tier, now);
+}
+
+// ---------- op 27: water-day planner (pure, no IO) ----------
+
+export type PlanStep = { time: string; label: string; kind: "remind" | "arrive" | "task" | "end" };
+
+/**
+ * Pure. Reminder 30 min before the window, water arrives at the start. Default tasks: fill the tank
+ * at the start, washing machine at start + 3 h if that is before end - 30 min, finish laundry at
+ * end - 30 min. Custom `tasks` are spread evenly from the start to end - 30 min. A window that ends
+ * at or before its start crosses midnight (22:00-02:00).
+ */
+export function planDay(window: { start_time: string; end_time: string }, tasks?: string[]): PlanStep[] {
+  const toMin = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + m;
+  };
+  const fmt = (m: number) => {
+    const x = ((m % 1440) + 1440) % 1440;
+    return `${String(Math.floor(x / 60)).padStart(2, "0")}:${String(x % 60).padStart(2, "0")}`;
+  };
+  const start = toMin(window.start_time);
+  let end = toMin(window.end_time);
+  if (end <= start) end += 1440;
+  const lastTask = Math.max(start, end - 30);
+  const steps: { m: number; label: string; kind: PlanStep["kind"] }[] = [
+    { m: start - 30, label: "Water in 30 minutes. Start the pump.", kind: "remind" },
+    { m: start, label: "Water arrives", kind: "arrive" },
+  ];
+  if (!tasks) {
+    steps.push({ m: start, label: "Fill the tank", kind: "task" });
+    if (start + 180 < end - 30) steps.push({ m: start + 180, label: "Washing machine", kind: "task" });
+    if (end - 30 > start) steps.push({ m: end - 30, label: "Finish laundry before the water stops", kind: "task" });
+  } else {
+    tasks.forEach((label, i) => {
+      const m = tasks.length === 1 ? start : Math.round(start + (i * (lastTask - start)) / (tasks.length - 1));
+      steps.push({ m, label, kind: "task" });
+    });
+  }
+  steps.push({ m: end, label: "Water ends", kind: "end" });
+  return steps.sort((a, b) => a.m - b.m).map((s) => ({ time: fmt(s.m), label: s.label, kind: s.kind }));
+}
+
+// ---------- V4 client calls (routes fall back to labelled demo data; `demo: true`) ----------
+
+export const getForecast = (areaId?: number) =>
+  api<(Forecast & { demo: boolean }) | null>(`/api/forecast${areaId ? `?area_id=${areaId}` : ""}`);
+export const getReservoirTrend = (reservoir = DEFAULT_RESERVOIR) =>
+  api<(Trend & { demo: boolean }) | null>(`/api/reservoirs/trend?reservoir=${encodeURIComponent(reservoir)}`);
+export const getReservoirTrendsAll = () => api<{ trends: Trend[]; demo: boolean }>("/api/reservoirs/trend?reservoir=all");
+export const getWaterQuality = (areaId?: number) =>
+  api<Quality & { demo: boolean }>(`/api/quality${areaId ? `?area_id=${areaId}` : ""}`);
+
 // ---------- sessions (guest / driver / ops) ----------
 
 export type Role = "guest" | "driver" | "ops";
@@ -1004,6 +1326,68 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
   // Locality matching
   const areas = [{ id: 1, name: "Vacoas" }, { id: 2, name: "Pointe-aux-Piments" }];
   ok(matchArea(" vacoas ", areas) === 1 && matchArea("Pointe aux Piments", areas) === 2 && matchArea("Triolet", areas) === null, "locality match, unmatched stays null");
+
+  // ===== V4 water day =====
+  // op 24 forecast. now = Fri 13 Nov 2026 12:00.
+  const alt = (from: string, to: string) => {
+    const out: ScheduleRow[] = [];
+    for (let d = parseDay(from); d <= parseDay(to); d = addDays(d, 2)) out.push({ day: isoDate(d), start_time: "03:00:00", end_time: "08:00:00", source_url: "cwa", source_date: "2026-10-10" });
+    return out;
+  };
+  const offl = computeForecast(alt("2026-10-10", "2026-11-29"), "watch", null, now);
+  ok(offl?.basis === "official" && offl.confidence === "high" && offl.next.day === "2026-11-15" && offl.next.start_time === "03:00", "official window on or after tomorrow wins");
+  const wk = computeForecast([{ day: "Mon", start_time: "05:00", end_time: "09:00", source_url: null, source_date: null }], null, null, now);
+  ok(wk?.basis === "official" && wk.next.day === "2026-11-16", "weekday row -> next Monday");
+  const rule = computeForecast(alt("2026-10-10", "2026-11-11"), "watch", null, now);
+  ok(rule?.basis === "every_second_day" && rule.confidence === "medium" && rule.next.day === "2026-11-15" && rule.note.includes("10 Oct") && rule.note.includes("watch"), "rule: 11 Nov + 2 = today, so 15 Nov");
+  const skip = computeForecast(alt("2026-10-10", "2026-11-01"), "critical", null, now);
+  ok(skip?.next.day === "2026-11-15" && skip.confidence === "low" && skip.note.includes("cuts may get longer"), "rule skips forward on the 2-day grid; critical -> low");
+  const notAlt = [{ day: "2026-11-01", start_time: "03:00", end_time: "08:00", source_url: null, source_date: null }, { day: "2026-11-02", start_time: "03:00", end_time: "08:00", source_url: null, source_date: null }, { day: "2026-11-05", start_time: "03:00", end_time: "08:00", source_url: null, source_date: null }];
+  const hist = computeForecast(notAlt, null, { from: "06:00", to: "08:00", days_hit: 4, days_total: 6 }, now);
+  ok(hist?.basis === "history" && hist.confidence === "low" && hist.next.day === "2026-11-14" && hist.source_url === null, "no rule -> history, low");
+  ok(computeForecast(notAlt, null, null, now) === null, "nothing to go on -> null");
+
+  // op 25 trend: the 7 real Mare aux Vacoas readings in data/reservoir.csv.
+  const mavRows: TrendPoint[] = [
+    { day: "2026-09-25", level_pct: 38.5 }, { day: "2026-09-28", level_pct: 37.3 }, { day: "2026-10-02", level_pct: 36.6 },
+    { day: "2026-10-16", level_pct: 34.6 }, { day: "2026-10-19", level_pct: 34.2 }, { day: "2026-10-30", level_pct: 33.8 }, { day: "2026-11-05", level_pct: 33 },
+  ];
+  const mavT = reservoirTrend(mavRows, now, "Mare aux Vacoas")!;
+  ok(mavT.pct_per_day < -0.1 && mavT.pct_per_day > -0.15, `MaV slope about -0.12 %/day (got ${mavT.pct_per_day})`);
+  ok(mavT.days_to_30 !== null && mavT.days_to_20 !== null && mavT.days_to_20 > mavT.days_to_30, "falling -> days to 30% then 20%");
+  ok(!!mavT.reaches_20_on && mavT.reaches_20_on.startsWith("2027-02"), `MaV reaches 20% in Feb 2027 (got ${mavT.reaches_20_on})`);
+  ok(mavT.projection.length === 31 && mavT.projection[0].day === "2026-11-13" && mavT.projection[30].level_pct < mavT.projection[0].level_pct, "30-day projection falls");
+  ok(mavT.latest_pct === 33 && mavT.latest_day === "2026-11-05" && mavT.points.length === 7, "latest reading");
+  const rising = reservoirTrend([{ day: "2026-10-01", level_pct: 30 }, { day: "2026-10-10", level_pct: 32 }, { day: "2026-10-20", level_pct: 35 }], now)!;
+  ok(rising.pct_per_day > 0 && rising.days_to_30 === null && rising.days_to_20 === null, "rising -> null days");
+  const twoP = reservoirTrend([{ day: "2026-10-01", level_pct: 40 }, { day: "2026-10-10", level_pct: 35 }], now)!;
+  ok(twoP.days_to_20 === null && twoP.pct_per_day < 0, "fewer than 3 points -> null days");
+  ok(reservoirTrend([], now) === null, "no readings -> null");
+  const below = reservoirTrend([{ day: "2026-10-01", level_pct: 29.5 }, { day: "2026-10-10", level_pct: 29.3 }, { day: "2026-10-20", level_pct: 29.1 }], now)!;
+  ok(below.days_to_30 === 0 && below.days_to_20 !== null && below.days_to_20 > 0, "already under 30% -> 0 days, 20% still ahead");
+
+  // op 26 quality
+  const boilN: QualityNotice = { title: "Boil water notice", day: "2026-11-12", category: "boil", source_url: "https://cwa" };
+  const qN: QualityNotice = { title: "Turbidity", day: "2026-11-12", category: "quality", source_url: "https://cwa" };
+  ok(computeWaterQuality([qN, boilN], "normal", now).message === QUALITY_MESSAGES.boil, "boil notice wins, even at normal level");
+  ok(computeWaterQuality([{ ...boilN, day: "2026-10-01" }], "watch", now).level === "cloudy_possible", "old notice expired -> low tier caution");
+  ok(computeWaterQuality([], "critical", now).level === "cloudy_possible" && computeWaterQuality([], "normal", now).level === "none" && computeWaterQuality([], null, now).level === "none", "tier rule");
+  ok(Object.values(QUALITY_MESSAGES).every((m) => !/\bsafe\b|\bunsafe\b|\bdrinkable\b/i.test(m)), "no message claims safe / unsafe water");
+
+  // op 27 planner
+  const plan = planDay({ start_time: "03:00", end_time: "08:00" });
+  ok(plan[0].kind === "remind" && plan[0].time === "02:30", "reminder = start - 30 min");
+  ok(plan.map((p) => p.time).join() === "02:30,03:00,03:00,06:00,07:30,08:00" && plan[1].kind === "arrive" && plan[5].kind === "end", "03:00-08:00 plan");
+  const night = planDay({ start_time: "23:00:00", end_time: "02:00:00" });
+  ok(night[0].time === "22:30" && night[night.length - 1].time === "02:00" && !night.some((p) => p.label === "Washing machine"), "3 h window over midnight; no room for the machine");
+  ok(planDay({ start_time: "22:00", end_time: "02:00" }).some((p) => p.label === "Washing machine" && p.time === "01:00"), "4 h window over midnight fits the machine at 01:00");
+  ok(planDay({ start_time: "00:15", end_time: "04:00" })[0].time === "23:45", "reminder before midnight");
+  const custom = planDay({ start_time: "03:00", end_time: "08:00" }, ["Fill buckets", "Shower", "Dishes"]);
+  ok(custom.filter((p) => p.kind === "task").map((p) => p.time).join() === "03:00,05:15,07:30", "custom tasks spread to end - 30 min");
+
+  // Mauritius clock: 22:30 UTC is 02:30 the next day in Mauritius.
+  const mu = mauritiusNow(new Date(Date.UTC(2026, 10, 13, 22, 30)));
+  ok(mu.getDate() === 14 && mu.getHours() === 2 && mu.getMinutes() === 30, "mauritiusNow");
 
   if (fails) { console.error(`${fails} V3 check(s) failed`); process.exit(1); }
   console.log("queries ok");
