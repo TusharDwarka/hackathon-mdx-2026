@@ -19,11 +19,11 @@ export function AppNav() {
   return (
     <nav
       aria-label="Main"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-[1100] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:pointer-events-auto lg:sticky lg:top-0 lg:bottom-auto lg:h-(--nav-h) lg:bg-card lg:px-6 lg:pb-0 lg:shadow-card"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-[1100] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:pointer-events-auto lg:sticky lg:top-0 lg:bottom-auto lg:h-(--nav-h) lg:px-6 lg:pb-0 lg:shadow-card lg:glass"
     >
       <div className="lg:mx-auto lg:flex lg:h-full lg:max-w-6xl lg:items-center lg:justify-between">
         <Link href="/" className="hidden text-xl font-bold tracking-[-0.02em] lg:block">Kot Delo?</Link>
-        <ul className="pointer-events-auto mx-auto flex h-16 max-w-sm items-center gap-1 rounded-full bg-card p-2 shadow-nav lg:mx-0 lg:h-auto lg:max-w-none lg:bg-transparent lg:p-0 lg:shadow-none">
+        <ul className="pointer-events-auto mx-auto flex h-16 max-w-sm items-center gap-1 rounded-full p-2 shadow-nav max-lg:glass lg:mx-0 lg:h-auto lg:max-w-none lg:p-0 lg:shadow-none">
           {TABS.map(({ href, label, Icon }) => (
             <li key={href} className="min-w-0 flex-1 lg:flex-none">
               <Link
