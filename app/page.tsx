@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { SurpriseCard } from "@/components/home/SurpriseCard";
 import { MOCK_AREA, MOCK_HOURS_DRY, MOCK_RELIABILITY, MOCK_STREETS, MOCK_WINDOW } from "@/lib/mock";
@@ -9,15 +9,28 @@ import { MOCK_AREA, MOCK_HOURS_DRY, MOCK_RELIABILITY, MOCK_STREETS, MOCK_WINDOW 
 // Heat colour: hours since last water_on report
 const heat = (h: number) => (h < 6 ? "bg-emerald-500" : h < 24 ? "bg-amber-400" : h < 48 ? "bg-orange-500" : "bg-red-600");
 
+const STREET_KEY = "kotdelo.street"; // localStorage: the resident's street id (read by /map too)
+const hhmm = (t: string) => t.slice(0, 5); // Postgres time comes back as "05:00:00"
+const noSubscribe = () => () => {};
+
 function Label({ text }: { text: string }) {
   return <span className="font-semibold">{text}</span>;
 }
 
 export default function Home() {
-  const [streetId, setStreetId] = useState(MOCK_STREETS[2].id);
+  // false on the server and the first hydration pass, true after. The page is prerendered,
+  // so browser-only values (saved street, today's date) wait for it to avoid a hydration mismatch.
+  const mounted = useSyncExternalStore(noSubscribe, () => true, () => false);
+  const [picked, setPicked] = useState<number | null>(null);
+  const saved = mounted ? Number(localStorage.getItem(STREET_KEY)) : 0;
+  const street = MOCK_STREETS.find((s) => s.id === (picked ?? saved)) ?? MOCK_STREETS[2];
+  const today = mounted ? new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Indian/Mauritius" }) : "";
+  const pickStreet = (id: number) => {
+    setPicked(id);
+    localStorage.setItem(STREET_KEY, String(id));
+  };
   const [reported, setReported] = useState(false);
   const [requested, setRequested] = useState(false);
-  const street = MOCK_STREETS.find((s) => s.id === streetId)!;
 
   return (
     <main className="mx-auto flex w-full max-w-[390px] flex-col gap-4 p-4">
@@ -30,7 +43,7 @@ export default function Home() {
 
       <label className="flex flex-col gap-1">
         <Label text="Which street do you live on?" />
-        <select className="h-12 rounded-lg border px-3 text-base" value={streetId} onChange={(e) => setStreetId(Number(e.target.value))}>
+        <select className="h-12 rounded-lg border px-3 text-base" value={street.id} onChange={(e) => pickStreet(Number(e.target.value))}>
           {MOCK_STREETS.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
@@ -39,8 +52,11 @@ export default function Home() {
 
       <section className="rounded-xl border bg-sky-50 p-4">
         <Label text="Today's official CWA water window" />
-        <p className="mt-2 text-4xl font-bold tabular-nums">{MOCK_WINDOW.start_time} – {MOCK_WINDOW.end_time}</p>
-        <a href={MOCK_WINDOW.source_url} className="text-xs text-sky-700 underline">Source: CWA communiqué, {MOCK_WINDOW.source_date}</a>
+        <p className="min-h-5 text-sm text-zinc-600">{MOCK_AREA.name}{today && ` · ${today}`}</p>
+        <p className="mt-2 text-4xl font-bold tabular-nums">{hhmm(MOCK_WINDOW.start_time)} – {hhmm(MOCK_WINDOW.end_time)}</p>
+        <a href={MOCK_WINDOW.source_url} target="_blank" rel="noreferrer" className="inline-block py-2 text-xs text-sky-700 underline">
+          Source: CWA communiqué, {MOCK_WINDOW.source_date}
+        </a>
       </section>
 
       <div className="grid grid-cols-2 gap-3">
