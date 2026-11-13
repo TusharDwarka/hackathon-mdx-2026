@@ -40,13 +40,13 @@ Owners by folder, no shared files:
 - **P5 `feat/data-files`**: data/*.csv, README.md, team/p5-pitch/
 
 - [ ] 9. (P1 or P3) `npm run load-data` + `npm run seed-demo` against Supabase. Nothing is real until this is done
-- [ ] 10. (P3) `sql/v2.sql` (P1 runs it) + `lib/queries.ts` for ops 12 to 17, each with a pure function and a self-check; seed-demo adds rows for today, a few complaints, paid requests
-- [ ] 11. (P5) `data/reservoir.csv`: real daily or weekly Mare aux Vacoas level with source URLs; the real CWA tanker fee if a source exists
+- [ ] 10. (P3) `sql/v2.sql` (P1 runs it) + `lib/queries.ts` for ops 12, 14, 15, 16, 17, each with a pure function and a self-check; seed-demo adds rows for today and a few complaints. No payment (dropped)
+- [ ] 11. (P5) `data/reservoir.csv`: real daily or weekly Mare aux Vacoas level with source URLs
 - [ ] 12. (P2) Three design directions as PNG (phone + desktop) in team/p2-frontend/design/, P1 picks one
 - [ ] 13. (P2) Responsive shell + landing `/`; Home moves to `/resident`
-- [ ] 14. (P2) Resident: status with trust (op 15), likely water time (op 16), demo payment step (op 13), complaint in two taps (op 14), one report per street per 30 min
+- [ ] 14. (P2) Resident: status with trust (op 15), likely water time (op 16), complaint in two taps (op 14), one report per street per 30 min
 - [ ] 15. (P4) `/ops`: reservoir (12), heat map (11), priority list (17), open complaints (14), suspect reports (15)
-- [ ] 16. (P4) /driver shows "Paid Rs X" per stop; /map and /driver demo mode when `streets` is empty; links go to `/resident`
+- [ ] 16. (P4) /map and /driver demo mode when `streets` is empty; links go to `/resident`
 - [ ] 17. (All) Two-phone run on the Vercel URL, then polish only
 
 ## Extras (only if P1 says so)
