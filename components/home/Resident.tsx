@@ -284,7 +284,7 @@ export function Resident({ info }: { info: PublicData }) {
   // ---------- pieces used by several sections ----------
 
   const placeCard = (
-    <section className={card} aria-labelledby="place-title">
+    <section data-tour="place" className={card} aria-labelledby="place-title">
       {area ? (
         <>
           <div className="flex items-start justify-between gap-3">

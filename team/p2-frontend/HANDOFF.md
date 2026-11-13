@@ -1,6 +1,18 @@
-# HANDOFF (p2-frontend) — P3 swap, onboarding guide, motion pass
+# HANDOFF (p2-frontend) — spotlight tutorial, glossy glass, flowing water
 
 ## Latest
+- **Tutorial at the start.** The tour is now a spotlight: the screen dims, the real element is lit with a pulsing ring, and a glass card says what to tap (Skip / Back / Next, step dots). Landing `/`: Welcome -> today's window -> Just browse -> Open the app (key `kotdelo.tour.landing`). Resident: Welcome -> locality -> water day -> Add to calendar -> Report tab -> Tanker tab -> Notices tab -> How it works (key `kotdelo.onboarded`). Anchors are `data-tour="..."` attributes; nav links get `nav-<tab>` automatically, the visible copy (tab bar or sidebar) is picked. The card goes on the half of the screen away from the lit element, so phones work. Replay: "Take the 30-second tour" on the landing, "How it works" on /resident and /guide.
+- **Glossy glass** (recipe from teamblackreef.com's nav): `glass` = sheen gradients + bright inner top/bottom edges + blur(20) saturate(1.8). Needs a `shadow-card`/`shadow-nav` class for the inner edges. `surface` cards are 86% white (no blur, cheap on phones) with a top sheen. Primary buttons have a gloss highlight. Reduced transparency = solid white.
+- **Water flow.** Two wave layers drift along the bottom of every screen (CSS only, transform, GPU), visible through the glass tab bar. `BottomWaves` (CTA band, tanker card, sign-in) now flows; flowing water under the landing hero.
+- **Fixed** two hydration errors: `Skeleton` was a div inside a p; gauge tick coordinates differed in the last digit between server and browser.
+
+## How to test (latest)
+1. `npm run build`, `npx eslint components app`.
+2. Private window at 390 px -> `/`: tour opens, "Show me" walks 4 lit steps, Skip closes it; reload stays closed; "Take the 30-second tour" replays.
+3. Private window -> `/resident`: 8 steps, the last 3 light the bottom tab bar on phones and the sidebar at 1440 px. Esc also closes.
+4. Bottom of any screen: waves drift behind the tab bar. Reduce motion: waves and pulse stop.
+
+## Previous (P3 swap, onboarding guide, motion pass)
 - **Swapped to P3 (water-day).** `planDay` now comes from `lib/queries.ts`. Next water + Water quality call `getForecast(areaId)` / `getWaterQuality(areaId)`; if the API is not reachable (or demo mode) the page runs P3's `computeForecast` / `computeWaterQuality` on the timetable it already has. My stand-in rules are deleted; `components/home/water-day.ts` keeps only the calendar file, step offsets and distances. Save water reads P3's `water_points` table (P4's `loadWaterPoints`) plus `data/water_points.csv` if it exists.
 - **Onboarding.** First visit to `/resident` opens a 7-step tour (native `<dialog>`, glass, Skip / Back / Next, dots). It is remembered on the phone (`kotdelo.onboarded`) and reopens with "How it works" in the header. New page `/guide` (route created by P2, inside the app shell): numbered steps for Resident, Tanker driver and CWA staff, each with a link to the screen. "How to use" is in the sidebar for every role and in the driver/ops phone bars; the landing nav has "Guide".
 - **Motion + transparency** (ideas from the reference site, our colours only): scroll progress bar, landing bar see-through at the top and frosted after 100 px, cards rise into view (`reveal`), drifting aurora behind the hero, headline words slide up, the drop bobs with water ripples, marquee band, count-up numbers, 3D tilt + light spot on cards (mouse only). Scroll effects are pure CSS scroll timelines (no JS on scroll); browsers without them just show everything. Reduced motion turns all of it off. New utilities in `app/globals.css`: `reveal`, `scroll-progress`, `bar-on-scroll`, `tilt`; helpers in `components/ui/motion.tsx` (`tilt` handlers, `CountUp`).
