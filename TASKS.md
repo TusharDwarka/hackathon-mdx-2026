@@ -39,14 +39,15 @@ Owners by folder, no shared files:
 - **P4 `feat/driver-map`**: app/driver/, app/map/, app/ops/, components/map/, components/ops/, lib/eta.ts
 - **P5 `feat/data-files`**: data/*.csv, README.md, team/p5-pitch/
 
+Merge 4 (Fri 17:46): #12 feat/data, #13 feat/data-files, #14 feat/driver-map, #15 feat/home are on main. A tick = code merged, not run against real rows. What is left is in HANDOFF.md, "Merge 4".
 - [ ] 9. (P1 or P3) `npm run load-data` + `npm run seed-demo` against Supabase. Nothing is real until this is done
-- [ ] 10. (P3) `sql/v2.sql` (P1 runs it) + `lib/queries.ts` for ops 12, 14, 15, 16, 17, each with a pure function and a self-check; seed-demo adds rows for today and a few complaints. No payment (dropped)
-- [ ] 11. (P5) `data/reservoir.csv`: real daily or weekly Mare aux Vacoas level with source URLs
-- [ ] 12. (P2) Three design directions as PNG (phone + desktop) in team/p2-frontend/design/, P1 picks one
-- [ ] 13. (P2) Responsive shell + landing `/`; Home moves to `/resident`
-- [ ] 14. (P2) Resident: status with trust (op 15), likely water time (op 16), complaint in two taps (op 14), one report per street per 30 min
-- [ ] 15. (P4) `/ops`: reservoir (12), heat map (11), priority list (17), open complaints (14), suspect reports (15)
-- [ ] 16. (P4) /map and /driver demo mode when `streets` is empty; links go to `/resident`
+- [x] 10. (P3) `sql/v2.sql` (P1 runs it) + `lib/queries.ts` for ops 12, 14, 15, 16, 17, each with a pure function and a self-check; seed-demo adds rows for today and a few complaints. No payment (dropped) — merged (#11 sql, #12 queries + seed). Left (P1): run `sql/v2.sql` in Supabase
+- [x] 11. (P5) `data/reservoir.csv`: real daily or weekly Mare aux Vacoas level with source URLs — merged (#13)
+- [ ] 12. (P2) Three design directions as PNG (phone + desktop) in team/p2-frontend/design/, P1 picks one — one direction is merged as screenshots (#15), built straight into the app
+- [x] 13. (P2) Responsive shell + landing `/`; Home moves to `/resident` — merged (#15)
+- [x] 14. (P2) Resident: status with trust (op 15), likely water time (op 16), complaint in two taps (op 14), one report per street per 30 min — merged (#15)
+- [x] 15. (P4) `/ops`: reservoir (12), heat map (11), priority list (17), open complaints (14), suspect reports (15) — on main (97b922e)
+- [x] 16. (P4) /map and /driver demo mode when `streets` is empty; links go to `/resident` — merged (#14)
 - [ ] 17. (All) Two-phone run on the Vercel URL, then polish only
 
 ## Extras (only if P1 says so)
