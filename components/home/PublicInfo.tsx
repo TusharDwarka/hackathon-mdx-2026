@@ -65,8 +65,8 @@ export function Reservoirs({ reservoirs, combined, now }: { reservoirs: Reading[
     <div className="flex flex-col gap-4 lg:gap-6">
       <section className="surface p-5" aria-labelledby="res-title">
         <h2 id="res-title" className={title}>Reservoirs</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Latest published level, with date and source. Stored water, not what reaches your tap.</p>
-        <p className="mt-1 text-xs text-muted-foreground">Blue normal, amber watch, red critical (demo limits). Dashed lines: 30% and 20%.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Latest level, with date and source.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Blue normal, amber watch, red critical.</p>
         <SearchBox label="Search a reservoir" value={q} onChange={setQ} placeholder="e.g. Midlands" />
       </section>
       {shown.length ? (
@@ -113,7 +113,7 @@ export function News({ items, locality }: { items: NewsItem[]; locality: string 
         <section className="surface p-5" aria-labelledby="news-title">
           <h2 id="news-title" className={title}>CWA notices and news</h2>
           <SearchBox label="Search a place or topic" value={q} onChange={setQ} placeholder="e.g. Moka, borehole" />
-          <p className="mt-2 text-xs text-muted-foreground">Newest first. Check the source before acting.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Newest first.</p>
           {district && (
             <button type="button" onClick={() => setQ(district)} className="chip mt-3 min-h-11 bg-primary/10 text-primary">
               Notices for {district}, where {locality} is

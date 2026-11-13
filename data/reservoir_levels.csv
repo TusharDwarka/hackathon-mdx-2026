@@ -133,3 +133,5 @@ date,date_basis,reservoir,fill_pct,source_url,note
 2026-10-08,data_date,ALL_7_RESERVOIRS,57.1,https://www.riotimesonline.com/mauritius-boreholes-water-crisis-2026/,same date 2025: 87.4% overall
 2026-10-08,data_date,Mare-aux-Vacoas,35.7,https://www.riotimesonline.com/mauritius-boreholes-water-crisis-2026/,same date 2025: 87.4% overall
 2026-10-09,data_date,ALL_7_RESERVOIRS,56.8,https://fr.allafrica.com/stories/202610100075.html,same date 2025: 87.04%
+2026-11-05,data_date,ALL_7_RESERVOIRS,49.6,https://defimedia.info/eau-les-principaux-reservoirs-remplis-496-les-fournisseurs-reclament-une-revision-de-la-subvention,
+2025-11-12,prior_year_comparison,Mare-aux-Vacoas,74.3,https://www.lemauricien.com/actualites/societe/secheresse-mare-aux-vacoas-a-33-la-baisse-du-niveau-vue-du-ciel/723192/,same date 2025 (WRC via Le Mauricien)

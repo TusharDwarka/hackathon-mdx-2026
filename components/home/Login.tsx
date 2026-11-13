@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Droplets, KeyRound, LayoutDashboard, LogOut, Mail, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo, SideWaves, saveRole, type Role } from "@/components/ui/brand";
+import { LangSwitch } from "@/components/ui/i18n";
 import { safeNext, saveGuest, useUser } from "@/components/home/shared";
 import { ApiError, MIN_PASSWORD, getTankers, signIn, signOut, signUp, startGuestSession, startStaffSession, type Tanker } from "@/lib/queries";
 
@@ -145,8 +146,9 @@ export function Login({ asked, next, mode: askedMode }: { asked: Role; next?: st
       </section>
 
       <section className="flex flex-col px-4 pt-4 pb-8 sm:px-8 lg:justify-center lg:px-14">
-        <div className="flex items-center justify-between lg:hidden">
-          <Link href="/" aria-label="Kot Delo? home"><Logo /></Link>
+        <div className="flex items-center justify-between lg:justify-end">
+          <Link href="/" aria-label="Kot Delo? home" className="lg:hidden"><Logo /></Link>
+          <LangSwitch />
         </div>
         <div className="mx-auto mt-8 w-full max-w-md lg:mt-0">
           <Link href="/" className="hidden min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground lg:inline-flex">

@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Layers as LayersIcon, LocateFixed, Search } from "lucide-react";
 import { PipeLoader } from "@/components/ui/pipe-loader";
+import { LangSwitch } from "@/components/ui/i18n";
 import { supabase } from "@/lib/supabase";
 import { etaMinutes, km } from "@/lib/eta";
 import { NEAR_RIVER_M, foldName, loadPlaces, nearestRiver, placeLabel, searchPlaces, type Place, type Rivers } from "@/lib/queries";
@@ -300,6 +301,7 @@ export default function MapPage() {
       </div>
 
       <aside className="flex max-h-[55%] flex-col gap-3 overflow-y-auto bg-card p-4 shadow-card lg:max-h-none lg:w-96 lg:shrink-0">
+        <LangSwitch className="self-end" />
         {offline && <p className="rounded-xl bg-amber-100 px-3 py-2 text-xs text-amber-900">Demo mode: sample streets, simulated tankers.</p>}
 
         <section aria-live="polite" className="flex flex-col gap-1">

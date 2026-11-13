@@ -399,7 +399,7 @@ export function Resident({ info }: { info: PublicData }) {
             </span>
           </label>
           <p className="mt-2 text-xs text-muted-foreground">
-            Needed only to report or request a tanker. Never your house.
+            Only to report or request a tanker.
           </p>
         </>
       ) : spot ? (
@@ -413,7 +413,7 @@ export function Resident({ info }: { info: PublicData }) {
             <button type="button" onClick={changePlace} className="chip min-h-11 shrink-0 bg-muted hover:bg-primary/10">Change</button>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Timetable, water safety, notices and rivers work here. Reports and the tanker are live in {areas.map((a) => a.name).join(", ")} for now.
+            Reports and the tanker are not live here yet.
           </p>
         </>
       ) : (
@@ -525,7 +525,7 @@ export function Resident({ info }: { info: PublicData }) {
   const needStreet = (what: string) => (
     <p className={`${card} text-sm`}>
       <span className={`block ${title}`}>Add your street</span>
-      <span className="mt-1 block text-muted-foreground">Choose your street above to {what}. Reports and the tanker work street by street, never by house.</span>
+      <span className="mt-1 block text-muted-foreground">Choose your street above to {what}.</span>
     </p>
   );
 
@@ -614,7 +614,7 @@ export function Resident({ info }: { info: PublicData }) {
             <b className="font-semibold">{TIER[reservoirTier(mav.pct)].label}</b> = {TIER_MEANS[reservoirTier(mav.pct)]}
           </span>
           <span className="block text-muted-foreground">
-            {mav.date ? `Reading of ${fmtDate(mav.date, { day: "numeric", month: "short", year: "numeric" })}. ` : ""}Demo limits, not official CWA ones.
+            {mav.date ? `Reading of ${fmtDate(mav.date, { day: "numeric", month: "short", year: "numeric" })}. ` : ""}
           </span>
         </p>
       )}
@@ -926,7 +926,6 @@ export function Resident({ info }: { info: PublicData }) {
       {area && !guest && (
         <section className={`flex flex-col gap-3 ${card}`} aria-labelledby="guest-title">
           <h2 id="guest-title" className={title}>Continue as a guest</h2>
-          <p className="-mt-2 text-sm text-muted-foreground">No account, no name. Saved by street only.</p>
           <Button size="tap" onClick={() => { saveGuest(); setGuestNow(true); }}>Continue as guest</Button>
           <Link href={`/login?mode=login&next=${encodeURIComponent(tabHref(tab))}`} className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-primary underline underline-offset-2">
             <LogIn aria-hidden className="size-4" /> Have an account? Log in
@@ -996,7 +995,7 @@ export function Resident({ info }: { info: PublicData }) {
                   <LogIn aria-hidden className="size-4" />
                   {user === undefined ? "Checking your account…" : "Sign in to make a complaint"}
                 </Link>
-                <p className="text-xs text-muted-foreground">An account stops fake complaints. Your email is never shown to CWA or anyone else.</p>
+                <p className="text-xs text-muted-foreground">An account stops fake complaints. CWA never sees your email.</p>
               </>
             ) : complaint === "closed" ? (
               <Button size="tap" variant="secondary" onClick={() => setComplaint("open")}>

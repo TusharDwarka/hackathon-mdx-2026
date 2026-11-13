@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useSyncExternalStore } from "react";
-import { BookOpen, CalendarClock, GlassWater, Info, LayoutDashboard, LayoutGrid, LogIn, LogOut, Map, Megaphone, Newspaper, Route, Truck, Waves, type LucideIcon } from "lucide-react";
+import { BookOpen, Database, CalendarClock, GlassWater, Info, LayoutDashboard, LayoutGrid, LogIn, LogOut, Map, Megaphone, Newspaper, Route, Truck, Waves, type LucideIcon } from "lucide-react";
 import { Logo, ROLE_LABEL, SideWaves, readRole, type Role } from "@/components/ui/brand";
 import { logOut, useUser } from "@/components/home/shared";
 
@@ -109,6 +109,9 @@ function Nav({ role, path, tab }: { role: Role; path: string; tab: string | null
             </button>
             <Link href="/" className="flex min-h-9 items-center gap-2 font-medium text-white underline-offset-2 hover:underline">
               <Info aria-hidden className="size-4" /> About Kot Delo?
+            </Link>
+            <Link href="/sources" className="flex min-h-9 items-center gap-2 font-medium text-white underline-offset-2 hover:underline">
+              <Database aria-hidden className="size-4" /> Data sources
             </Link>
           </div>
         </div>

@@ -72,9 +72,6 @@ export function Forecasts({ data, now }: { data: OpsData; now: number }) {
           );
         })}
       </ul>
-      <p className="text-xs text-muted-foreground">
-        {rows?.some((r) => r.fromApi) ? "From /api/forecast." : "Local rule over the CWA timetable (forecast API not live yet)."} An estimate never overrides an official CWA window.
-      </p>
     </section>
   );
 }
