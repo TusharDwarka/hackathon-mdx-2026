@@ -42,3 +42,18 @@
 6. /map: open http://localhost:3000/map?street=<id of a street in the round> in a second tab (or another phone). The 🚚 jumps every 5 s as the driver moves, the panel says "N stops away, about X min". Tap Served on the driver for a stop before yours: N drops by one. Tap Served on your stop: "Tanker arrived! Served ✓". End round: "No tanker round right now".
 7. Supabase: Database -> Replication -> `supabase_realtime` must list truck_positions, round_stops, rounds (sql/schema.sql does this). If the marker never moves, check that first.
 8. Note for P1: `next dev` regenerates AGENTS.md (Next 16 `agentRules`). I restored it before committing; set `agentRules: false` in next.config.ts if it keeps changing.
+
+## NEXT-TASK-SPLIT P4 package (Fri 13 Nov evening)
+### Changed
+- `components/map/LiveMap.tsx` (was TruckMap): one map that fills its container, ResizeObserver -> invalidateSize, layers reliability / reports / notices / tankers, several trucks reused with setLatLng.
+- `components/map/layers.ts`: reliability blue scale (grey = unknown), report rings (dashed = unconfirmed, no house pins), notices from the CWA timetable (interruption until next window, expires, hatched). Self-check `npx tsx components/map/layers.ts`.
+- `components/map/data.ts`: all active rounds, litres per request (`select("*")`, 20 L assumed until `requests.litres` exists), serve = this stop + requests waiting before the round started only.
+- `components/map/demo.ts`: demo data and the demo dispatch hand-off (localStorage) between /ops, /driver, /map.
+- `app/map`: bottom panel on phones, side panel from 1024 px, follows the tanker carrying my street.
+- `app/driver`: one round per phone (`?round=<id>` or remembered), chooser, new rounds skip streets on other active rounds, litres per stop, failed saves show retry instead of demo mode.
+- `app/ops` + `components/ops/{Overview,DispatchPanel,Complaints,Review}.tsx`, `components/ops/dispatch.ts` (planner, self-check `npx tsx components/ops/dispatch.ts`): 4 sections, priority with litres/evidence/reasons, Add to dispatch, preview (120 L / 100 L = 2 loads), grouped complaints with restore + Retry.
+### Needs from others
+- P3: `POST /api/dispatch` with body `{key, capacity_l, loads:[{tanker, trip, deliveries:[{street_id, litres}]}]}` -> `{rounds:[{round_id, tanker}]}`, idempotent on `key`. Until then live Confirm says the API is not live (demo Confirm works). Also `requests.litres`.
+- P5: verified official notices beyond the timetable.
+### Not verified
+- Live database (no keys here). Browser checks ran in demo mode only. When Supabase is unreachable, demo mode starts after about 7 s of supabase-js retries.

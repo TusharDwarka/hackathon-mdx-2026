@@ -1,20 +1,25 @@
-// Supabase reads/writes for /ops (contracts/api.md V2 ops 12, 14, 15, 17) plus the demo sample.
+// Supabase reads/writes for /ops (contracts/api.md V2 ops 11, 12, 14, 15, 17) plus the demo sample.
 // Browser-side, anon key: RLS (sql/schema.sql, sql/v2.sql) decides what is allowed.
-// Local stand-ins in P3's shapes: when lib/queries.ts ships ops 12-17, swap these imports.
+// Local stand-ins in P3's shapes: when lib/queries.ts ships the shared versions, swap these imports.
 import { supabase } from "@/lib/supabase";
 import { getHoursDry, getStreets, type Street } from "@/lib/queries";
-import { MOCK_HOURS_DRY, MOCK_STREETS } from "@/lib/mock";
-import { priorityList, reservoirTier, streetStatuses, type Priority, type RecentReport, type Reservoir, type StreetStatus } from "@/components/ops/rules";
+import { MOCK_HOURS_DRY } from "@/lib/mock";
+import { demandByStreet, loadActiveRounds, loadAreas, loadReports, loadWaitingRequests, type LiveRound, type WaitingRequest } from "@/components/map/data";
+import { DEMO_AREA, DEMO_STREETS, demoRecentReports, demoRounds, demoWaiting, readDemoDispatch } from "@/components/map/demo";
+import { priorityList, reservoirTier, streetStatuses, type Priority, type Reservoir, type StreetStatus } from "@/components/ops/rules";
 
 export type Category = "no_water" | "dirty_water" | "tanker_no_show" | "other";
 export type Complaint = { id: number; street_id: number; category: Category; created_at: string; status: "open" | "resolved" };
 export type OpsData = {
   streets: Street[];
+  areaNames: Record<number, string>;
   reservoir: Reservoir | null;
   hoursDry: Record<number, number | null>;
   priorities: Priority[];
   statuses: StreetStatus[];
-  complaints: Complaint[]; // open only
+  complaints: Complaint[]; // open, plus resolved of the last 14 days
+  waiting: WaitingRequest[];
+  rounds: LiveRound[]; // active rounds (one per tanker)
   demo: boolean;
 };
 
@@ -25,7 +30,7 @@ export const CATEGORY_LABEL: Record<Category, string> = {
   other: "Other",
 };
 
-// Op 12: latest Mare aux Vacoas row. Null when the table is empty (P5's data/reservoir.csv not loaded yet).
+// Op 12: latest Mare aux Vacoas row. Null when the table is empty (data/reservoir.csv not loaded yet).
 export async function loadReservoir(): Promise<Reservoir | null> {
   const { data, error } = await supabase
     .from("reservoir_levels")
@@ -38,56 +43,54 @@ export async function loadReservoir(): Promise<Reservoir | null> {
   return data ? { ...data, tier: reservoirTier(data.level_pct) } : null;
 }
 
-// Op 14: open complaints, newest first; resolve one.
-export async function loadOpenComplaints(): Promise<Complaint[]> {
+// Op 14: open complaints plus the recently resolved ones (so the Resolved filter has something), newest first.
+export async function loadComplaints(now = Date.now()): Promise<Complaint[]> {
+  const since = new Date(now - 14 * 86_400_000).toISOString();
   const { data, error } = await supabase
     .from("complaints")
     .select("id,street_id,category,created_at,status")
-    .eq("status", "open")
-    .order("created_at", { ascending: false });
+    .or(`status.eq.open,created_at.gte.${since}`)
+    .order("created_at", { ascending: false })
+    .limit(300);
   if (error) throw error;
   return (data ?? []) as Complaint[];
 }
-export async function resolveComplaint(id: number): Promise<void> {
-  const { error } = await supabase.from("complaints").update({ status: "resolved" }).eq("id", id);
+export async function setComplaintStatus(id: number, status: Complaint["status"]): Promise<void> {
+  const { error } = await supabase.from("complaints").update({ status }).eq("id", id);
   if (error) throw error;
 }
 
-// Op 15 input: reports of the last 3 h (all streets).
-async function loadRecentReports(now = Date.now()): Promise<RecentReport[]> {
-  const since = new Date(now - 3 * 3_600_000).toISOString();
-  const { data, error } = await supabase.from("reports").select("street_id,type,created_at").gte("created_at", since);
-  if (error) throw error;
-  return (data ?? []) as RecentReport[];
-}
-
-// Op 17 input: waiting requests per street.
-async function loadWaitingCounts(): Promise<Record<number, number>> {
-  const { data, error } = await supabase.from("requests").select("street_id").eq("status", "waiting");
-  if (error) throw error;
-  const out: Record<number, number> = {};
-  for (const r of data ?? []) out[r.street_id] = (out[r.street_id] ?? 0) + 1;
-  return out;
+/** Priority list with litres, from waiting requests (op 17 rule unchanged). */
+export function prioritiesFor(streets: Street[], hoursDry: Record<number, number | null>, waiting: WaitingRequest[]): Priority[] {
+  const d = demandByStreet(waiting);
+  const count: Record<number, number> = {}, litres: Record<number, number> = {};
+  for (const [id, v] of Object.entries(d)) { count[Number(id)] = v.requests; litres[Number(id)] = v.litres; }
+  return priorityList(streets.map((s) => s.id), hoursDry, count, litres);
 }
 
 /** Everything /ops shows. Throws when Supabase is unreachable or `streets` is empty: callers fall back to DEMO. */
 export async function loadOps(): Promise<OpsData> {
   const streets = await getStreets();
   if (streets.length === 0) throw new Error("no streets loaded yet");
-  const [reservoir, hoursDry, reports, waiting, complaints] = await Promise.all([
-    loadReservoir(),
+  const [areas, reservoir, hoursDry, reports, waiting, complaints, rounds] = await Promise.all([
+    loadAreas(),
+    loadReservoir().catch(() => null), // table missing until sql/v2.sql runs: show the sample instead
     getHoursDry(),
-    loadRecentReports(),
-    loadWaitingCounts(),
-    loadOpenComplaints(),
+    loadReports(3 / 24),
+    loadWaitingRequests(),
+    loadComplaints().catch(() => [] as Complaint[]),
+    loadActiveRounds(),
   ]);
   return {
     streets,
+    areaNames: Object.fromEntries(areas.map((a) => [a.id, a.name])),
     reservoir,
     hoursDry,
-    priorities: priorityList(streets.map((s) => s.id), hoursDry, waiting),
+    priorities: prioritiesFor(streets, hoursDry, waiting),
     statuses: streetStatuses(streets, reports),
     complaints,
+    waiting,
+    rounds,
     demo: false,
   };
 }
@@ -105,27 +108,24 @@ export const SAMPLE_RESERVOIR: Reservoir = {
 
 export function demoOps(now = Date.now()): OpsData {
   const at = (minAgo: number) => new Date(now - minAgo * 60_000).toISOString();
-  const streets = MOCK_STREETS;
-  const waiting = { 2: 1, 4: 2 };
-  // Street 3 says water is here while both neighbours say no water -> suspect.
-  const reports: RecentReport[] = [
-    { street_id: 1, type: "water_on", created_at: at(12) }, { street_id: 1, type: "water_on", created_at: at(25) },
-    { street_id: 2, type: "water_off", created_at: at(6) }, { street_id: 2, type: "water_off", created_at: at(40) },
-    { street_id: 3, type: "water_on", created_at: at(9) },
-    { street_id: 4, type: "water_off", created_at: at(15) }, { street_id: 4, type: "water_off", created_at: at(70) },
-    { street_id: 5, type: "water_off", created_at: at(33) },
-  ];
+  const waiting = demoWaiting(now);
   return {
-    streets,
+    streets: DEMO_STREETS,
+    areaNames: { [DEMO_AREA.id]: DEMO_AREA.name },
     reservoir: SAMPLE_RESERVOIR,
     hoursDry: MOCK_HOURS_DRY,
-    priorities: priorityList(streets.map((s) => s.id), MOCK_HOURS_DRY, waiting),
-    statuses: streetStatuses(streets, reports, now),
+    priorities: prioritiesFor(DEMO_STREETS, MOCK_HOURS_DRY, waiting),
+    statuses: streetStatuses(DEMO_STREETS, demoRecentReports(now), now),
     complaints: [
       { id: -1, street_id: 4, category: "tanker_no_show", created_at: at(18), status: "open" },
       { id: -2, street_id: 5, category: "no_water", created_at: at(95), status: "open" },
       { id: -3, street_id: 2, category: "dirty_water", created_at: at(240), status: "open" },
+      { id: -4, street_id: 4, category: "no_water", created_at: at(130), status: "open" },
+      { id: -5, street_id: 4, category: "no_water", created_at: at(300), status: "open" },
+      { id: -6, street_id: 1, category: "no_water", created_at: at(1500), status: "resolved" },
     ],
+    waiting,
+    rounds: readDemoDispatch() ? demoRounds() : [],
     demo: true,
   };
 }
