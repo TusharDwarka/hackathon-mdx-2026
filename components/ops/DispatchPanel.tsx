@@ -29,7 +29,7 @@ function evidence(s: StreetStatus | undefined): string {
   if (!s || s.status === "none") return "No reports in the last 3 h";
   const what = s.type === "water_on" ? "water is here" : "no water";
   if (s.status === "confirmed") return `Confirmed now: ${s.reports} reports say ${what}`;
-  return `${s.reports === 1 ? "1 report" : `${s.reports} mixed reports`} say ${what}, unconfirmed`;
+  return `${s.reports === 1 ? "1 report says" : `${s.reports} mixed reports, mostly`} ${what}, unconfirmed`;
 }
 
 type Props = {
