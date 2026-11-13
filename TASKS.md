@@ -54,6 +54,12 @@ Merge 4 (Fri 17:46): #12 feat/data, #13 feat/data-files, #14 feat/driver-map, #1
 - [x] 16. (P4) /map and /driver demo mode when `streets` is empty; links go to `/resident` — merged (#14)
 - [ ] 17. (All) Two-phone run on the Vercel URL, then polish only
 
+## Merge 5 (Fri evening): NEXT-TASK-SPLIT packages from P2, P3, P4 are on main (feat/home, feat/data, feat/driver-map). Contract V3 adopted (contracts/api.md "V3").
+- [ ] 18. (P1) Run `sql/v3.sql` in Supabase, set `SUPABASE_SERVICE_ROLE_KEY` (+ `KD_DEMO_ACCESS=1` or `DRIVER_ACCESS_CODE`/`OPS_ACCESS_CODE`) on Vercel, redeploy
+- [ ] 19. (P4) Ops Confirm: use `startStaffSession("ops", code)` + `confirmDispatch()` from `lib/queries.ts` (live Confirm returns 401 until then; demo Confirm works)
+- [ ] 20. (P2) After 18: pass litres to `postRequest(street.id, litres)`; `saveGuest` calls `startGuestSession()`
+- [ ] 21. (P1) After 19 + 20: `sql/v3-lockdown.sql`
+
 ## Extras (only if P1 says so)
 - [ ] Crowd "kamion spotted" fallback
 - [ ] Water points map

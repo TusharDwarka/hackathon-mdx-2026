@@ -8,3 +8,4 @@ One line per finished task: what, files, commit hash.
 - Merge 2: PR #5 feat/data-files into main (real schedule + streets, CSVs checked against the loader and the CWA notice); decision #8 logged, TASKS.md + HANDOFF.md updated — 772f4e6
 - Merge 3: PR #7 feat/home into main (Home on real queries, heat map, day track, design pass); build, lint and time self-check pass; TASKS.md steps 2, 7, 8 ticked, HANDOFF.md updated — a75ec2f
 
+- Merge 5: feat/data, feat/driver-map, feat/home into main; build fix (tsconfig excludes scripts/test-sql.ts); build, lint and all 6 self-checks pass; contract V3 adopted, TASKS 18 to 21 added

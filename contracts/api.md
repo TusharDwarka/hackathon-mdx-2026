@@ -53,5 +53,11 @@ Rules stay: no house/person fields, no free text from residents, no device ids. 
 
 Not in V2: any payment or fee (dropped), login, drinkability claims (the app shows the supply tier and official notices only, it never says water is safe or unsafe to drink), boreholes (pitch slide, not app).
 
+## V3 (Fri evening, P1). Adopted as written in `team/p3-backend/CONTRACT-V3-PROPOSAL.md`
+That file is the V3 contract: schema (`sql/v3.sql`), ops 18 to 23, error codes, sample shapes. P1 confirms all six decisions in it (guest session = hashed cookie token, never a person id; staff access codes; litres 1 to 1000; round = one tank-load; split delivery on; demo limits).
+- Writes go through `/api/*` once `sql/v3.sql` and `SUPABASE_SERVICE_ROLE_KEY` are deployed; until then `lib/queries.ts` falls back to the anon insert. `sql/v3-lockdown.sql` runs only after every screen writes through `/api/*`.
+- Dispatch: the shape in the proposal wins (`POST /api/dispatch {tanker_id, dispatch_key, split}` with an ops session, one load per call). P4 calls `startStaffSession("ops", code)` + `confirmDispatch()` from `lib/queries.ts` instead of its own body.
+- Litres: P2 calls `postRequest(streetId, litres)` only after V3 is live (no anon fallback with litres).
+
 ## Mock / seed data
 No separate mock files: real timetable and streets come from `/data/schedule.csv` and `/data/streets.csv`; 7 days of demo reports are seeded with `is_demo = true`.
