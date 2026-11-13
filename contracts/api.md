@@ -36,7 +36,6 @@ Rules: no house/person fields anywhere. `reports.is_demo = true` for seeded rows
 ### Schema changes (P3 writes `sql/v2.sql`, P1 runs it in Supabase)
 | Table | Change |
 |---|---|
-| requests | + `fee_rs int`, + `paid_at timestamptz` (DEMO payment: no gateway, no card data) |
 | complaints (new) | id, street_id, category ['no_water','dirty_water','tanker_no_show','other'], created_at, status ['open','resolved'] |
 | reservoir_levels (new) | id, reservoir, day (date), level_pct, source_url |
 
@@ -46,13 +45,13 @@ Rules stay: no house/person fields, no free text from residents, no device ids. 
 | # | Operation | Who | Effect / rule |
 |---|-----------|-----|---------------|
 | 12 | GET reservoir status | Landing, Ops | latest `reservoir_levels` row for Mare aux Vacoas -> `{level_pct, day, tier}`. Tier: >= 60 normal, 30 to 60 watch, < 30 critical. DEMO thresholds, labelled as such in the UI |
-| 13 | Pay + request (replaces the bare insert of op 3) | Resident | "I need water" shows the fee, the resident confirms a DEMO payment, then insert `requests {street_id, fee_rs, paid_at: now}` |
+| 13 | REMOVED (payment idea dropped Fri evening). The tanker request stays op 3, free, unchanged | | |
 | 14 | POST complaint `{street_id, category}` / GET open complaints / resolve one | Resident / Ops | insert / list / `status = 'resolved'` |
 | 15 | GET street water status with trust | Resident, Ops | reports of the last 3 h for the street: `confirmed` when there are >= 2 reports and >= 2/3 agree, else `unconfirmed`. `suspect` when a single report contradicts both neighbouring streets (previous and next `order_index`) |
 | 16 | GET likely water time | Resident, Ops | from the street's `water_on` reports of the last 14 days: the 2-hour slot hit on the most days -> `{from, to, days_hit, days_total}`; null under 3 days of history |
 | 17 | GET priority list | Ops | per street: score = hours dry + 12 x waiting requests. Action: "send tanker" (waiting requests > 0), "place a static tank" (dry > 48 h), else "watch" |
 
-Not in V2: real payment, login, drinkability claims (the app shows the supply tier and official notices only, it never says water is safe or unsafe to drink), boreholes (pitch slide, not app).
+Not in V2: any payment or fee (dropped), login, drinkability claims (the app shows the supply tier and official notices only, it never says water is safe or unsafe to drink), boreholes (pitch slide, not app).
 
 ## Mock / seed data
 No separate mock files: real timetable and streets come from `/data/schedule.csv` and `/data/streets.csv`; 7 days of demo reports are seeded with `is_demo = true`.

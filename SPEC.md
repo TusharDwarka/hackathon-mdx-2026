@@ -31,9 +31,9 @@ One responsive app (phone first, must also work on desktop), five screens, still
 | # | Screen | Purpose |
 |---|--------|---------|
 | 1 | Landing (/) | What Kot Delo? is, area status (reservoir level + supply tier, today's window), three ways in: Resident, Driver, CWA operations |
-| 2 | Resident (/resident) | The old Home, plus: confirmed / unconfirmed water status, likely water time, demo payment before the tanker request, complaint in two taps |
+| 2 | Resident (/resident) | The old Home, plus: confirmed / unconfirmed water status, likely water time, complaint in two taps |
 | 3 | Map (/map) | Unchanged |
-| 4 | Driver (/driver) | Unchanged, plus "Paid Rs X" on each stop |
+| 4 | Driver (/driver) | Unchanged |
 | 5 | Operations (/ops, desktop first) | Reservoir status, heat map, priority list with a suggested action per street, open complaints, suspect reports |
 
 Rules for all of it are in `contracts/api.md`, "V2 additions". Nothing else is in scope.
