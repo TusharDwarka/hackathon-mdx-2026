@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bell, BellRing, CalendarPlus, Car, Info, MapPin, Recycle, ShieldAlert, Truck, Waves, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Source } from "@/components/home/PublicInfo";
-import { addDays, icsFile, km, withOffsets, type Win } from "@/components/home/water-day";
+import { addDays, googleCalUrl, icsFile, km, withOffsets, type Win } from "@/components/home/water-day";
 import { planDay, type Forecast, type PlanStep, type Quality } from "@/lib/queries";
 type WaterPoint = { name: string; kind: string; lat: number; lng: number; source_url: string | null };
 import { fmtDate } from "@/components/home/shared";
@@ -66,6 +66,13 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
   const how = (p: string) => (p === "granted" ? "a notification" : p === "denied" ? "an alert on this page (notifications are blocked in this browser)" : "an alert on this page");
 
   // Primary, demo-safe: a calendar event with its own alarm. Works with the browser closed.
+  // Android: the Google Calendar app cannot import .ics, so it gets Google's "new event" page; iPhone and the rest get the file.
+  const remind = () => (/android/i.test(navigator.userAgent) ? openGoogle() : addToCalendar());
+  const openGoogle = () => {
+    if (!d) return;
+    window.open(googleCalUrl(d, w, place ?? "your area"), "_blank", "noopener");
+    setStatus("Save the event in Google Calendar. It reminds you 30 min before (your default reminder).");
+  };
   const addToCalendar = () => {
     if (!d) return;
     const url = URL.createObjectURL(new Blob([icsFile(d, w, place ?? "your area", new Date())], { type: "text/calendar;charset=utf-8" }));
@@ -74,7 +81,7 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    setStatus(`Calendar event saved for ${dayLabel(d, today).toLowerCase()} ${w.start_time}. Open it and add it: your phone rings 30 minutes before, even with Kot Delo? closed.`);
+    setStatus(`Event for ${dayLabel(d, today).toLowerCase()} ${w.start_time} downloaded. Open it and tap Add. Your phone rings 30 min before.`);
   };
   // Extra: only while this tab stays open (no push server, no service worker).
   const remindInTab = async () => {
@@ -104,7 +111,7 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
       </div>
       <p className="text-sm text-muted-foreground">
         {sample
-          ? "Choose your locality to plan around your real window. This is an example."
+          ? "An example. Choose your locality for your real window."
           : `${dayLabel(d!, today)} in ${place} · ${w.start_time} – ${w.end_time}${kind === "estimate" ? " (forecast, not an official time)" : ""}`}
       </p>
 
@@ -136,13 +143,9 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
         </ol>
 
         <div className="flex flex-col gap-3 rounded-2xl bg-muted/70 p-4">
-          <p className="flex items-center gap-2 font-semibold">
-            <Bell aria-hidden className="size-5 text-primary" />
-            Remind me 30 min before
-          </p>
-          <Button data-tour="calendar" size="tap" disabled={sample} onClick={addToCalendar} className="h-12 text-sm">
+          <Button data-tour="calendar" size="tap" disabled={sample} onClick={remind} className="h-12 text-sm">
             <CalendarPlus aria-hidden className="size-5" />
-            Add to calendar
+            Remind me 30 min before
           </Button>
           <Button size="tap" variant="outline" disabled={sample} onClick={remindInTab} className="h-12 border-transparent bg-card text-sm">
             <Bell aria-hidden className="size-5" />
@@ -150,7 +153,11 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
           </Button>
           <button type="button" onClick={test} className="min-h-11 text-sm font-semibold text-primary underline underline-offset-2">Test reminder now (5 s)</button>
           {status && <p role="status" className={`text-xs text-muted-foreground ${enter}`}>{status}</p>}
-          <p className="text-xs text-muted-foreground">The calendar alarm works with the browser closed. A planned time, not a promise that water reaches every house.</p>
+          <p className="text-xs text-muted-foreground">
+            A calendar alarm: rings even with the browser closed. Or use{" "}
+            <button type="button" disabled={sample} onClick={openGoogle} className="py-2 font-semibold text-primary underline underline-offset-2">Google Calendar</button> ·{" "}
+            <button type="button" disabled={sample} onClick={addToCalendar} className="py-2 font-semibold text-primary underline underline-offset-2">.ics file</button>
+          </p>
         </div>
       </div>
     </section>
@@ -171,9 +178,9 @@ export function ForecastCard({ forecast, loading, today }: { forecast: Forecast 
         {forecast && <span className={`${tag} ${official ? "bg-primary/10 text-primary" : "bg-muted"}`}>{official ? "Official CWA" : "Estimate"}</span>}
       </div>
       {loading ? (
-        <div className="mt-3 h-10 w-48 animate-pulse rounded-lg bg-muted motion-reduce:animate-none" />
+        <div aria-hidden className="wave-load mt-3 h-10 w-48 rounded-lg" />
       ) : !forecast ? (
-        <p className="mt-2 text-sm text-muted-foreground">Not enough information for a forecast yet: no official window and too few neighbours&apos; reports. Choose your locality and street.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Not known yet. Choose your locality and street.</p>
       ) : (
         <>
           <p className="mt-2 text-sm text-muted-foreground">{dayLabel(forecast.next.day, today)}</p>
@@ -191,7 +198,7 @@ export function ForecastCard({ forecast, loading, today }: { forecast: Forecast 
           {official ? (
             <Source url={forecast.source_url}>CWA communiqué</Source>
           ) : (
-            <p className="mt-1 text-xs text-muted-foreground">An estimate, not an official time and not a promise. An official CWA window always wins.</p>
+            <p className="mt-1 text-xs text-muted-foreground">An estimate. An official CWA window always wins.</p>
           )}
         </>
       )}
@@ -252,7 +259,7 @@ export function SaveWaterCard({ points, from }: { points: WaterPoint[]; from: { 
       <div>
         <h3 className="font-semibold">Nearby help</h3>
         {!from ? (
-          <p className="mt-2 text-sm text-muted-foreground">Choose your street to see the nearest tanker stop or water point.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Choose your street to see the nearest water point.</p>
         ) : near.length ? (
           <ul className="mt-2 flex flex-col gap-2">
             {near.map((p) => (
@@ -267,7 +274,7 @@ export function SaveWaterCard({ points, from }: { points: WaterPoint[]; from: { 
             ))}
           </ul>
         ) : (
-          <p className="mt-2 text-sm text-muted-foreground">No verified public water points in our sources yet. The tanker map shows where the tanker stops on its round.</p>
+          <p className="mt-2 text-sm text-muted-foreground">No verified water point near you yet. The tanker map shows its stops.</p>
         )}
         <Link href="/map" className="mt-3 flex min-h-12 items-center gap-3 rounded-2xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-[scale] duration-150 ease-snap active:scale-[0.98]">
           <Truck aria-hidden className="size-5" />

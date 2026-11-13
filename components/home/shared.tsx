@@ -175,14 +175,14 @@ export const daysOld = (iso: string, now: Date) => Math.floor((now.getTime() - n
 export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export function Skeleton({ className }: { className: string }) {
-  return <span className={`block animate-pulse rounded-lg bg-muted motion-reduce:animate-none ${className}`} />; // span: it sits inside <p> too
+  return <span aria-hidden className={`wave-load block rounded-lg ${className}`} />; // span: it sits inside <p> too
 }
 
 /** Shown in demo mode. Not a dead end: "Try again" asks the database once more. */
 export function DemoBanner({ onRetry }: { onRetry: () => void }) {
   return (
     <div className="flex items-center gap-3 rounded-3xl bg-amber-100 py-2 pr-2 pl-5 text-sm text-amber-950">
-      <p className="flex-1 py-1">Demo mode: sample data. The database did not answer, or the timetable is not loaded yet.</p>
+      <p className="flex-1 py-1">Demo mode: sample data. The database did not answer.</p>
       <button type="button" onClick={onRetry} className="min-h-12 shrink-0 rounded-full bg-amber-950 px-4 font-semibold text-amber-50 transition-[scale] duration-150 ease-snap active:scale-[0.97]">
         Try again
       </button>

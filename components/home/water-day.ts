@@ -25,6 +25,7 @@ export function icsFile(day: string, w: Win, place: string, stamp: Date): string
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//Kot Delo//Water reminder//EN",
+    "METHOD:PUBLISH",
     "BEGIN:VEVENT",
     `UID:${d}-${t(w.start_time)}-${Math.abs(hash(place))}@kotdelo`,
     `DTSTAMP:${stamp.toISOString().replace(/[-:]/g, "").slice(0, 15)}Z`,
@@ -39,8 +40,32 @@ export function icsFile(day: string, w: Win, place: string, stamp: Date): string
     "END:VALARM",
     "END:VEVENT",
     "END:VCALENDAR",
-    "",
-  ].join("\r\n");
+  ].map(fold).join("\r\n") + "\r\n";
+}
+/** RFC 5545 line folding: at most 75 bytes per line, continued with CRLF + space (strict calendar apps need it). */
+function fold(line: string): string {
+  const out: string[] = [];
+  let cur = "";
+  for (const ch of line) {
+    if (new TextEncoder().encode(cur + ch).length > (out.length ? 74 : 75)) { out.push(cur); cur = ""; }
+    cur += ch;
+  }
+  return [...out, cur].join("\r\n ");
+}
+/** Android: the Google Calendar app cannot import .ics, so this opens its "new event" page instead.
+ *  Times in Mauritius time; the reminder is the account's default (30 min unless the user changed it). */
+export function googleCalUrl(day: string, w: Win, place: string): string {
+  const d = day.replaceAll("-", "");
+  const t = (s: string) => `${s.replace(":", "")}00`;
+  const end = toMin(w.end_time) <= toMin(w.start_time) ? addDays(day, 1).replaceAll("-", "") : d;
+  const q = new URLSearchParams({
+    action: "TEMPLATE",
+    text: `Water supply in ${place} (CWA window)`,
+    dates: `${d}T${t(w.start_time)}/${end}T${t(w.end_time)}`,
+    details: "Official CWA window, a planned time. Fill the tank first. From Kot Delo?",
+    ctz: "Indian/Mauritius",
+  });
+  return `https://calendar.google.com/calendar/render?${q}`;
 }
 const hash = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
 
@@ -59,6 +84,9 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("water-day.ts"
 
   const ics = icsFile("2026-11-15", { start_time: "22:00", end_time: "02:00" }, "Vacoas", new Date(Date.UTC(2026, 10, 13, 10)));
   console.assert(ics.includes("DTSTART:20261115T220000") && ics.includes("DTEND:20261116T020000") && ics.includes("TRIGGER:-PT30M") && ics.includes("\r\n"), "ics with alarm, over midnight");
+  const g = new URL(googleCalUrl("2026-11-15", { start_time: "22:00", end_time: "02:00" }, "Vacoas"));
+  console.assert(g.searchParams.get("dates") === "20261115T220000/20261116T020000" && g.searchParams.get("ctz") === "Indian/Mauritius", "google link over midnight");
+  console.assert(ics.split(String.fromCharCode(13, 10)).every((l) => new TextEncoder().encode(l).length <= 75), "ics lines fit 75 octets");
   console.assert(Math.abs(km({ lat: -20.24, lng: 57.49 }, { lat: -20.25, lng: 57.5 }) - 1.5) < 0.1, "km");
   console.log("water-day ok");
 }
