@@ -136,6 +136,22 @@ async function main() {
   await db.exec("insert into quality_notices (area, area_id, day, title, category, source_url) values ('Vacoas', 1, '2026-11-12', 'Boil water notice', 'boil', 'https://cwa')");
   check((await fails("insert into quality_notices (area, day, title, category, source_url) values ('Vacoas', '2026-11-12', 'Boil water notice', 'boil', 'https://cwa')")) !== null, "duplicate notice rejected (upsert key)");
 
+  console.log("capped load + water points (v4)");
+  await db.exec("update rounds set status = 'done' where status in ('planned','active')");
+  await db.exec("update allocations set released_at = now() where delivered_at is null");
+  await db.exec("update tankers set capacity_litres = 1000");
+  const capReq = await fn("kd_guest_request($1, 3, 300)", [C]);
+  check(capReq.ok, "new 300 L request");
+  const capped = await fn("kd_allocate_load_max($1, 'plan-key:Tanker A', true, 100)", [T1]);
+  check(capped.ok && capped.litres === 100 && capped.capacity_litres === 100, "cap 100 L on a 1000 L tanker -> load of 100 L");
+  check((await fn("kd_allocate_load_max($1, 'plan-key:Tanker A', true, 100)", [T1])).duplicate === true, "same plan key -> same round");
+  check((await fn("kd_allocate_load_max($1, null, true, 0)", [T2])).error === "invalid_capacity", "cap 0 rejected");
+  const uncapped = await fn("kd_allocate_load($1, null, true)", [T2]);
+  check(uncapped.ok && uncapped.capacity_litres === 1000, "wrapper kd_allocate_load = no cap");
+  check((await fails("insert into water_points (name, kind, lat, lng) values ('x', 'standpipe', -20.3, 57.5)")) !== null, "water point without source rejected");
+  check((await fails("insert into water_points (name, kind, lat, lng, source_url) values ('x', 'standpipe', -95, 57.5, 'u')")) !== null, "water point with bad latitude rejected");
+  await db.exec("insert into water_points (name, kind, lat, lng, source_url) values ('Vacoas static tank', 'static_tank', -20.30, 57.48, 'https://cwa')");
+
   console.log("permissions (Supabase roles)");
   await db.exec("set role anon");
   check((await fails("select kd_allocate_load(1, null, true)"))?.includes("permission denied") ?? false, "anon cannot call kd_allocate_load");
@@ -147,6 +163,8 @@ async function main() {
   check((await db.query("update requests set status = 'served' returning id")).rows.length === 0, "anon update of requests touches no rows");
   check((await db.query("select id from allocations")).rows.length > 0, "anon can still read allocations");
   check((await db.query("select id from quality_notices")).rows.length === 1, "anon can read quality notices");
+  check((await db.query("select id from water_points")).rows.length === 1, "anon can read water points");
+  check((await fails("select kd_allocate_load_max(1, null, true, 100)"))?.includes("permission denied") ?? false, "anon cannot call kd_allocate_load_max");
   check((await fails("insert into quality_notices (area, day, title, category, source_url) values ('X', '2026-11-12', 't', 'boil', 'u')")) !== null, "anon cannot write quality notices");
   await db.exec("reset role");
   await db.exec("set role service_role");
