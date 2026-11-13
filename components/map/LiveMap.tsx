@@ -4,18 +4,18 @@
 // Created once; data changes only redraw layer groups, trucks move with setLatLng.
 // Fills its parent: a ResizeObserver calls invalidateSize() so resize, minimize/restore and
 // panel changes never leave blank tiles. Leaflet touches `window`, so it is imported in the effect.
-// Layers, each separately toggled: reliability (blue dots), resident reports (rings, never house pins),
+// Layers, each separately toggled: one dot per street (water now, never house pins), your street pin,
 // official notices (hatched area labels, never solid blue), live tankers (+ my tanker's stops),
 // tanker stops / public water points (nearest to my street highlighted).
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type { Fix, Stop, Street, WaterPoint } from "@/components/map/data";
-import { noticeTimes, reliabilityHex, RELIABILITY_DAYS, type Notice, type Reliability, type Signal } from "@/components/map/layers";
+import { noticeTimes, RELIABILITY_DAYS, UNKNOWN_HEX, type Notice, type Reliability, type Signal } from "@/components/map/layers";
 
 type Lf = typeof import("leaflet");
 export type TankerMarker = { id: number; label: string; fix: Fix; mine: boolean; stale: boolean };
 export type AreaNotice = { area_id: number; name: string; lat: number; lng: number; notice: Notice };
-export type Layers = { reliability: boolean; reports: boolean; notices: boolean; tankers: boolean; water: boolean };
+export type Layers = { reports: boolean; notices: boolean; tankers: boolean; water: boolean };
 export type WaterMarker = WaterPoint & { nearest: boolean; km: number | null };
 type Props = {
   streets: Street[];
@@ -55,7 +55,7 @@ export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliabil
       const m = L.map(el.current, { center: [-20.3, 57.48], zoom: 15 });
       m.attributionControl.setPrefix(false);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap contributors", maxZoom: 19 }).addTo(m);
-      groups.current = { reliability: L.layerGroup(), reports: L.layerGroup(), notices: L.layerGroup(), tankers: L.layerGroup(), water: L.layerGroup(), mine: L.layerGroup().addTo(m) };
+      groups.current = { reports: L.layerGroup(), notices: L.layerGroup(), tankers: L.layerGroup(), water: L.layerGroup(), mine: L.layerGroup().addTo(m) };
       map.current = m;
       observer = new ResizeObserver(resize);
       observer.observe(el.current);
@@ -84,34 +84,22 @@ export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliabil
     }
   }, [ready, layers]);
 
-  // Step 2: historical reliability, one blue dot per street. Grey = unknown.
-  useEffect(() => {
-    const L = lf.current, g = groups.current?.reliability;
-    if (!L || !g) return;
-    g.clearLayers();
-    for (const s of streets) {
-      const r = reliability[s.id];
-      const text = !r || r.share == null
-        ? `${s.name}: no reports in the last ${RELIABILITY_DAYS} days, unknown`
-        : `${s.name}: water reported on ${r.days_hit} of ${r.days_total} days (${r.reports} reports). Past reports, not a forecast.`;
-      L.circleMarker([s.lat, s.lng], { radius: 8, weight: 2, color: "#ffffff", fillColor: reliabilityHex(r?.share), fillOpacity: 1 }).bindTooltip(esc(text)).addTo(g);
-    }
-  }, [ready, streets, reliability]);
-
-  // Step 4: resident reports as rings around the street point. Dashed = unconfirmed. No house pins.
+  // One dot per street: water now. Green = water reported, red = no water, grey = no report in 3 h.
   useEffect(() => {
     const L = lf.current, g = groups.current?.reports;
     if (!L || !g) return;
     g.clearLayers();
     for (const s of streets) {
       const sig = signals[s.id];
-      if (!sig) continue;
-      const color = sig.type === "water_on" ? "#059669" : "#e11d48";
-      L.circleMarker([s.lat, s.lng], { radius: 15, weight: 3, color, fill: false, dashArray: sig.confirmed ? undefined : "4 5" })
-        .bindTooltip(esc(`${s.name}: ${sig.text}${sig.context ? `. ${sig.context}` : ""}`))
+      const r = reliability[s.id];
+      const fill = !sig ? UNKNOWN_HEX : sig.type === "water_on" ? "#059669" : "#e11d48";
+      const now = !sig ? "No report in the last 3 hours." : sig.text + (sig.context ? `. ${sig.context}` : "") + ".";
+      const past = r && r.share != null ? `Water reported on ${r.days_hit} of ${r.days_total} days.` : `No reports in the last ${RELIABILITY_DAYS} days.`;
+      L.circleMarker([s.lat, s.lng], { radius: 9, weight: 2, color: "#ffffff", fillColor: fill, fillOpacity: 1 })
+        .bindPopup(`<b>${esc(s.name)}</b><br>${esc(now)}<br>${esc(past)}`)
         .addTo(g);
     }
-  }, [ready, streets, signals]);
+  }, [ready, streets, signals, reliability]);
 
   // Step 3: official notices as hatched labels at the area's centre. No invented boundary.
   useEffect(() => {
@@ -162,13 +150,13 @@ export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliabil
     }
   }, [ready, stops]);
 
-  // My street: a ring around the street point (street level, not a house).
+  // My street: a pin on the street point (street level, not a house).
   useEffect(() => {
     const L = lf.current, g = groups.current?.mine;
     if (!L || !g) return;
     g.clearLayers();
     const s = streets.find((x) => x.id === myStreetId);
-    if (s) L.circleMarker([s.lat, s.lng], { radius: 20, weight: 3, color: "#0f172a", fill: false }).bindTooltip(esc(`Your street: ${s.name}`)).addTo(g);
+    if (s) L.marker([s.lat, s.lng], { icon: L.divIcon({ html: `<div style="font-size:30px;line-height:30px;filter:drop-shadow(0 2px 2px rgb(0 0 0/.4))">📍</div>`, className: "", iconSize: [30, 30], iconAnchor: [15, 29] }), zIndexOffset: 900, title: `Your street: ${s.name}` }).addTo(g);
   }, [ready, streets, myStreetId]);
 
   // Live tankers: reuse each marker, move it with setLatLng, swap the icon only when its label changes.

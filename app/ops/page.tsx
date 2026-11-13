@@ -95,7 +95,7 @@ export default function OpsPage() {
             aria-selected={section === s.id}
             aria-controls={`panel-${s.id}`}
             onClick={() => go(s.id)}
-            className="chip shrink-0 shadow-card transition-colors duration-150 ease-snap aria-selected:bg-primary aria-selected:text-primary-foreground motion-reduce:transition-none"
+            className="chip min-h-11 shrink-0 shadow-card transition-colors duration-150 ease-snap aria-selected:bg-primary aria-selected:text-primary-foreground motion-reduce:transition-none"
           >
             {s.label}
             {counts[s.id] ? <span className="rounded-full bg-current/15 px-1.5 text-xs tabular-nums">{counts[s.id]}</span> : null}

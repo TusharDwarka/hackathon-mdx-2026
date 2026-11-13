@@ -14,7 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { etaMinutes, km } from "@/lib/eta";
 import { LiveMap, type AreaNotice, type Layers, type TankerMarker, type WaterMarker } from "@/components/map/LiveMap";
 import { errText, loadActiveRounds, loadAreas, loadLatestFixes, loadReports, loadSchedule, loadStreets, loadWaterPoints, type Area, type Fix, type LiveRound, type Street, type WaterPoint } from "@/components/map/data";
-import { areaNotice, noticeTimes, reliabilityLegend, reportSignals, streetReliability, RELIABILITY_DAYS, type ScheduleRow } from "@/components/map/layers";
+import { areaNotice, noticeTimes, reportSignals, streetReliability, RELIABILITY_DAYS, type ScheduleRow } from "@/components/map/layers";
 import { arrived, DEMO_AREA, DEMO_STREETS, DEMO_WATER_POINTS, demoHistory, demoRounds, demoSchedule, simulateStep } from "@/components/map/demo";
 import type { RecentReport } from "@/components/ops/rules";
 
@@ -22,8 +22,7 @@ const STREET_KEY = "kotdelo.street"; // shared with /resident
 const STALE_MS = 2 * 60_000;
 const LAYER_INFO: { key: keyof Layers; label: string }[] = [
   { key: "tankers", label: "Live tankers" },
-  { key: "reports", label: "Resident reports, last 3 h" },
-  { key: "reliability", label: `Supply reliability, last ${RELIABILITY_DAYS} days` },
+  { key: "reports", label: "Streets: water now" },
   { key: "notices", label: "Official notices" },
   { key: "water", label: "Tanker stops and water points" },
 ];
@@ -40,7 +39,7 @@ export default function MapPage() {
   const [offline, setOffline] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(0);
-  const [layers, setLayers] = useState<Layers>({ tankers: true, reports: true, reliability: true, notices: true, water: true });
+  const [layers, setLayers] = useState<Layers>({ tankers: true, reports: true, notices: true, water: true });
   const [layersOpen, setLayersOpen] = useState(false); // phones only; always open from 1024px
   const roundsRef = useRef<LiveRound[]>([]);
   useEffect(() => { roundsRef.current = rounds; }, [rounds]);
@@ -250,8 +249,8 @@ export default function MapPage() {
           </select>
         </label>
 
-        <button type="button" className="chip self-start border lg:hidden" aria-expanded={layersOpen} onClick={() => setLayersOpen((o) => !o)}>
-          <LayersIcon aria-hidden className="size-4" /> {layersOpen ? "Hide layers" : "Map layers and legend"}
+        <button type="button" className="chip min-h-11 self-start border lg:hidden" aria-expanded={layersOpen} onClick={() => setLayersOpen((o) => !o)}>
+          <LayersIcon aria-hidden className="size-4" /> {layersOpen ? "Hide legend" : "Legend and layers"}
         </button>
 
         <section className={`${layersOpen ? "flex" : "hidden"} flex-col gap-3 lg:flex`} aria-label="Map layers">
@@ -263,21 +262,13 @@ export default function MapPage() {
               </label>
               {key === "tankers" && (
                 <Legend items={[{ dot: "#f59e0b", label: "next stop" }, { dot: "#475569", label: "later stop" }, { dot: "#a1a1aa", label: "served" }]}
-                  note={`${tankers.length} tanker${tankers.length === 1 ? "" : "s"} with a GPS fix. Ring = your street.`} />
+                  note={`${tankers.length} tanker${tankers.length === 1 ? "" : "s"} with a GPS fix.`} />
               )}
               {key === "reports" && (
-                reports ? (
-                  <Legend
-                    items={[{ ring: "#059669", label: "water is here" }, { ring: "#e11d48", label: "no water" }, { ring: "#64748b", dashed: true, label: "dashed: unconfirmed" }]}
-                    note="Solid = 2+ reports that agree. One report is a street-level signal, never proof. No house pins, no names."
-                  />
-                ) : <p className="text-xs text-muted-foreground">Reports are unavailable right now.</p>
-              )}
-              {key === "reliability" && (
-                reports ? (
-                  <Legend items={reliabilityLegend().map((l) => ({ dot: l.hex, label: l.label }))}
-                    note={`Days with a "water is here" report in the last ${RELIABILITY_DAYS} days. Past reports, not a forecast.`} />
-                ) : <p className="text-xs text-muted-foreground">Reports are unavailable right now.</p>
+                <Legend
+                  items={[{ dot: "#059669", label: "water reported" }, { dot: "#e11d48", label: "no water" }, { dot: "#a1a1aa", label: "no report, 3 h" }]}
+                  note={reports ? "One dot per street. Tap it for details. 📍 = your street." : "Reports are unavailable right now."}
+                />
               )}
               {key === "water" && (
                 <div className="flex flex-col gap-1 text-xs text-muted-foreground">
@@ -307,7 +298,7 @@ export default function MapPage() {
           ))}
         </section>
 
-        <Link href="/resident" className="text-sm text-primary underline">← Back to my street</Link>
+        <Link href="/resident" className="inline-flex min-h-11 items-center text-sm text-primary underline">← Back to my street</Link>
       </aside>
     </main>
   );
