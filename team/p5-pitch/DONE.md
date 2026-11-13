@@ -10,3 +10,4 @@ One line per finished task: what, files, commit hash.
 - Fri 13 Nov: round 3 — reservoir.csv all 7 reservoirs (40 rows), schedule.csv 6 areas from the CWA 10 Oct notice (every-second-day source), water_points.csv (5, area level), quality_notices.csv (empty: no official notice), river = keep #7 dropped (Rivers and Canals Act s.68/s.87) — 012d31b..faed067
 - Fri 13 Nov: pitch slides prediction-model.md + water-day-planner.md — fb79036
 - Fri 13 Nov: data/context/cwa-supply-localities-oct-2026.csv (53 localities) + cwa-tankers-oct-2026.csv (10 facts); no public tanker timetable exists — a94702b
+- Fri 13 Nov: data/context/cwa-hours-of-supply-2026-06.csv (234 localities, MAV Upper + Lower, via water.cyber.mu) — b111e55
