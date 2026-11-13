@@ -16,6 +16,8 @@ const SUPPLY = "data/supply.csv"; // locality,volume_m3,period_start,period_end,
 // V4, optional (needs sql/v4.sql): OFFICIAL quality / boil notices only.
 const QUALITY = "data/quality_notices.csv"; // area,day,title,category,source_url (category boil | quality)
 const WATER_POINTS = "data/water_points.csv"; // name,kind,lat,lng,source_url (sourced points only)
+// V5, optional (needs sql/v5.sql): every town / village / suburb from OSM (scripts/fetch-osm.ts).
+const LOCALITIES = "data/localities.csv"; // name,kind,district,lat,lng,source
 
 for (const f of [SCHEDULE, STREETS]) {
   if (!existsSync(f)) {
@@ -74,6 +76,31 @@ async function main() {
   await loadSupply(db, allAreas ?? []);
   await loadQualityNotices(db, allAreas ?? []);
   await loadWaterPoints(db);
+  await loadLocalities(db);
+}
+
+/** OSM localities for the island-wide search and map. Rows without a name, district, source or with bad coordinates are skipped. */
+async function loadLocalities(db: Db) {
+  if (!existsSync(LOCALITIES)) {
+    console.log(`No ${LOCALITIES}: localities not loaded (run npx tsx scripts/fetch-osm.ts).`);
+    return;
+  }
+  let bad = 0;
+  const out = rows(LOCALITIES).flatMap((r) => {
+    const name = r.name?.trim(), kind = r.kind?.trim(), district = r.district?.trim(), source = r.source?.trim();
+    const lat = +r.lat, lng = +r.lng;
+    if (!name || !kind || !district || !source || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
+      bad++;
+      return [];
+    }
+    return [{ name, kind, district, lat, lng, source }];
+  });
+  if (bad) console.warn(`${LOCALITIES}: ${bad} row(s) skipped (need name, kind, district, lat, lng, source).`);
+  if (!out.length) return;
+  const { error } = await db.from("localities").upsert(out, { onConflict: "name,district" });
+  if (isMissingColumnOrTable(error)) return console.warn("localities not loaded: run sql/v5.sql first.");
+  if (error) throw error;
+  console.log(`Loaded ${out.length} localities.`);
 }
 
 /** Tanker stops / standpipes / static tanks for P4's map layer. Rows without a source or with bad coordinates are skipped. */

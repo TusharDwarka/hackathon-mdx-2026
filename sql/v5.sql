@@ -172,3 +172,21 @@ end $$;
 
 revoke all on function kd_household_litres() from public, anon, authenticated;
 grant execute on function kd_household_litres() to service_role;
+
+-- =====================================================================================
+-- 3. Places for all of Mauritius (OSM via scripts/fetch-osm.ts -> data/localities.csv).
+--    Loaded with the service key by scripts/load-data.ts. Read-only for everyone else.
+-- =====================================================================================
+create table if not exists localities (
+  id bigint generated always as identity primary key,
+  name text not null,
+  kind text not null,          -- OSM place=*: city | town | village | suburb | hamlet | locality
+  district text not null,
+  lat double precision not null check (lat between -90 and 90),
+  lng double precision not null check (lng between -180 and 180),
+  source text not null,
+  unique (name, district)
+);
+alter table localities enable row level security;
+drop policy if exists "read all" on localities;
+create policy "read all" on localities for select using (true);

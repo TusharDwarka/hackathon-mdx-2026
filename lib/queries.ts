@@ -1130,6 +1130,107 @@ export async function ensureGuestSession(): Promise<SessionInfo> {
   return s.role ? s : startGuestSession();
 }
 
+// ---------- V5 places: every locality and named street of Mauritius (OSM) ----------
+// public/places.json and data/localities.csv come from scripts/fetch-osm.ts (run once, not at runtime).
+
+/** One search entry. A locality has l === n; a street has l = its nearest locality. */
+export type Place = { n: string; l: string; d: string; lat: number; lng: number };
+export type Locality = { name: string; kind: string; district: string; lat: number; lng: number; source: string };
+
+/** Pure: lower case, no accents, no apostrophes, punctuation as spaces. "L’Escalier" -> "lescalier", "Rose-Belle" -> "rose belle". */
+export function foldName(s: string): string {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/['’‘`´]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+const foldCache = new WeakMap<Place[], { full: string; compact: string }[]>();
+
+/**
+ * Pure: best matches first. Exact name > name starts with the query > a word starts with it >
+ * contains it (spaces ignored, so "rosebelle" finds "Rose Belle"). Localities before streets on a tie.
+ */
+export function searchPlaces(index: Place[], query: string, limit = 8): Place[] {
+  const q = foldName(query), qc = q.replace(/ /g, "");
+  if (!qc) return [];
+  let folded = foldCache.get(index);
+  if (!folded) {
+    folded = index.map((p) => { const full = foldName(p.n); return { full, compact: full.replace(/ /g, "") }; });
+    foldCache.set(index, folded);
+  }
+  const hits: { p: Place; rank: number }[] = [];
+  index.forEach((p, i) => {
+    const { full, compact } = folded[i];
+    const rank = compact === qc ? 0 : full.startsWith(q) || compact.startsWith(qc) ? 1 : (" " + full).includes(" " + q) ? 2 : compact.includes(qc) ? 3 : -1;
+    if (rank >= 0) hits.push({ p, rank: rank * 2 + (p.l === p.n ? 0 : 1) });
+  });
+  return hits
+    .sort((a, b) => a.rank - b.rank || a.p.n.length - b.p.n.length || a.p.n.localeCompare(b.p.n))
+    .slice(0, limit)
+    .map((h) => h.p);
+}
+
+/** "Street, Locality" for a street, "Locality, District" for a locality. */
+export const placeLabel = (p: Place) => (p.l === p.n ? `${p.n}, ${p.d}` : `${p.n}, ${p.l}`);
+
+let placesPromise: Promise<Place[]> | null = null;
+/** Browser: the island-wide search index (public/places.json, ~0.5 MB, fetched once). */
+export function loadPlaces(): Promise<Place[]> {
+  placesPromise ??= fetch("/places.json").then((r) => {
+    if (!r.ok) throw new Error(`places.json: HTTP ${r.status}`);
+    return r.json() as Promise<Place[]>;
+  }).catch((e) => { placesPromise = null; throw e; });
+  return placesPromise;
+}
+
+/** Localities table (needs sql/v5.sql + load-data), optionally one district. */
+export async function getLocalities(district?: string): Promise<Locality[]> {
+  let q = supabase.from("localities").select("name,kind,district,lat,lng,source").order("name");
+  if (district) q = q.eq("district", district);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as Locality[];
+}
+
+// ---------- V5 rivers: "near a river?" (computed on the phone, never sent or stored) ----------
+
+export type RiverFeature = { properties: { name: string | null; waterway: string }; geometry: { coordinates: [number, number][] } }; // [lng, lat]
+export type Rivers = { features: RiverFeature[] };
+export const NEAR_RIVER_M = 200;
+const EARTH_M_PER_DEG = 111_320;
+
+/**
+ * Pure: the nearest river or stream to (lat, lng) and its distance in metres. Flat projection
+ * around the point (error well under 1 % at island scale). null when there are no rivers.
+ */
+export function nearestRiver(lat: number, lng: number, rivers: Rivers): { distance_m: number; name: string | null; waterway: string } | null {
+  const kx = EARTH_M_PER_DEG * Math.cos((lat * Math.PI) / 180), ky = EARTH_M_PER_DEG;
+  let best: { distance_m: number; name: string | null; waterway: string } | null = null;
+  for (const f of rivers.features) {
+    const pts = f.geometry.coordinates;
+    for (let i = 0; i < pts.length; i++) {
+      const ax = (pts[i][0] - lng) * kx, ay = (pts[i][1] - lat) * ky;
+      let d = Math.hypot(ax, ay);
+      if (i + 1 < pts.length) {
+        const bx = (pts[i + 1][0] - lng) * kx, by = (pts[i + 1][1] - lat) * ky;
+        const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+        const t = len2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
+        d = Math.min(d, Math.hypot(ax + t * dx, ay + t * dy));
+      }
+      if (!best || d < best.distance_m) best = { distance_m: d, name: f.properties.name, waterway: f.properties.waterway };
+    }
+  }
+  return best && { ...best, distance_m: Math.round(best.distance_m) };
+}
+
+/** Pure: metres to the nearest river or stream, or null when there are none. */
+export const distanceToRiverM = (lat: number, lng: number, rivers: Rivers): number | null => nearestRiver(lat, lng, rivers)?.distance_m ?? null;
+
+/** Browser: public/rivers.geojson (fetched on demand by the map layer / "near a river?"). */
+export const loadRivers = (): Promise<Rivers> =>
+  fetch("/rivers.geojson").then((r) => {
+    if (!r.ok) throw new Error(`rivers.geojson: HTTP ${r.status}`);
+    return r.json() as Promise<Rivers>;
+  });
+
 // ---------- V5 accounts: Supabase Auth, email + password ----------
 // Guests report and request; a complaint needs sign-in. No profile, no name. The email is shown
 // only to its owner. Errors are ApiError with Supabase's code, e.g. "invalid_credentials",
@@ -1323,6 +1424,27 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
   const withLitres = validateRequestInput({ street_id: 1, litres: 5000 });
   ok(withLitres.ok && !("litres" in withLitres.value), "V5: litres from a resident are ignored, not stored");
   ok(!validateRequestInput({ street_id: "1" }).ok && !validateRequestInput(null).ok, "bad street id rejected");
+  // V5 places: accent / apostrophe tolerant search
+  ok(foldName("L’Escalier") === "lescalier" && foldName("L'Escalier") === "lescalier" && foldName("Rose-Belle") === "rose belle", "foldName");
+  const idx: Place[] = [
+    { n: "L’Escalier", l: "L’Escalier", d: "Grand Port", lat: -20.47, lng: 57.62 },
+    { n: "Chemin Chamarel", l: "Case Noyale", d: "Black River", lat: -20.4, lng: 57.38 },
+    { n: "Chamarel", l: "Chamarel", d: "Black River", lat: -20.42, lng: 57.39 },
+    { n: "Rose Belle", l: "Rose Belle", d: "Grand Port", lat: -20.4, lng: 57.6 },
+    { n: "Royal Road", l: "Rose Belle", d: "Grand Port", lat: -20.41, lng: 57.6 },
+  ];
+  ok(searchPlaces(idx, "lescalier")[0]?.n === "L’Escalier" && searchPlaces(idx, "l'escalier")[0]?.n === "L’Escalier", "lescalier finds L’Escalier");
+  ok(searchPlaces(idx, "rose-belle")[0]?.n === "Rose Belle" && searchPlaces(idx, "rosebelle")[0]?.n === "Rose Belle", "Rose-Belle / rosebelle find Rose Belle");
+  const cham = searchPlaces(idx, "chamarel");
+  ok(cham[0]?.n === "Chamarel" && cham[1]?.n === "Chemin Chamarel", "locality before the street that contains its name");
+  ok(searchPlaces(idx, "  ").length === 0 && searchPlaces(idx, "zzz").length === 0, "empty / no match -> []");
+  ok(placeLabel(idx[4]) === "Royal Road, Rose Belle" && placeLabel(idx[2]) === "Chamarel, Black River", "labels");
+  // V5 rivers: a 2 km east-west river at lat -20.30
+  const riv: Rivers = { features: [{ properties: { name: "Rivière Test", waterway: "river" }, geometry: { coordinates: [[57.50, -20.30], [57.52, -20.30]] } }] };
+  const south = nearestRiver(-20.301, 57.51, riv);
+  ok(south !== null && Math.abs(south.distance_m - 111) <= 1 && south.name === "Rivière Test", "111 m south of the river");
+  ok(Math.abs((distanceToRiverM(-20.30, 57.53, riv) ?? 0) - 1044) <= 5, "past the end: distance to the end point");
+  ok(distanceToRiverM(-20.30, 57.51, riv) === 0 && distanceToRiverM(-20.3, 57.5, { features: [] }) === null, "on the river = 0; no rivers = null");
   // V5 accounts: form checks before Supabase
   const cred = validateCredentials("  Ana@Example.MU ", "secret1");
   ok(cred.ok && cred.value.email === "ana@example.mu", "email trimmed + lower-cased");

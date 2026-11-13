@@ -228,6 +228,13 @@ async function main() {
   check((await fn("kd_serve_stop($1, $2)", [T1, hs[0].id])).served_requests === 1, "a fully delivered household is served");
   check((await fn("kd_serve_stop($1, $2)", [T1, hs[2].id])).served_requests === 0, "a half-delivered household stays waiting");
 
+  await db.exec("insert into localities (name, kind, district, lat, lng, source) values ('Chamarel', 'village', 'Black River', -20.42, 57.39, 'OSM')");
+  check((await fails("insert into localities (name, kind, district, lat, lng, source) values ('Chamarel', 'village', 'Black River', -20.42, 57.39, 'OSM')")) !== null, "locality unique per district (upsert key)");
+  await db.exec("set role anon");
+  check((await db.query("select name from localities")).rows.length === 1, "anon reads localities");
+  check((await fails("insert into localities (name, kind, district, lat, lng, source) values ('X', 'village', 'Moka', -20.2, 57.5, 'OSM')")) !== null, "anon cannot write localities");
+  await db.exec("reset role");
+
   if (failures) {
     console.error(`\n${failures} check(s) FAILED`);
     process.exit(1);
