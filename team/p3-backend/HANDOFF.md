@@ -1,5 +1,77 @@
 # HANDOFF (p3-backend)
 
+## Round 3 water day (docs/WATER-DAY-SPLIT.md, P3) — bb82343 on feat/data
+Ops 24 to 27 are built against the shapes in the brief. All three routes answer even without a database: they fall back to the real timetable and Mare aux Vacoas readings, with `demo: true`, and the UI must label that.
+
+### Shapes (for P2 / P4; import the types from `@/lib/queries`)
+```ts
+// op 24  getForecast(areaId?) -> GET /api/forecast?area_id=   (null when nothing to go on)
+type Forecast = {
+  next: { day: string /* YYYY-MM-DD */; start_time: string; end_time: string };
+  basis: "official" | "every_second_day" | "history";
+  confidence: "high" | "medium" | "low";
+  tier: "normal" | "watch" | "critical" | null;
+  note: string;            // "Official CWA timetable (published 10 Oct); reservoir at watch level"
+  source_url: string | null;
+} & { demo: boolean };
+
+// op 25  getReservoirTrend(reservoir = "Mare aux Vacoas") -> GET /api/reservoirs/trend?reservoir=
+//        getReservoirTrendsAll() -> GET /api/reservoirs/trend?reservoir=all -> { trends: Trend[]; demo }
+type Trend = {
+  reservoir: string; latest_pct: number; latest_day: string;
+  pct_per_day: number;                                   // negative = falling
+  days_to_30: number | null; days_to_20: number | null; // from today; null if rising or < 3 points
+  reaches_30_on: string | null; reaches_20_on: string | null; // extra: the dates, for the chart label
+  points: { day: string; level_pct: number }[];
+  projection: { day: string; level_pct: number }[];     // today + 30 days
+} & { demo: boolean };
+
+// op 26  getWaterQuality(areaId?) -> GET /api/quality?area_id=
+type Quality = { level: "none" | "cloudy_possible" | "official_notice"; message: string;
+  notice?: { title: string; day: string; source_url: string } } & { demo: boolean };
+
+// op 27  planDay(window, tasks?) -> { time, label, kind: "remind" | "arrive" | "task" | "end" }[]  (pure, no API)
+```
+
+### Rules
+- **Forecast (op 24):**
+  - The official timetable wins: the earliest window on or after tomorrow gives high confidence.
+  - Otherwise, if the last 3 dated windows are 2 days apart, the forecast repeats every second day from the last official day. That is medium confidence, or low when the reservoir is critical.
+  - Otherwise op 16's likely time for tomorrow gives low confidence.
+  - Today `data/schedule.csv` runs to 29 Nov, so the demo shows "official".
+- **Trend (op 25):** a least-squares line over readings from the last 90 days, one per day, without the aggregate. On the 7 real Mare aux Vacoas rows it gives:
+
+  | Measure | Value |
+  |---|---|
+  | Slope | -0.124 % per day |
+  | 30% reached | 27 Nov 2026 |
+  | 20% reached | 16 Feb 2027 |
+
+  The press says 20% by end of November, so our straight line is slower. Show ours as an estimate next to the press figure, linked through `source_url` in `data/reservoir.csv`, and do not hide the gap.
+- **Quality (op 26):**
+  - An official notice from the last 14 days wins, with boil before quality.
+  - Otherwise a watch or critical tier gives the "may look cloudy" caution.
+  - Otherwise the result is `none`.
+  - The messages are fixed strings in `QUALITY_MESSAGES`, and none says safe or unsafe.
+- **Planner (op 27):**
+  - The reminder comes 30 min before the start, and water arrives at the start.
+  - Default tasks: fill the tank at the start. Run the washing machine at start + 3 h if that is before end - 30 min. Finish laundry at end - 30 min.
+  - Custom tasks are spread from the start to end - 30 min.
+  - A window that crosses midnight works.
+- **Server time:** the routes use `mauritiusNow()`, because Vercel runs in UTC and would get "tomorrow" wrong between 00:00 and 04:00 in Mauritius.
+
+### Needs from others
+- **P1:** add ops 24 to 27 to `contracts/api.md`. My only additions to the brief's shapes are `demo`, `reaches_30_on`, `reaches_20_on` and `?reservoir=all`. Then run `sql/v4.sql`, which adds the `quality_notices` table.
+- **P5:**
+  - Add `data/quality_notices.csv` with columns `area,day,title,category,source_url`. Category is `boil` or `quality`, from official notices only. An empty file is fine. An area of "island-wide" applies to every area.
+  - Add more reservoir readings, at least 3 per reservoir in the last 90 days, so other reservoirs get a trend.
+  - Add an area to `AREA_RESERVOIR` in `lib/queries.ts` (ask P3) if a new locality is fed by a reservoir other than Mare aux Vacoas.
+
+### How to test
+- `npx tsx lib/queries.ts` prints `queries ok`. It checks that official beats the rule, the rule lands on the right day, critical gives low, the history fallback works, the real Mare aux Vacoas slope and February date, rising gives null, the planner reminder and midnight crossing, and that no quality message claims safety.
+- `npm i --no-save @electric-sql/pglite && npx tsx scripts/test-sql.ts` prints `sql ok`. v4 is applied twice, the category is checked, and anon can read but not write.
+- With no keys, `npm run build && npx next start` then `curl localhost:3000/api/forecast`, `/api/quality` and `/api/reservoirs/trend` return real-data fallbacks with `demo: true`.
+
 ## V3 (docs/NEXT-TASK-SPLIT.md, P3 package) — b06aef4 on feat/data
 Full shapes, limits and decisions for P1: `team/p3-backend/CONTRACT-V3-PROPOSAL.md`.
 
