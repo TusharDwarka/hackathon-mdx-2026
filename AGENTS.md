@@ -40,4 +40,5 @@ Read CLAUDE.md, SPEC.md, contracts/api.md and team/<my-folder>/TODO.md. Do ONE t
 - `.env` is git-ignored. API keys are used server-side only, never in browser code. Share keys over WhatsApp DM, not in the repo.
 
 ## Timeline
-FEATURE FREEZE at H19: bug fixes only after that.
+Real schedule: core working end to end by Fri 15:30 · solid by Fri 22:00 · FEATURE FREEZE Sat 08:00 (bug fixes only) · submit by Sat 12:30. See docs/CHALLENGE.md.
+Rules: real dataset required, public repo, list AI tools in README, never identify or profile individuals.
