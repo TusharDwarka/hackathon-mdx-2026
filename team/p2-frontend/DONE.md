@@ -8,3 +8,7 @@ One line per finished task: what, files, commit hash.
 - SurpriseCard slot: already on Home from the mockup (renders nothing), verified and ticked. Files: components/home/SurpriseCard.tsx, app/page.tsx. Commit 106b4a6
 - Step 7: schedule vs reality card, "On time X of Y days" + per-day tick/cross cells, on fake data in the shape of getReliability(). Files: app/page.tsx. Commit 68155c0
 - Fix: --font-sans referenced itself so every screen rendered in a serif fallback; now Geist. Files: app/globals.css. Commit 2a19945
+- Swap to real data: Home reads streets, window, reliability, hours dry through lib/queries.ts; demo mode on lib/mock.ts when the database is empty or unreachable (4 s timeout). Files: app/page.tsx. Commit 7d262a4
+- Step 8: heat map (still Leaflet map + legend + list) of hours since the last water_on report. Files: components/home/HeatMap.tsx, app/page.tsx. Commit 7d262a4
+- Loading and empty states on Home (skeletons, choose-your-street, no window, no reports, no history, failed saves). Files: app/page.tsx. Commit 7d262a4
+- Design pass (Impeccable polish + Emil motion): blue header, palette tokens, day track, icons, press feedback, eased status lines. Files: app/globals.css, app/layout.tsx, components/ui/button.tsx, components/home/DayTrack.tsx, components/home/time.ts. Commit 7d262a4
