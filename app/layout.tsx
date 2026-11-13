@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -16,6 +16,8 @@ export const metadata: Metadata = {
   title: "Kot Delo?",
   description: "Water rationing: when will water really come, and where is the tanker?",
 };
+
+export const viewport: Viewport = { themeColor: "#0a5b9f" }; // header blue, so the phone's browser bar matches
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
