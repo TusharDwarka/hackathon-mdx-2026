@@ -1,0 +1,31 @@
+# TRACKER (P1 only) — tick as you go. H0 = official start. Real start time: ____
+
+- [ ] Everyone installed and passed tonight's test (SETUP-TONIGHT.md) — All — Night
+- [ ] Repo created, starter kit pushed, branch protection on, collaborators invited — P1 — Night
+- [ ] LLM API key tested with one call — P4 — Night
+- [ ] Challenge + rules written into docs/CHALLENGE.md, organiser questions asked — P1 — H0:20
+- [ ] Ideas researched (strategist x4, last30days, statistics) — All — H1:00
+- [ ] Idea decided + one-line pitch written — P1 — H1:30
+- [ ] SPEC.md + contracts + mocks + TASKS.md — P1 — H2:30
+- [ ] Clickable mockup in /web — P2 — H2:30
+- [ ] Scaffold + Supabase + hello world live on Vercel — P3 — H2:30
+- [ ] AI spike returns structured JSON — P4 — H2:30
+- [ ] CHECKPOINT 1: everything on main and live — P1 — H2:45
+- [ ] Merge 1 (Codex reviewed) — P1 — H4:15
+- [ ] Merge 2 — P1 — H5:45
+- [ ] Merge 3 — P1 — H7:15
+- [ ] CHECKPOINT 2: demo path end to end live + scope check done — P1 — H8:00
+- [ ] Real API replaces mocks, real Mauritian data loaded — P2/P3 — H11
+- [ ] Wow moment works reliably, with a cached fallback — P4 — H12
+- [ ] /understand run #1 + notes — P1 — H10
+- [ ] Sleep shift A (P2,P5 12:00-14:30) / B (P1,P4 14:30-17:00) / P3 shift done — All — H19
+- [ ] Impeccable audit + polish, Emil animations (2-3) — P2 — H18
+- [ ] Archify architecture diagram — P1 — H18
+- [ ] FEATURE FREEZE — P1 — H19
+- [ ] Final deploy tested on Android + iPhone + mobile data — P5 — H20
+- [ ] Seeded demo account + QR code — P3 — H20
+- [ ] Backup demo video recorded — P5 — H20:30
+- [ ] /understand run #2 + onboard guide read — P1 — H20:30
+- [ ] Pitch script + slides final — P5 — H21:30
+- [ ] Rehearsal 1 / 2 (failure drill) / Q&A drill / 3 — All — H23:30
+- [ ] Laptop, phone, power bank, hotspot charged and ready — All — H23:45
