@@ -1,5 +1,57 @@
 # HANDOFF (p3-backend)
 
+## V5 (docs/SPLIT-V5.md, P3) — feat/data, commits fc3aa0d, ca917c8, 811cbc3, 709e8a5
+Shapes are in `lib/queries.ts` (import types from `@/lib/queries`). Every new route answers without a database (`demo: true`).
+
+### For P1
+- Run `sql/v5.sql` once (after v3 and v4). It is safe to re-run. Then turn on Email auth and turn off "Confirm email".
+- Set `ANTHROPIC_API_KEY` on Vercel. Then run the scraper once with it: `node --env-file=.env.local --import tsx scripts/scrape-notices.ts`. That stores AI readings in `notices` and in `app/api/notices/demo-notices.json`; commit that file so the demo has cached AI readings. Without the key everything works, but readings come from the rule reader (`ai_extracted: false`).
+- `npm run load-data` now also loads `data/localities.csv` once P5 commits it.
+- The AI call uses plain `fetch` because `package.json` is yours. Add `@anthropic-ai/sdk` if you want, and I will switch `app/api/_lib/notice-ai.ts` to it.
+- **Behaviour change:** guests can no longer file complaints (`kd_guest_complaint` is closed), and anon can no longer insert complaints. P2 must ship the login before this goes live.
+
+### For P2
+- **Accounts:**
+  - Functions: `signUp(email, password)`, `signIn`, `signOut`, `getUser()` and `onAuthChange(cb)`, which returns an unsubscribe.
+  - Errors are `ApiError` with `code` = `invalid_credentials` | `user_already_exists` | `weak_password` (under 6) | `email_address_invalid` | `over_request_rate_limit`.
+  - `validateCredentials(email, password)` checks the form first.
+- **Complaints:** `postComplaint(streetId, category)` throws `ApiError` `sign_in_required` (401) for a guest, without a network call; show the login. `getMyComplaints()` lists the user's own.
+- **Requests:** `postRequest(streetId)`. A second argument is ignored, so your current call still compiles; delete the litres picker.
+- **Search:** `loadPlaces()` (once, ~0.5 MB), then `searchPlaces(index, query, 8)` and `placeLabel(p)` ("Street, Locality" / "Locality, District"). "lescalier", "l'escalier", "rose-belle" and "rosebelle" all work.
+- **Safe to drink:** `getWaterQuality(undefined, localityName)`.
+  - Returns `{level, message, reasons[], advice, advice_source_url, source_url, date, rain_mm_48h, level_pct, notice?, demo}`.
+  - `reasons` ⊂ `official_notice | heavy_rain | low_reservoir`.
+  - It never says "safe". `message` already reads "No official advisory found for <locality>. If the water looks cloudy or smells, boil it before drinking." when nothing is known.
+  - `computeWaterQuality([], tier, now)` still works for your offline path.
+- **Notices:** `getNoticeFeed(locality?)` returns `{notices: FeedNotice[], demo}`. When `ai_extracted` is true, show `AI_NOTICE_LABEL` and the `url`.
+
+### For P4
+- **Dispatch (households):** every waiting request is one household, planned at `HOUSEHOLD_L = 20` L (demo, ops-side, the same as your `ASSUMED_REQUEST_L`). `GET /api/dispatch` now returns `households` and `household_litres` instead of `requests_without_litres`. Your plan body `{key, capacity_l, loads}` is unchanged.
+- **Priority:** `PriorityRow` has no `waiting_litres` any more; `waiting` = households. The reason line reads "3 households waiting for a tanker".
+- **Places:** `public/places.json` (5,968 entries: 305 localities, 5,663 streets). Localities with district are in the `localities` table (`getLocalities(district?)`).
+- **Rivers:** `public/rivers.geojson` (1,099 rivers and streams, 434 named). Use `loadRivers()`, then `nearestRiver(lat, lng, rivers)` → `{distance_m, name, waterway}`, or `distanceToRiverM(lat, lng, rivers)`. `NEAR_RIVER_M = 200`. It is pure: compute on the phone, never send the position.
+- **Paste-a-notice box:** `parseNotice(text, url?, save)`.
+  - Needs an ops session.
+  - Returns `{notice: {localities, unmatched_localities, start, end, dates, kind, summary}, ai_extracted, cached, saved_id, note}`.
+  - Preview with `save=false`, then Publish with `save=true`. The second call is cached, so no second AI call.
+
+### For P5
+- Commit `data/localities.csv` with its source line: run `npx tsx scripts/fetch-osm.ts` (Overpass, OSM ODbL). It also rewrites `public/places.json` and `public/rivers.geojson`.
+- The safe-to-drink advice is fixed text pointing at the WHO "Boil water" brief (`WHO_BOIL_URL`). Swap in CWA or Ministry of Health text and a URL if you find one.
+- The heavy-rain threshold (`HEAVY_RAIN_MM_48H = 50` mm in 48 h, Open-Meteo rainfall) is a demo value. Replace it if MMS publishes one.
+
+### Not done
+- Item 4 (supply rule per locality): `data/supply_rules.csv` is not on main yet. When P5 commits it, I wire `basis` into the forecast.
+- GIS (gis.govmu.org) times out from here. The scraper tries it and skips it. News comes from defimedia and lemauricien RSS.
+- Low reservoir as a reason only covers Plaines Wilhems (Mare aux Vacoas). For other districts the reservoir is unknown and is not used as a reason.
+
+### How to test
+- `npx tsx lib/queries.ts` → `queries ok`.
+- `npx tsx scripts/test-sql.ts` → `sql ok`. It runs v3, v4 and v5 twice in PGlite and checks auth RLS, household dispatch, localities and notices.
+- `/api/quality?locality=lescalier` → `none` with real rainfall.
+- `/api/notices/feed?locality=Curepipe`.
+- A guest `POST /api/complaints` → 401 `sign_in_required`.
+
 ## After merge 8 — integration with P2 and P4 (4bbce48 on feat/data, main merged in)
 I read P2's and P4's merge-8 code against my API and closed the gaps on P3's side.
 
