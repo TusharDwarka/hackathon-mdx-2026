@@ -6,11 +6,12 @@
 // pictures are illustrations and say so to screen readers.
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, BadgeCheck, CalendarClock, Droplet, DropletOff, Gift, MapPin, Megaphone, ShieldCheck, Truck, UserRoundX } from "lucide-react";
+import { ArrowRight, BadgeCheck, CalendarClock, Droplet, DropletOff, Gift, Megaphone, ShieldCheck, Truck, UserRoundX } from "lucide-react";
 import { cn } from "cn";
 import { buttonVariants } from "@/components/ui/button";
 import { BottomWaves, Logo } from "@/components/ui/brand";
 import { Gauge } from "@/components/ui/gauge";
+import { CountUp, tilt } from "@/components/ui/motion";
 import { LevelTank } from "@/components/ui/level-tank";
 import { DayTrack } from "@/components/home/DayTrack";
 import { minOfDay, windowStatus } from "@/components/home/time";
@@ -29,6 +30,8 @@ const STEPS = [
   { title: "Tap what you see", text: "\"Water is here\" or \"No water\": your report counts together with your neighbours'.", Icon: Megaphone },
   { title: "Follow the tanker", text: "No water for too long? Request the tanker for your street and watch it come on the map.", Icon: Truck },
 ];
+const MARQUEE = ["Official CWA timetables", "Plan your water day", "Reminder 30 min before", "Live tanker tracking", "One-tap street reports", "Every reservoir, dated"];
+const HEADLINE = [["A", "small", "app"], ["that", "tells", "you"], ["when", "water", "comes."]];
 const long = { day: "numeric", month: "short", year: "numeric" } as const;
 const h2 = "text-3xl leading-tight font-bold tracking-[-0.03em] sm:text-4xl lg:text-5xl";
 const cta = cn(buttonVariants({ size: "tap" }), "h-14 px-7");
@@ -64,14 +67,16 @@ export function Landing({ info }: { info: PublicData }) {
 
   return (
     <div className="overflow-x-clip">
-      {/* Top bar */}
+      <div aria-hidden className="scroll-progress" />
+      {/* Top bar: see-through at the top, frosted once the page scrolls. */}
       <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 lg:px-6">
-        <div className="glass mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 rounded-full pr-2 pl-3 shadow-card sm:pl-4">
+        <div className="glass bar-on-scroll mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 rounded-full pr-2 pl-3 shadow-card sm:pl-4">
           <Link href="/" aria-label="Kot Delo? home"><Logo /></Link>
           <nav aria-label="Sections" className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
             <a href="#how" className="hover:text-foreground">How it works</a>
             <a href="#features" className="hover:text-foreground">Features</a>
             <a href="#notices" className="hover:text-foreground">CWA notices</a>
+            <Link href="/guide" className="hover:text-foreground">Guide</Link>
           </nav>
           <Link href="/login" className={cn(buttonVariants(), "h-12 px-5 text-sm font-semibold")}>Open the app</Link>
         </div>
@@ -79,18 +84,38 @@ export function Landing({ info }: { info: PublicData }) {
 
       <main>
         {/* Hero */}
-        <section className="mx-auto grid max-w-6xl gap-12 px-4 pt-10 pb-16 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:px-6 lg:pt-16 lg:pb-24">
+        <section className="relative isolate mx-auto grid max-w-6xl gap-12 px-4 pt-10 pb-16 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:px-6 lg:pt-16 lg:pb-24">
+          {/* Aurora: soft blue light drifting behind the hero. Decoration only. */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+            <span className="absolute -top-20 -left-24 size-[26rem] rounded-full bg-sky-300/45 blur-3xl animate-[aurora_18s_ease-in-out_infinite_alternate]" />
+            <span className="absolute top-40 right-0 size-[22rem] rounded-full bg-blue-400/30 blur-3xl animate-[aurora_22s_ease-in-out_-6s_infinite_alternate-reverse]" />
+            <span className="absolute -bottom-10 left-1/3 size-[18rem] rounded-full bg-cyan-200/50 blur-3xl animate-[aurora_26s_ease-in-out_-12s_infinite_alternate]" />
+          </div>
           <div>
-            <p className="chip bg-white/75 text-primary shadow-card">
-              <MapPin aria-hidden className="size-4" />
+            <p className="chip bg-white/60 text-primary shadow-card backdrop-blur-md">
+              <span aria-hidden className="relative flex size-2.5">
+                <span className="absolute inset-0 animate-ping rounded-full bg-primary/60" />
+                <span className="relative size-2.5 rounded-full bg-primary" />
+              </span>
               Made for Mauritius · CWA water rationing
             </p>
-            <h1 className="mt-6 text-[2.6rem] leading-[1] font-bold tracking-[-0.045em] sm:text-6xl lg:text-7xl">
-              A small app
-              <br />
-              that tells you
-              <br />
-              when <span className="text-primary">water</span> comes.
+            <h1 className="mt-6 text-[2.6rem] leading-[1.02] font-bold tracking-[-0.045em] sm:text-6xl lg:text-7xl">
+              {/* Each word slides up into place once, on load. */}
+              {HEADLINE.map((line, l) => (
+                <span key={l} className="block">
+                  {line.map((w, n) => (
+                    <span key={n} className="inline-block overflow-hidden pb-[0.08em] align-bottom">
+                      <span
+                        className={`inline-block animate-[word-up_0.9s_cubic-bezier(.2,.7,.2,1)_both] ${w === "water" ? "text-primary" : ""}`}
+                        style={{ animationDelay: `${(l * 3 + n) * 70}ms` }}
+                      >
+                        {w}
+                      </span>
+                      {n < line.length - 1 && "\u00a0"}
+                    </span>
+                  ))}
+                </span>
+              ))}
             </h1>
             <p className="mt-6 max-w-[44ch] text-lg text-muted-foreground">
               Official CWA timetables, what your neighbours see right now, and the tanker truck live on a map. All in one place, in English, on any phone.
@@ -105,7 +130,7 @@ export function Landing({ info }: { info: PublicData }) {
             </div>
             <ul className="mt-8 flex flex-wrap gap-2">
               {TRUST.map(({ label, Icon }) => (
-                <li key={label} className="chip min-h-8 bg-white/60 px-3 text-xs text-foreground">
+                <li key={label} className="chip min-h-8 bg-white/50 px-3 text-xs text-foreground backdrop-blur-md">
                   <Icon aria-hidden className="size-4 text-primary" />
                   {label}
                 </li>
@@ -152,8 +177,45 @@ export function Landing({ info }: { info: PublicData }) {
                 </div>
               </div>
             </Phone>
-            <Mascot className="absolute -bottom-2 -left-3 w-24 sm:-left-10 sm:w-28" />
+            <div aria-hidden className="absolute -bottom-2 -left-3 w-24 sm:-left-10 sm:w-28">
+              <span className="absolute -bottom-1 left-1/2 -ml-14 h-6 w-28 rounded-[50%] border-2 border-primary/40 animate-[ripple_2.6s_ease-out_infinite]" />
+              <span className="absolute -bottom-1 left-1/2 -ml-14 h-6 w-28 rounded-[50%] border-2 border-primary/40 animate-[ripple_2.6s_ease-out_1.3s_infinite]" />
+              <Mascot className="relative w-full animate-[bob_4s_ease-in-out_infinite]" />
+            </div>
           </div>
+        </section>
+
+        {/* Marquee band */}
+        <div className="wave-panel -rotate-1 overflow-hidden py-5 shadow-card">
+          <div className="flex w-max animate-[marquee_40s_linear_infinite] gap-10 text-2xl font-bold tracking-[-0.02em] whitespace-nowrap sm:text-3xl">
+            {[0, 1].map((copy) => (
+              <p key={copy} aria-hidden={copy === 1} className="flex gap-10">
+                {MARQUEE.map((m) => (
+                  <span key={m} className="flex items-center gap-10">
+                    {m}
+                    <span aria-hidden className="text-white/50">✦</span>
+                  </span>
+                ))}
+              </p>
+            ))}
+          </div>
+        </div>
+
+        {/* Numbers that count up */}
+        <section aria-label="Kot Delo? in numbers" className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-4 pt-14 pb-16 md:grid-cols-4 lg:gap-6 lg:px-6">
+          {[
+            { n: info.reservoirs.length, suffix: "", label: "reservoirs tracked" },
+            { n: mav.pct ?? 0, suffix: "%", label: "Mare aux Vacoas, latest reading" },
+            { n: info.news.length, suffix: "", label: "dated CWA notices and news" },
+            { n: 30, suffix: " min", label: "reminder before the water" },
+          ].map((x) => (
+            <div key={x.label} className="tilt glass reveal rounded-3xl p-5 shadow-card" {...tilt}>
+              <p className="text-4xl font-bold tracking-[-0.03em] text-primary lg:text-5xl">
+                <CountUp to={Math.round(x.n)} suffix={x.suffix} />
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{x.label}</p>
+            </div>
+          ))}
         </section>
 
         {/* How it works */}
@@ -162,7 +224,7 @@ export function Landing({ info }: { info: PublicData }) {
           <p className="mt-3 max-w-[52ch] text-lg text-muted-foreground">During rationing, the timetable says one thing and the tap says another. Kot Delo? puts both side by side.</p>
           <ol className="mt-8 grid gap-4 md:grid-cols-3 lg:gap-6">
             {STEPS.map(({ title, text, Icon }, i) => (
-              <li key={title} className="surface relative overflow-hidden p-6">
+              <li key={title} className="tilt reveal surface overflow-hidden p-6" {...tilt}>
                 <span aria-hidden className="absolute -top-4 -right-1 text-8xl font-bold text-primary/8 tabular-nums">{i + 1}</span>
                 <span className="grid size-12 place-items-center rounded-2xl bg-primary/10 text-primary">
                   <Icon aria-hidden className="size-6" />
@@ -173,6 +235,12 @@ export function Landing({ info }: { info: PublicData }) {
             ))}
           </ol>
         </section>
+
+        <p className="mx-auto -mt-8 max-w-6xl px-4 pb-16 lg:-mt-16 lg:px-6 lg:pb-24">
+          <Link href="/guide" className="inline-flex min-h-11 items-center gap-1.5 font-semibold text-primary">
+            Read the full guide for residents, drivers and CWA staff <ArrowRight aria-hidden className="size-4" />
+          </Link>
+        </p>
 
         {/* Features */}
         <section id="features" aria-label="Features" className="mx-auto flex max-w-6xl scroll-mt-24 flex-col gap-16 px-4 pb-16 lg:gap-24 lg:px-6 lg:pb-24">
@@ -259,7 +327,7 @@ export function Landing({ info }: { info: PublicData }) {
             </div>
             <ul className="mt-8 grid gap-4 md:grid-cols-3 lg:gap-6">
               {info.news.slice(0, 3).map((n) => (
-                <li key={`${n.date}-${n.title}`} className="surface flex flex-col p-6">
+                <li key={`${n.date}-${n.title}`} className="tilt reveal surface flex flex-col p-6" {...tilt}>
                   <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="chip min-h-6 bg-primary/10 px-2 text-xs text-primary first-letter:uppercase">{n.kind}</span>
                     {fmtDate(n.date, long)}
@@ -305,7 +373,7 @@ export function Landing({ info }: { info: PublicData }) {
 
 function Feature({ kicker, title, text, flip, children }: { kicker: string; title: string; text: string; flip?: boolean; children: React.ReactNode }) {
   return (
-    <article className="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
+    <article className="reveal grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
       <div className={flip ? "lg:order-2" : ""}>
         <p className="text-sm font-semibold tracking-[0.08em] text-primary uppercase">{kicker}</p>
         <h3 className="mt-2 text-3xl leading-tight font-bold tracking-[-0.03em] lg:text-4xl">{title}</h3>
@@ -313,7 +381,9 @@ function Feature({ kicker, title, text, flip, children }: { kicker: string; titl
       </div>
       <div className="relative flex justify-center">
         <div aria-hidden className="absolute inset-6 rounded-[2.5rem] bg-white/45 blur-2xl" />
-        <div className="relative flex w-full justify-center">{children}</div>
+        <div className="tilt relative flex w-full justify-center rounded-3xl" {...tilt}>
+          {children}
+        </div>
       </div>
     </article>
   );

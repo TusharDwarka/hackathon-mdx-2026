@@ -35,4 +35,6 @@ Until P3's queries exist, use a small local fake-data object so screens render; 
 - [x] 6. Save water + nearby help (reads data/water_points.csv when P5 adds it)
 - [x] 7. Diagram pass: tanks, report split bar, litres vs tanker bar
 - [x] SurpriseCard shell with props { title, body, href }: waiting for P1's text (DECISIONS #9)
-- [ ] Swap stand-ins in components/home/water-day.ts for P3's planDay / forecastNext / waterQuality when on main
+- [x] Swapped to P3: planDay (lib/queries), forecast + quality from /api/forecast and /api/quality, P3 pure rules as fallback
+- [x] Onboarding tour (first visit) + /guide tutorial for resident, driver, CWA staff
+- [x] Motion + transparency pass (scroll progress, frosted bar, reveal, aurora, tilt, marquee, count-up, ripples)
