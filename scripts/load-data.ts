@@ -6,6 +6,7 @@ import { supabaseAdmin } from "../lib/supabase-server";
 
 const SCHEDULE = "data/schedule.csv"; // area,day,start_time,end_time,source_url,source_date
 const STREETS = "data/streets.csv"; // area,name,lat,lng,order_index
+const RESERVOIR = "data/reservoir.csv"; // reservoir,day,level_pct,source_url (V2, optional: skipped when missing)
 
 for (const f of [SCHEDULE, STREETS]) {
   if (!existsSync(f)) {
@@ -56,6 +57,21 @@ async function main() {
   );
   if (te) throw te;
   console.log(`Loaded ${names.length} areas, ${streets.length} streets, ${schedule.length} schedule rows.`);
+
+  // V2: reservoir levels (needs sql/v2.sql). Upsert on (reservoir, day) so re-runs just refresh.
+  if (!existsSync(RESERVOIR)) {
+    console.log(`No ${RESERVOIR}: reservoir_levels not loaded (P5 adds it, see contracts/api.md op 12).`);
+    return;
+  }
+  const levels = rows(RESERVOIR).map((r) => ({
+    reservoir: r.reservoir.trim(),
+    day: r.day.trim(),
+    level_pct: +r.level_pct,
+    source_url: r.source_url?.trim() || null,
+  }));
+  const { error: le } = await db.from("reservoir_levels").upsert(levels, { onConflict: "reservoir,day" });
+  if (le) throw le;
+  console.log(`Loaded ${levels.length} reservoir_levels rows.`);
 }
 main().catch((e) => {
   console.error(e);
