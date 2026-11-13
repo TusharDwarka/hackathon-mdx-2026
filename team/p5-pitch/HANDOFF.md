@@ -3,6 +3,7 @@
 ## Round 3 (water-day split) — Fri 13 Nov night
 
 ### Changed
+- `data/context/cwa-supply-localities-oct-2026.csv` (53 localities → supply group A/B, every 2 days, 03:00–08:00) and `data/context/cwa-tankers-oct-2026.csv` (fleet size, private tanker specs, hotlines). Context only, not loaded. No public tanker timetable by locality exists: the CWA sends tankers on request.
 - `data/reservoir.csv`: **all 7 reservoirs**, 4 to 10 dated WRC readings each (14 Aug → 5 Nov 2026), one source URL per row. Every number was checked against the article text. Mare aux Vacoas gained 14 Aug (40.5), 4 Sep (39.7) and 18 Sep (39.9). Names match `MAIN_RESERVOIRS` in `lib/queries.ts` (`La Nicoliere` without an accent; the loader does not rename `reservoir.csv` rows).
 - `data/schedule.csv`: the same CWA notice (10 Oct 2026) also covers **Phoenix, St Pierre** (from Sat 10 Oct) and **Curepipe, Forest-Side, Floreal** (from Sun 11 Oct), all 03:00–08:00, every second day, up to 30 Nov. 26 rows per area, 156 in total. The PDF says word for word "La distribution d'eau se fera tous les deux jours". That is the official source for the every-second-day rule. Still the newest timetable on the CWA site (checked tonight).
 - `data/quality_notices.csv`: **header only, on purpose**. There is no 2026 boil-water or quality notice from the CWA or the Ministry of Health. `waterQuality()` must never return `official_notice` from this file as it stands.
