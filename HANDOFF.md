@@ -39,3 +39,16 @@ Format per step: **Step N — done / changed / blocked** + 5 beginner bullets. P
   3. "Stops away" = my stop plus every unserved stop before it in `stop_order`; 1 means I am next, 0 means served.
   4. ETA = distance at 20 km/h from the truck to the next stop + 10 min per stop before mine. If the last fix is older than 2 min the map shows stops × 10 min and says the signal was lost.
   5. Leaflet needs `window`, so it is imported inside a `useEffect` (never at the top of the file), otherwise the server-side build breaks.
+
+## Merge 1 — Fri 16:10 (P1)
+- Done: PR #1 feat/data, #2 feat/home, #3 feat/driver-map merged into main (9ed0071), no conflicts. On the merged code `npm run build`, `npm run lint`, `npx tsx lib/queries.ts`, `npx tsx lib/eta.ts` and `npx tsx scripts/seed-demo.ts --dry-run` all pass. Vercel deployed it.
+- Changed (P1): `package.json` has `npm run seed-demo` (asked by P3). TASKS.md ticked.
+- State of the live URL (checked Fri 16:20): Supabase is reachable and the 8 tables exist, but every table is EMPTY. So Home's taps save nothing (street ids 1-5 from `lib/mock.ts` do not exist in `streets`), /driver offers "Start round · 0 stops" and /map says "No tanker round right now". The demo-mode fallbacks only start when Supabase is unreachable, not when it is empty.
+- Left, in order:
+  1. P5 -> P1: `data/streets.csv` + `data/schedule.csv` (still THE blocker). Then `npm run load-data` and `npm run seed-demo`.
+  2. P2: swap Home from `lib/mock.ts` and `fakeReliability()` to `lib/queries.ts` (`getStreets`, `getTodayWindow`, `getReliability`, `getHoursDry`). `Window.source_url` can be null there.
+  3. P4: in `app/map/page.tsx` set `STREET_KEY = "kotdelo.street"`, the key Home writes. Today the two screens use different keys, so the map does not know the resident's street. P1 decision: Home's key wins.
+  4. P4: when `streets` is empty, show the same demo mode as when Supabase is unreachable (/map and /driver).
+  5. P3 (small): `seed-demo` writes nothing for today, so on demo day every street is about a day dry and the heat map has no green. Add a few `water_on` rows for today.
+  6. All: two-phone test on the Vercel URL (GPS needs https). Nothing has run against real rows yet.
+- Not done: P4 reported that `next dev` rewrites AGENTS.md. `next build` did not touch it, so `next.config.ts` is unchanged until someone sees it again.
