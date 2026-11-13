@@ -32,7 +32,7 @@ const STEPS = [
   { title: "Follow the tanker", text: "No water for too long? Request the tanker for your street and watch it come on the map.", Icon: Truck },
 ];
 const MARQUEE = ["Official CWA timetables", "Plan your water day", "Reminder 30 min before", "Live tanker tracking", "One-tap street reports", "Every reservoir, dated"];
-const HEADLINE = [["A", "small", "app"], ["that", "tells", "you"], ["when", "water", "comes."]];
+const HEADLINE = "Know when water comes, and if it's safe to drink.".split(" ");
 const long = { day: "numeric", month: "short", year: "numeric" } as const;
 const h2 = "text-3xl leading-tight font-bold tracking-[-0.03em] sm:text-4xl lg:text-5xl";
 const cta = cn(buttonVariants({ size: "tap" }), "h-14 px-7");
@@ -100,26 +100,23 @@ export function Landing({ info }: { info: PublicData }) {
               </span>
               Made for Mauritius · CWA water rationing
             </p>
-            <h1 className="mt-6 text-[2.6rem] leading-[1.02] font-bold tracking-[-0.045em] sm:text-6xl lg:text-7xl">
-              {/* Each word slides up into place once, on load. */}
-              {HEADLINE.map((line, l) => (
-                <span key={l} className="block">
-                  {line.map((w, n) => (
-                    <span key={n} className="inline-block overflow-hidden pb-[0.08em] align-bottom">
-                      <span
-                        className={`inline-block animate-[word-up_0.9s_cubic-bezier(.2,.7,.2,1)_both] ${w === "water" ? "text-primary" : ""}`}
-                        style={{ animationDelay: `${(l * 3 + n) * 70}ms` }}
-                      >
-                        {w}
-                      </span>
-                      {n < line.length - 1 && "\u00a0"}
+            <h1 aria-label="Know when water comes, and if it's safe to drink." className="mt-6 text-[2.5rem] leading-[1.04] font-bold tracking-[-0.035em] sm:text-6xl lg:text-7xl">
+              {/* Each word slides up into place once, on load. Words wrap freely, so it fits 360 px. */}
+              {HEADLINE.map((w, n) => (
+                <span key={n}>
+                  <span className="inline-block overflow-hidden pb-[0.08em] align-bottom">
+                    <span
+                      className={`inline-block animate-[word-up_0.9s_cubic-bezier(.2,.7,.2,1)_both] ${w === "water" || w === "safe" ? "text-primary" : ""}`}
+                      style={{ animationDelay: `${n * 60}ms` }}
+                    >
+                      {w}
                     </span>
-                  ))}
+                  </span>{" "}
                 </span>
               ))}
             </h1>
             <p className="mt-6 max-w-[44ch] text-lg text-muted-foreground">
-              Official CWA timetables, what your neighbours see right now, and the tanker truck live on a map. All in one place, in English, on any phone.
+              Official CWA timetables, your neighbours&apos; reports and the tanker live on a map.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/login" className={cta}>
