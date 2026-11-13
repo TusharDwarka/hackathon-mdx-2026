@@ -67,5 +67,15 @@ Schema: `sql/v4.sql` (table `quality_notices`, read-only for anon). Import types
 - op 27 `planDay(window, tasks?)` → steps `{ time, label, kind }[]`. Pure, no API.
 - P2 swaps its local `components/home/water-day.ts` for these imports.
 
+## V5 (Fri night, P1). Plan and owners: `docs/SPLIT-V5.md`. Everything above stays unless changed here.
+- **Accounts**: Supabase Auth, email + password. Guest (existing V3 guest session) may report and request. **Complaint needs a signed-in user**: `sql/v5.sql` adds `complaints.user_id uuid references auth.users`; RLS insert only when `auth.uid() is not null`; a user reads only their own; ops sees complaints without `user_id`. `/api/complaints` from a guest → `401 sign_in_required`. No profile table, no names, no email shown to anyone else.
+- **Requests carry no litres**: `postRequest(streetId)`; residents never choose tank capacity (overrides V3 "litres 1 to 1000"). Ops demand per street = count of waiting requests (households). Tanker capacity is an ops-side value per load.
+- **Places for all of Mauritius**: `data/localities.csv` (`name,kind,district,lat,lng,source`) from OSM, table `localities`; `public/places.json` = search index `{n: name, l: locality, d: district, lat, lng}[]` for localities and named streets. Search folds accents and apostrophes.
+- **Supply rule per locality**: `data/supply_rules.csv` (`locality,district,region,frequency,start_time,end_time,valid_from,source_url,source_date,basis`), `basis` = `locality_notice` | `regional_timetable` | `unknown`. Forecast returns `basis`; unknown is shown as "Not known yet".
+- **Notices**: table `notices` (`id, url unique, published_on, source, raw_text, localities text[], start_time, end_time, dates date[], kind, summary, ai_extracted bool, demo bool`). Filled by `scripts/scrape-notices.ts` (CWA site, GIS, news; no Facebook scraping) and by ops pasting text. `POST /api/notices/parse {text, url?}` (ops session) → parsed notice via Claude, server-side `ANTHROPIC_API_KEY`; validated JSON; cached; demo never needs a live AI call.
+- **Safe to drink (op 26 extended)**: `Quality` adds `reasons: ("official_notice"|"heavy_rain"|"low_reservoir")[]`, `advice: string` (fixed, sourced text), `source_url`, `date`. Status stays `none` | `cloudy_possible` | `official_notice`; never "safe".
+- **Rivers**: `public/rivers.geojson` (OSM `waterway=river|stream`), `distanceToRiverM(lat, lng)` pure. Location for "near a river" is computed on the phone and never sent or stored.
+- **Reminder**: client only, `.ics` download, alarm 30 min before the next window. No server, no stored contact.
+
 ## Mock / seed data
 No separate mock files: real timetable and streets come from `/data/schedule.csv` and `/data/streets.csv`; 7 days of demo reports are seeded with `is_demo = true`.
