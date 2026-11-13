@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Droplet } from "lucide-react";
 import { cn } from "cn";
+import { LangSwitch } from "@/components/ui/i18n";
 
 export type Role = "resident" | "driver" | "ops";
 export const ROLE_LABEL: Record<Role, string> = { resident: "Resident", driver: "Tanker driver", ops: "CWA operations" };
@@ -76,7 +77,10 @@ export function PageHeader({ eyebrow, title, logo, children }: { eyebrow?: React
           <h1 className="truncate text-2xl leading-tight font-bold tracking-[-0.02em] lg:text-[1.75rem]">{title}</h1>
         </div>
       </div>
-      {children}
+      <div className="flex flex-wrap items-center gap-2">
+        {children}
+        <LangSwitch />
+      </div>
     </header>
   );
 }

@@ -7,10 +7,12 @@
 import { useState } from "react";
 import { Bot, CalendarDays, Clock, MapPin, Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmButton } from "@/components/ui/confirm";
 import { ApiError, AI_NOTICE_LABEL, extractNoticeRules, loadPlaces, parseNotice, type ParsedNotice } from "@/lib/queries";
 
-// Sample text in the style of a CWA communiqué, for the demo. Clearly labelled; not a real notice.
-const SAMPLE = `COMMUNIQUÉ - La Central Water Authority informe ses abonnés qu'en raison de travaux de réparation sur une conduite principale, l'approvisionnement en eau sera interrompu le samedi 21 novembre 2026 de 08h00 à 16h00 dans les régions suivantes : Rose Hill, Beau Bassin, Coromandel et Stanley. La CWA s'excuse des désagréments causés.`;
+// Real example: the key lines of the CWA communiqué of 10 Oct 2026 (data/sources/cwa-communique-2026-10-10.pdf).
+const SAMPLE = `Nouveaux horaires de distribution d'eau pour les régions de Vacoas, Phoenix, St. Pierre, Curepipe, Forest-Side et Floréal. La distribution d'eau se fera tous les deux jours, de 03h00 à 08h00, à partir du samedi 10 octobre 2026 pour Vacoas, Phoenix et St Pierre, et à partir du dimanche 11 octobre 2026 pour Curepipe, Forest-Side et Floréal.`;
+const SAMPLE_URL = "https://cwa.govmu.org/cwa/?p=5001";
 
 type Result = { notice: ParsedNotice; ai: boolean; cached: boolean; note: string | null; offline: boolean };
 const day = (iso: string) => new Date(`${iso}T00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
@@ -65,22 +67,21 @@ export function NoticePaste() {
     <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
       <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-card" aria-labelledby="paste-title">
         <h2 id="paste-title" className="text-lg font-bold">Paste a CWA notice</h2>
-        <p className="-mt-2 text-sm text-muted-foreground">A communiqué or a CWA Facebook post. The AI reads places, dates and times. You check it, then publish.</p>
+        <p className="-mt-2 text-sm text-muted-foreground">AI reads the places, dates and times. Check, then publish.</p>
         <label className="flex flex-col gap-1.5 text-sm font-medium">
           Notice text
           <textarea value={text} onChange={(e) => { setText(e.target.value); setRes(null); setPublished(null); }} rows={7} placeholder="Paste the notice here (French or English)" className="rounded-xl border bg-background p-3 text-base font-normal" />
         </label>
         <label className="flex flex-col gap-1.5 text-sm font-medium">
-          Source link <span className="font-normal text-muted-foreground">(optional, shown to residents)</span>
+          Source link <span className="font-normal text-muted-foreground">(optional)</span>
           <input type="url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://cwa.govmu.org/…" className="h-11 rounded-xl border bg-background px-3 text-base font-normal" />
         </label>
         <div className="flex flex-wrap gap-2">
           <Button size="tap" onClick={read} disabled={busy !== null}>
             <Sparkles aria-hidden /> {busy === "read" ? "Reading…" : "Read notice"}
           </Button>
-          <Button size="tap" variant="secondary" onClick={() => { setText(SAMPLE); setRes(null); setPublished(null); }}>Use a sample</Button>
+          <Button size="tap" variant="secondary" onClick={() => { setText(SAMPLE); setUrl(SAMPLE_URL); setRes(null); setPublished(null); }}>Try the 10 Oct notice</Button>
         </div>
-        <p className="text-xs text-muted-foreground">The sample is made-up demo text in CWA&apos;s style, not a real notice.</p>
         {error && <p role="alert" className="text-sm text-red-800">{error}</p>}
       </section>
 
@@ -112,9 +113,9 @@ export function NoticePaste() {
             {published !== null ? (
               <p role="status" className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-900">Published. Residents in {n.localities.join(", ") || "every area"} see it under Notices.</p>
             ) : (
-              <Button size="tap" onClick={publish} disabled={busy !== null || res.offline}>
+              <ConfirmButton size="tap" onConfirm={publish} disabled={busy !== null || res.offline} title="Publish this notice?" body={<>Residents in {n.localities.join(", ") || "every area"} will see it under Notices.</>} confirm="Yes, publish">
                 <Send aria-hidden /> {busy === "publish" ? "Publishing…" : "Publish to residents"}
-              </Button>
+              </ConfirmButton>
             )}
           </>
         )}

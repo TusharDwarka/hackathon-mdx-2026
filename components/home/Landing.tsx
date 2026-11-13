@@ -10,6 +10,7 @@ import { ArrowRight, BadgeCheck, CalendarClock, Droplet, DropletOff, Gift, Megap
 import { cn } from "cn";
 import { buttonVariants } from "@/components/ui/button";
 import { BottomWaves, Logo } from "@/components/ui/brand";
+import { LangSwitch } from "@/components/ui/i18n";
 import { Gauge } from "@/components/ui/gauge";
 import { CountUp, tilt } from "@/components/ui/motion";
 import { LevelTank } from "@/components/ui/level-tank";
@@ -81,9 +82,12 @@ export function Landing({ info }: { info: PublicData }) {
             <a href="#how" className="hover:text-foreground">How it works</a>
             <a href="#features" className="hover:text-foreground">Features</a>
             <a href="#notices" className="hover:text-foreground">CWA notices</a>
-            <Link href="/guide" className="hover:text-foreground">Guide</Link>
+            <Link href="/sources" className="hover:text-foreground">Data sources</Link>
           </nav>
-          <Link href="/login" data-tour="open" className={cn(buttonVariants(), "h-12 px-5 text-sm font-semibold")}>Open the app</Link>
+          <span className="flex items-center gap-2">
+            <LangSwitch className="shadow-none" />
+            <Link href="/login" data-tour="open" className={cn(buttonVariants(), "h-12 px-5 text-sm font-semibold")}>Start</Link>
+          </span>
         </div>
       </header>
 
@@ -124,7 +128,7 @@ export function Landing({ info }: { info: PublicData }) {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/login" className={cta}>
-                Open the app <ArrowRight aria-hidden />
+                Start <ArrowRight aria-hidden />
               </Link>
               <Link href="/resident" data-tour="browse" className={cn(buttonVariants({ size: "tap", variant: "outline" }), "h-14 border-transparent bg-white/80 px-7 shadow-card")}>
                 Just browse
@@ -243,7 +247,7 @@ export function Landing({ info }: { info: PublicData }) {
         <div className="mx-auto -mt-8 flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 pb-16 lg:-mt-16 lg:px-6 lg:pb-24">
                     <OnboardingTour tour="landing" label="Take the 30-second tour" className="chip min-h-11 shadow-card" />
           <Link href="/guide" className="inline-flex min-h-11 items-center gap-1.5 font-semibold text-primary">
-            Read the full guide for residents, drivers and CWA staff <ArrowRight aria-hidden className="size-4" />
+            Read the guide <ArrowRight aria-hidden className="size-4" />
           </Link>
         </div>
 
@@ -301,7 +305,7 @@ export function Landing({ info }: { info: PublicData }) {
             flip
             kicker="Reservoirs"
             title="Every reservoir at a glance"
-            text="Latest published level of each reservoir, dated and sourced. Old readings say so."
+            text="Latest level of each reservoir, with its date and source."
           >
             <div className="surface w-full max-w-md p-6">
               <ul className="grid grid-cols-3 gap-x-3 gap-y-5">
@@ -324,7 +328,6 @@ export function Landing({ info }: { info: PublicData }) {
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <h2 className={h2}>Latest CWA notices</h2>
-                <p className="mt-3 max-w-[52ch] text-lg text-muted-foreground">Dated notices from public sources. Open the source to check whether one still applies.</p>
               </div>
               <Link href="/resident?tab=news" className="inline-flex min-h-11 items-center gap-1 font-semibold text-primary">
                 All notices <ArrowRight aria-hidden className="size-4" />
@@ -352,10 +355,9 @@ export function Landing({ info }: { info: PublicData }) {
         <section className="px-4 pb-10 lg:px-6">
           <div className="wave-panel relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] px-6 pt-10 pb-28 text-center sm:px-10 lg:pt-14 lg:pb-36">
             <h2 className={h2}>Ready when the water is.</h2>
-            <p className="mx-auto mt-3 max-w-[44ch] text-lg text-white/85">One tap for residents. Drivers and CWA staff sign in with a code.</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/login" className={cn(buttonVariants({ size: "tap" }), "h-14 bg-white px-7 text-primary hover:bg-white/90")}>
-                Open the app <ArrowRight aria-hidden />
+                Start <ArrowRight aria-hidden />
               </Link>
               <Link href="/login?role=driver" className={cn(buttonVariants({ size: "tap" }), "h-14 bg-white/15 px-7 hover:bg-white/25")}>
                 Staff sign-in
@@ -369,7 +371,7 @@ export function Landing({ info }: { info: PublicData }) {
       <footer className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-10 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between lg:px-6">
         <Logo className="text-base text-foreground" />
         <p className="max-w-[60ch]">
-          Built in 24 hours at MDX Hackathon 2026, Mauritius. Data: CWA communiqués and reservoir bulletins.
+          Built at MDX Hackathon 2026, Mauritius. <Link href="/sources" className="font-semibold text-primary underline underline-offset-2">Data sources</Link>
         </p>
       </footer>
     </div>

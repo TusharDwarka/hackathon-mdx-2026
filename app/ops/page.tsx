@@ -1,11 +1,10 @@
 "use client";
 
-// CWA operations screen (SPEC V2 screen 5; contracts/api.md ops 11, 12, 14, 15, 17; docs/NEXT-TASK-SPLIT.md P4 steps 5, 6, 8).
-// Four sections instead of one long dashboard: Overview, Dispatch, Complaints, Report review.
-// The section is kept in the URL hash (#dispatch) so a link or a reload opens the same one.
-// Live: complaints, requests and rounds refresh over Realtime. No login.
+// CWA operations screen. Five sections (Overview, Dispatch, Complaints, Reports, Notices), kept in the
+// URL hash (#dispatch) so a link or a reload opens the same one. Live over Realtime.
 // Fallback: database unreachable or no streets loaded -> demo sample with a visible banner.
 import { useCallback, useEffect, useState } from "react";
+import { ClipboardCheck, FileText, LayoutDashboard, MessageSquareWarning, Truck, type LucideIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { errText, loadActiveRounds, loadWaitingRequests } from "@/components/map/data";
 import { demoOps, loadComplaints, loadOps, prioritiesFor, type OpsData } from "@/components/ops/data";
@@ -14,13 +13,15 @@ import { DispatchPanel } from "@/components/ops/DispatchPanel";
 import { Complaints } from "@/components/ops/Complaints";
 import { Review } from "@/components/ops/Review";
 import { NoticePaste } from "@/components/ops/NoticePaste";
+import { PageHeader } from "@/components/ui/brand";
+import { PipeLoader } from "@/components/ui/pipe-loader";
 
-const SECTIONS: { id: Section; label: string }[] = [
-  { id: "overview", label: "Overview" },
-  { id: "dispatch", label: "Dispatch" },
-  { id: "complaints", label: "Complaints" },
-  { id: "review", label: "Report review" },
-  { id: "notices", label: "Paste a notice" },
+const SECTIONS: { id: Section; label: string; Icon: LucideIcon }[] = [
+  { id: "overview", label: "Overview", Icon: LayoutDashboard },
+  { id: "dispatch", label: "Dispatch", Icon: Truck },
+  { id: "complaints", label: "Complaints", Icon: MessageSquareWarning },
+  { id: "review", label: "Reports", Icon: ClipboardCheck },
+  { id: "notices", label: "Notices", Icon: FileText },
 ];
 const isSection = (s: string): s is Section => SECTIONS.some((x) => x.id === s);
 
@@ -45,6 +46,7 @@ export default function OpsPage() {
   const go = useCallback((s: Section) => {
     setSection(s);
     window.history.replaceState(null, "", `#${s}`);
+    window.scrollTo({ top: 0 });
   }, []);
 
   // Live updates: a complaint from /resident, a new request, a round started or served on /driver.
@@ -68,11 +70,10 @@ export default function OpsPage() {
     return () => { clearTimeout(t); supabase.removeChannel(ch); };
   }, [live]);
 
-  if (!data) return <main className="p-6 text-lg text-muted-foreground">Loading…</main>;
+  if (!data) return <main className="grid min-h-[60dvh] place-items-center"><PipeLoader /></main>;
 
   const name = (id: number) => data.streets.find((s) => s.id === id)?.name ?? `Street ${id}`;
-  const area = (streetId: number) => { const s = data.streets.find((x) => x.id === streetId); return (s && data.areaNames[s.area_id]) || "Unknown area"; };
-  const areaTitle = [...new Set(Object.values(data.areaNames))].join(", ");
+  const area = (streetId: number) => { const s = data.streets.find((x) => x.id === streetId); return (s && data.areaNames[s.area_id]) || "—"; };
   const counts: Partial<Record<Section, number>> = {
     complaints: data.complaints.filter((c) => c.status === "open").length,
     review: data.statuses.filter((s) => s.status === "suspect" || s.status === "unconfirmed").length,
@@ -80,27 +81,25 @@ export default function OpsPage() {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-4 lg:p-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold">CWA operations{areaTitle ? ` · ${areaTitle}` : ""}</h1>
-        <p className="text-sm text-muted-foreground">Rule-based view of reports, requests and complaints. Stored by street only.</p>
-      </header>
-      {error && <p className="rounded-xl bg-amber-100 px-3 py-2 text-sm text-amber-900">Demo mode: sample data, nothing is saved. ({error})</p>}
+    <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 pt-5 pb-6 md:max-w-3xl lg:max-w-6xl lg:px-8 lg:pt-8">
+      <PageHeader eyebrow="CWA staff" title="Operations" />
+      {error && <p className="rounded-2xl bg-amber-100 px-4 py-2.5 text-sm text-amber-950">Demo mode: sample data, nothing is saved.</p>}
 
-      <div role="tablist" aria-label="Operations sections" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
-        {SECTIONS.map((s) => (
+      <div role="tablist" aria-label="Operations sections" className="sticky top-0 z-30 -mx-4 grid grid-cols-5 gap-1 bg-background/90 px-4 py-2 backdrop-blur lg:static lg:mx-0 lg:flex lg:gap-2 lg:bg-transparent lg:px-0 lg:backdrop-blur-none">
+        {SECTIONS.map(({ id, label, Icon }) => (
           <button
-            key={s.id}
-            id={`tab-${s.id}`}
+            key={id}
+            id={`tab-${id}`}
             type="button"
             role="tab"
-            aria-selected={section === s.id}
-            aria-controls={`panel-${s.id}`}
-            onClick={() => go(s.id)}
-            className="chip min-h-11 shrink-0 shadow-card transition-colors duration-150 ease-snap aria-selected:bg-primary aria-selected:text-primary-foreground motion-reduce:transition-none"
+            aria-selected={section === id}
+            aria-controls={`panel-${id}`}
+            onClick={() => go(id)}
+            className="relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl bg-card px-1 text-[0.6875rem] font-semibold shadow-card transition-colors duration-150 ease-snap aria-selected:bg-primary aria-selected:text-primary-foreground lg:min-h-11 lg:flex-row lg:gap-2 lg:px-4 lg:text-sm motion-reduce:transition-none"
           >
-            {s.label}
-            {counts[s.id] ? <span className="rounded-full bg-current/15 px-1.5 text-xs tabular-nums">{counts[s.id]}</span> : null}
+            <Icon aria-hidden className="size-5 lg:size-4" />
+            <span className="max-w-full truncate">{label}</span>
+            {counts[id] ? <span className="absolute -top-1 -right-1 grid min-w-5 place-items-center rounded-full bg-red-600 px-1 text-[0.625rem] leading-5 text-white tabular-nums lg:static lg:bg-current/15 lg:text-current">{counts[id]}</span> : null}
           </button>
         ))}
       </div>

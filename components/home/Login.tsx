@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Droplets, KeyRound, LayoutDashboard, LogOut, Mail, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo, SideWaves, saveRole, type Role } from "@/components/ui/brand";
+import { LangSwitch } from "@/components/ui/i18n";
 import { safeNext, saveGuest, useUser } from "@/components/home/shared";
 import { ApiError, MIN_PASSWORD, getTankers, signIn, signOut, signUp, startGuestSession, startStaffSession, type Tanker } from "@/lib/queries";
 
@@ -124,8 +125,6 @@ export function Login({ asked, next, mode: askedMode }: { asked: Role; next?: st
     router.push(role === "resident" ? back : DEST[role]);
   };
 
-  const demoCode = role === "driver" ? "demo-driver" : "demo-ops";
-
   return (
     <main className="grid min-h-dvh lg:grid-cols-[1fr_1.15fr]">
       {/* Brand panel, from 1024px */}
@@ -147,8 +146,9 @@ export function Login({ asked, next, mode: askedMode }: { asked: Role; next?: st
       </section>
 
       <section className="flex flex-col px-4 pt-4 pb-8 sm:px-8 lg:justify-center lg:px-14">
-        <div className="flex items-center justify-between lg:hidden">
-          <Link href="/" aria-label="Kot Delo? home"><Logo /></Link>
+        <div className="flex items-center justify-between lg:justify-end">
+          <Link href="/" aria-label="Kot Delo? home" className="lg:hidden"><Logo /></Link>
+          <LangSwitch />
         </div>
         <div className="mx-auto mt-8 w-full max-w-md lg:mt-0">
           <Link href="/" className="hidden min-h-11 items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground lg:inline-flex">
@@ -239,7 +239,6 @@ export function Login({ asked, next, mode: askedMode }: { asked: Role; next?: st
                 <Button type="submit" size="tap" disabled={busy}>
                   {busy ? "Opening…" : "Continue as guest"} <ArrowRight aria-hidden />
                 </Button>
-                <Link href="/resident" className="text-center text-sm font-medium text-primary underline underline-offset-2">Just browse, without reporting</Link>
               </>
             ) : (
               <>
@@ -267,11 +266,6 @@ export function Login({ asked, next, mode: askedMode }: { asked: Role; next?: st
                     <input type="password" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} placeholder="Access code" className={`${input} pl-11`} />
                   </span>
                 </label>
-                <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="chip min-h-6 bg-amber-100 px-2 text-xs text-amber-950">Demo</span>
-                  The demo code is <code className="font-mono font-semibold text-foreground">{demoCode}</code>
-                  <button type="button" onClick={() => setCode(demoCode)} className="min-h-9 font-semibold text-primary underline underline-offset-2">Use it</button>
-                </p>
                 {error && <p role="alert" className="text-sm text-red-800">{error}</p>}
                 <Button type="submit" size="tap" disabled={busy}>
                   {busy ? "Signing in…" : "Sign in"} <ArrowRight aria-hidden />

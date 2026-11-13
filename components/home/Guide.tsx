@@ -9,7 +9,7 @@ import {
   MessageSquareWarning, Newspaper, Play, Route, Square, Truck, X, type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { LogoMark, PageHeader, type Role } from "@/components/ui/brand";
+import { LogoMark, PageHeader, readRole, type Role } from "@/components/ui/brand";
 import { tilt } from "@/components/ui/motion";
 
 type Step = { title: string; text: string; Icon: LucideIcon; href?: string; cta?: string };
@@ -18,39 +18,39 @@ export const GUIDE: Record<Role, { label: string; Icon: LucideIcon; intro: strin
   resident: {
     label: "Resident",
     Icon: Droplets,
-    intro: "Know when water comes, plan around it and get the tanker when it does not. No account needed.",
+    intro: "When water comes, and the tanker when it doesn't.",
     steps: [
-      { title: "Pick your locality", text: "Choose where you live. Today's official CWA water window shows at once. No account, no name.", Icon: MapPin, href: "/resident", cta: "Open Overview" },
-      { title: "Plan your water day", text: "The top card turns the window into a plan: start the pump, fill the tank first, washing machine, finish before the water stops.", Icon: CalendarClock, href: "/resident", cta: "See your day" },
-      { title: "Never miss the water", text: "Tap Remind me 30 min before. Your phone rings before the window, even with Kot Delo? closed.", Icon: Bell, href: "/resident", cta: "Set a reminder" },
-      { title: "Tell your street", text: "In Report, tap Water is here or No water. When neighbours agree, the status says Confirmed.", Icon: Megaphone, href: "/resident?tab=report", cta: "Open Report" },
-      { title: "Request a tanker", text: "No water for too long? In Tanker, tap I need a tanker. Free, for your street.", Icon: Truck, href: "/resident?tab=request", cta: "Request a tanker" },
-      { title: "Follow it live", text: "Watch the truck move on the map and see how many stops are left before yours.", Icon: Route, href: "/map", cta: "Open the map" },
-      { title: "Stay informed", text: "Reservoir levels, CWA notices and the next-water forecast, always with a date and a source. A forecast is an estimate, never a promise.", Icon: Newspaper, href: "/resident?tab=news", cta: "Read notices" },
+      { title: "Pick your locality", text: "Today's CWA water time shows at once.", Icon: MapPin, href: "/resident", cta: "Overview" },
+      { title: "Plan your day", text: "Pump, tank, then washing machine, before the water stops.", Icon: CalendarClock, href: "/resident", cta: "Your day" },
+      { title: "Get a reminder", text: "Your phone rings 30 min before the water.", Icon: Bell, href: "/resident", cta: "Remind me" },
+      { title: "Tell your street", text: "Tap Water is here or No water. When neighbours agree, it says Confirmed.", Icon: Megaphone, href: "/resident?tab=report", cta: "Report" },
+      { title: "Request a tanker", text: "No water for too long? One tap, free.", Icon: Truck, href: "/resident?tab=request", cta: "Tanker" },
+      { title: "Follow it live", text: "See the truck on the map and the stops before yours.", Icon: Route, href: "/map", cta: "Map" },
+      { title: "Read the notices", text: "Reservoir levels and CWA notices, each with its date and source.", Icon: Newspaper, href: "/resident?tab=news", cta: "Notices" },
     ],
   },
   driver: {
     label: "Tanker driver",
     Icon: Truck,
-    intro: "One round at a time. Your position is shared only while a round is on.",
+    intro: "Your location is shared only while a round is on.",
     steps: [
-      { title: "Sign in", text: "On Sign in, choose Tanker driver, pick your tanker and enter the access code from your supervisor.", Icon: KeyRound, href: "/login?role=driver", cta: "Driver sign-in" },
-      { title: "Start a round", text: "The round lists the streets with waiting households that no other driver has.", Icon: Play, href: "/driver", cta: "Open My round" },
-      { title: "Drive", text: "Allow location when asked. Residents see the truck move. No GPS? Use Simulate the drive for a demo.", Icon: Route },
-      { title: "Mark each stop Served", text: "Tap Served at each street. The resident's request flips to Served on their phone straight away.", Icon: ClipboardList },
-      { title: "End the round", text: "Tap End round when the tank is empty or every stop is served. Location sharing stops.", Icon: Square },
+      { title: "Sign in", text: "Pick your tanker and enter the code from your supervisor.", Icon: KeyRound },
+      { title: "Start your round", text: "You get the streets to serve, in order, with the litres for each.", Icon: Play, href: "/driver", cta: "My round" },
+      { title: "Follow the route", text: "Tap Open route in Google Maps. It drives you stop by stop.", Icon: Route, href: "/driver", cta: "My round" },
+      { title: "Tap Served", text: "At each street. Residents see it at once.", Icon: ClipboardList },
+      { title: "End the round", text: "When the tank is empty or all stops are served. Sharing stops.", Icon: Square },
     ],
   },
   ops: {
     label: "CWA staff",
     Icon: LayoutDashboard,
-    intro: "A rule-based view of reports, requests and complaints, stored by street only.",
+    intro: "Requests, complaints and tankers in one place.",
     steps: [
-      { title: "Sign in", text: "On Sign in, choose CWA staff and enter the operations access code.", Icon: KeyRound, href: "/login?role=ops", cta: "Staff sign-in" },
-      { title: "Read the priorities", text: "Overview ranks streets by hours without water and waiting requests, with the reason for each.", Icon: LayoutDashboard, href: "/ops", cta: "Open Operations" },
-      { title: "Dispatch tankers", text: "Dispatch fills each tanker up to its capacity from waiting demand and sends the round to a driver.", Icon: Truck, href: "/ops", cta: "Dispatch" },
-      { title: "Handle complaints", text: "Complaints arrive live, grouped by area. Resolve them when they are dealt with.", Icon: MessageSquareWarning, href: "/ops", cta: "Complaints" },
-      { title: "Watch the reservoirs", text: "Tanks and the trend line show when a reservoir may reach 30% and 20%. An estimate, labelled as one.", Icon: LineChart, href: "/ops", cta: "See the trend" },
+      { title: "Sign in", text: "Enter the operations code.", Icon: KeyRound },
+      { title: "Check the overview", text: "Water waiting, tankers out, open complaints, reservoir levels.", Icon: LayoutDashboard, href: "/ops", cta: "Overview" },
+      { title: "Send tankers", text: "In Dispatch, pick streets, check the plan, then confirm.", Icon: Truck, href: "/ops#dispatch", cta: "Dispatch" },
+      { title: "Resolve complaints", text: "Confirm, and the resident with an account is told.", Icon: MessageSquareWarning, href: "/ops#complaints", cta: "Complaints" },
+      { title: "Watch the reservoirs", text: "The trend shows when a reservoir may hit 30% and 20%.", Icon: LineChart, href: "/ops", cta: "Trend" },
     ],
   },
 };
@@ -212,22 +212,16 @@ export function OnboardingTour({ tour = "resident", drop = false, label = "How i
   );
 }
 
-/** The /guide page: every role's steps as a numbered path, each with a link to the screen it talks about. */
+const noSub = () => () => {};
+/** The /guide page: only the signed-in role's steps (a driver never sees resident or CWA steps).
+ *  No role chosen yet = resident. */
 export function GuidePage() {
+  const stored = useSyncExternalStore(noSub, readRole, () => undefined); // undefined = server render, role not known yet
+  const roles: Role[] = stored === undefined ? [] : [stored ?? "resident"];
   return (
     <main className="mx-auto w-full max-w-md px-4 pt-5 pb-10 md:max-w-3xl lg:max-w-5xl lg:px-8 lg:pt-8">
-      <PageHeader eyebrow="Guide" title="How to use Kot Delo?" logo={<OnboardingTour drop />} />
-      <nav aria-label="Guide sections" className="mt-6 flex flex-wrap gap-2">
-        {(Object.keys(GUIDE) as Role[]).map((r) => {
-          const { label, Icon } = GUIDE[r];
-          return (
-            <a key={r} href={`#${r}`} className="chip min-h-11 bg-card shadow-card hover:bg-primary hover:text-primary-foreground">
-              <Icon aria-hidden className="size-4" /> {label}
-            </a>
-          );
-        })}
-      </nav>
-      {(Object.keys(GUIDE) as Role[]).map((r) => {
+      <PageHeader eyebrow="Guide" title="How to use Kot Delo?" logo={roles[0] === "resident" ? <OnboardingTour drop /> : undefined} />
+      {roles.map((r) => {
         const { label, Icon, intro, steps } = GUIDE[r];
         return (
           <section key={r} id={r} aria-labelledby={`${r}-title`} className="mt-10 scroll-mt-6">
@@ -260,9 +254,6 @@ export function GuidePage() {
           </section>
         );
       })}
-      <p className="surface mt-10 px-5 py-4 text-center text-xs text-muted-foreground">
-        Stored by street, never by house or person. Official CWA times win over any estimate.
-      </p>
     </main>
   );
 }
