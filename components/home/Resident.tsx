@@ -22,13 +22,16 @@ import { MoreLink, News, ReadingDate, Reservoirs, Source } from "@/components/ho
 import type { PublicData } from "@/components/home/public-data";
 import { minOfDay, toMin, windowStatus } from "@/components/home/time";
 import { ForecastCard, Planner, QualityCard, SaveWaterCard } from "@/components/home/WaterDay";
-import { forecastNext, waterQuality } from "@/components/home/water-day";
+import { loadWaterPoints, type WaterPoint } from "@/components/map/data";
 import { likelyWaterTime, streetStatus } from "@/components/home/rules";
 import {
   DemoBanner, REPORT_LIMIT_MS, Skeleton, fmtDate, fmtHours, isoDay, loadArea, loadStreetData, plural, readArea, readGuest, readMyReport, readStreet,
   saveArea, saveGuest, saveMyReport, saveStreet, useBase, useNow, type AreaData, type ComplaintCategory, type MyReport, type RequestStatus, type StreetData,
 } from "@/components/home/shared";
-import { postComplaint, postReport, postRequest, reservoirTier, type ReportType, type ReservoirTier } from "@/lib/queries";
+import {
+  computeForecast, computeWaterQuality, getForecast, getWaterQuality, postComplaint, postReport, postRequest, reservoirTier,
+  type Forecast, type Quality, type ReportType, type ReservoirTier,
+} from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
 
 const TABS = [
@@ -155,6 +158,28 @@ export function Resident({ info }: { info: PublicData }) {
     };
   }, [streetId, demo]);
 
+  // Ops 24 + 26 from P3's routes, per locality. On failure the page computes them itself (see below).
+  const [remote, setRemote] = useState<{ areaId: number; forecast: Forecast | null; quality: Quality } | null>(null);
+  useEffect(() => {
+    if (areaId === null || demo) return;
+    let current = true;
+    Promise.all([getForecast(areaId), getWaterQuality(areaId)])
+      .then(([forecast, quality]) => {
+        if (current) setRemote({ areaId, forecast, quality });
+      })
+      .catch((e) => console.warn("forecast/quality API not reachable, computing on the page:", e));
+    return () => {
+      current = false;
+    };
+  }, [areaId, demo]);
+
+  // Public water points (P3's water_points table from P5's file) + any in data/ at build time.
+  const [dbPoints, setDbPoints] = useState<WaterPoint[]>([]);
+  useEffect(() => {
+    if (demo) return;
+    loadWaterPoints().then(setDbPoints).catch(() => {}); // none = the card says so
+  }, [demo]);
+
   // One report per street per 30 minutes: remembered on this phone only.
   const lastReport = sent && sent.streetId === streetId ? sent.report : streetId !== null ? readMyReport(streetId) : null;
   const mine = lastReport && now && now.getTime() - lastReport.at < REPORT_LIMIT_MS ? lastReport : null;
@@ -236,11 +261,14 @@ export function Resident({ info }: { info: PublicData }) {
   const matches = areas.filter((a) => fold(a.name).includes(fold(query)));
   const mav = info.reservoirs[0];
 
-  // Water day (docs/WATER-DAY-SPLIT.md): forecast (op 24), the window to plan around (op 27), quality (op 26).
+  // Water day (docs/WATER-DAY-SPLIT.md): P3's forecast (op 24) and quality (op 26) from the API; if the API
+  // is not reachable (or in demo mode) P3's same pure functions run here on the timetable this page already has.
   const tier = mav.pct === null ? null : reservoirTier(mav.pct);
   const todayIso = now ? isoDay(now) : null;
-  const known = place && !place.failed ? (place.week ?? (place.win && todayIso ? [{ day: todayIso, win: place.win }] : [])) : null;
-  const forecast = known && todayIso ? forecastNext({ today: todayIso, official: known, likely, tier }) : null;
+  const apiDay = remote && remote.areaId === areaId ? remote : null;
+  const rows = place && !place.failed ? (place.week ?? (place.win && todayIso ? [{ day: todayIso, win: place.win }] : [])).flatMap((d) => (d.win ? [{ ...d.win, day: d.day }] : [])) : null;
+  const forecast = apiDay ? apiDay.forecast : rows && now ? computeForecast(rows, tier, likely, now) : null;
+  const quality = apiDay ? apiDay.quality : computeWaterQuality([], tier, now ?? undefined);
   // Today's window while it is still ahead or running, else the next official one, else the forecast (labelled estimate).
   const upcoming =
     place && !place.failed && now && todayIso
@@ -248,10 +276,9 @@ export function Resident({ info }: { info: PublicData }) {
         ? { day: todayIso, win: place.win, kind: "official" as const }
         : (() => {
             const next = place.week?.find((d) => d.day > todayIso && d.win);
-            return next?.win ? { day: next.day, win: next.win, kind: "official" as const } : forecast ? { day: forecast.next.day, win: forecast.next, kind: "estimate" as const } : null;
+            return next?.win ? { day: next.day, win: next.win, kind: "official" as const } : forecast ? { day: forecast.next.day, win: forecast.next, kind: forecast.basis === "official" ? ("official" as const) : ("estimate" as const) } : null;
           })()
       : null;
-  const quality = waterQuality(tier, info.quality, area?.name ?? null, todayIso ?? "");
 
   // ---------- pieces used by several sections ----------
 
@@ -717,7 +744,7 @@ export function Resident({ info }: { info: PublicData }) {
       {area && <div className="md:col-span-2">{heatCard}</div>}
       {noticesCard}
       <div className="md:col-span-2 xl:col-span-3">
-        <SaveWaterCard points={info.points} from={street ? { lat: street.lat, lng: street.lng, name: street.name } : null} />
+        <SaveWaterCard points={[...dbPoints, ...info.points.filter((p) => !dbPoints.some((d) => d.name === p.name))]} from={street ? { lat: street.lat, lng: street.lng, name: street.name } : null} />
       </div>
     </div>
   );

@@ -2,14 +2,15 @@
 
 // Water-day cards for the resident Overview (docs/WATER-DAY-SPLIT.md P2 steps 2-6):
 // planner + reminders, tomorrow forecast, water quality, save water + nearby help.
-// Rules are in water-day.ts. Every card has a labelled fallback. No card ever says water is safe or unsafe to drink.
+// Rules are P3's (lib/queries.ts ops 24, 26, 27); water-day.ts adds the calendar file and distances. Every card has a labelled fallback. No card ever says water is safe or unsafe to drink.
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Bell, BellRing, CalendarPlus, Car, Info, MapPin, Recycle, ShieldAlert, Truck, Waves, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Source } from "@/components/home/PublicInfo";
-import { addDays, icsFile, km, planDay, type Forecast, type PlanStep, type Quality, type Win } from "@/components/home/water-day";
-import type { WaterPoint } from "@/components/home/public-data";
+import { addDays, icsFile, km, withOffsets, type Win } from "@/components/home/water-day";
+import { planDay, type Forecast, type PlanStep, type Quality } from "@/lib/queries";
+type WaterPoint = { name: string; kind: string; lat: number; lng: number; source_url: string | null };
 import { fmtDate } from "@/components/home/shared";
 import { toMin } from "@/components/home/time";
 
@@ -38,7 +39,7 @@ const DOT: Record<PlanStep["kind"], string> = {
 export function Planner({ place, day, win, kind, now, today }: { place: string | null; day: string | null; win: Win | null; kind: "official" | "estimate" | "sample"; now: Date | null; today: string | null }) {
   const w = win ?? SAMPLE;
   const d = day ?? today;
-  const steps = planDay(w);
+  const steps = withOffsets(planDay(w), w); // P3 op 27
   const startAt = d ? new Date(`${d}T00:00`).getTime() + toMin(w.start_time) * 60_000 : null;
   const at = (offset: number) => (startAt === null ? null : startAt + offset * 60_000);
   const current = now ? steps.findLastIndex((s) => (at(s.offset) ?? Infinity) <= now.getTime()) : -1;
@@ -261,7 +262,7 @@ export function SaveWaterCard({ points, from }: { points: WaterPoint[]; from: { 
                   <span className="block font-semibold">{p.name}</span>
                   <span className="text-muted-foreground first-letter:uppercase">{p.kind} · {p.d < 1 ? `${Math.round(p.d * 1000)} m` : `${p.d.toFixed(1)} km`} from {from.name} (straight line)</span>
                 </span>
-                <a href={p.source_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline underline-offset-2">Source</a>
+                {p.source_url && <a href={p.source_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline underline-offset-2">Source</a>}
               </li>
             ))}
           </ul>
