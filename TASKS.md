@@ -32,6 +32,23 @@ Merged so far: #1 feat/data, #2 + #7 feat/home, #3 feat/driver-map, #5 feat/data
 
 **STOP after step 8 and ask P1. No extras on your own.**
 
+## V2 (Fri 17:30) — approved by P1. Scope: SPEC.md "V2 scope", rules: contracts/api.md "V2 additions"
+Owners by folder, no shared files:
+- **P2 `feat/home`**: app/page.tsx (landing), app/resident/, app/layout.tsx, app/globals.css, components/home/, components/ui/ (shared nav lives here)
+- **P3 `feat/data`**: sql/, scripts/, lib/queries.ts
+- **P4 `feat/driver-map`**: app/driver/, app/map/, app/ops/, components/map/, components/ops/, lib/eta.ts
+- **P5 `feat/data-files`**: data/*.csv, README.md, team/p5-pitch/
+
+- [ ] 9. (P1 or P3) `npm run load-data` + `npm run seed-demo` against Supabase. Nothing is real until this is done
+- [ ] 10. (P3) `sql/v2.sql` (P1 runs it) + `lib/queries.ts` for ops 12 to 17, each with a pure function and a self-check; seed-demo adds rows for today, a few complaints, paid requests
+- [ ] 11. (P5) `data/reservoir.csv`: real daily or weekly Mare aux Vacoas level with source URLs; the real CWA tanker fee if a source exists
+- [ ] 12. (P2) Three design directions as PNG (phone + desktop) in team/p2-frontend/design/, P1 picks one
+- [ ] 13. (P2) Responsive shell + landing `/`; Home moves to `/resident`
+- [ ] 14. (P2) Resident: status with trust (op 15), likely water time (op 16), demo payment step (op 13), complaint in two taps (op 14), one report per street per 30 min
+- [ ] 15. (P4) `/ops`: reservoir (12), heat map (11), priority list (17), open complaints (14), suspect reports (15)
+- [ ] 16. (P4) /driver shows "Paid Rs X" per stop; /map and /driver demo mode when `streets` is empty; links go to `/resident`
+- [ ] 17. (All) Two-phone run on the Vercel URL, then polish only
+
 ## Extras (only if P1 says so)
 - [ ] Crowd "kamion spotted" fallback
 - [ ] Water points map
