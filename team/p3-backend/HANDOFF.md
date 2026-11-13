@@ -1,5 +1,56 @@
 # HANDOFF (p3-backend)
 
+## V3 (docs/NEXT-TASK-SPLIT.md, P3 package) — b06aef4 on feat/data
+Full shapes, limits and decisions for P1: `team/p3-backend/CONTRACT-V3-PROPOSAL.md`.
+
+### Changed
+- `sql/v3.sql` is additive, so the current screens keep working. It adds tankers (2 demo rows of 1000 L), private `sessions` and `session_actions`, `requests.litres`, rounds with `tanker_id`, a 'planned' status and a `dispatch_key`, plus `allocations`, `complaints.is_demo`, reservoir `date_basis` and `is_aggregate`, `notices` and `supply_volumes`. Eight `kd_*` functions do every write with ownership and limit checks in one transaction. Only the service role may call them.
+- `sql/v3-lockdown.sql` drops the anon insert and update policies. Run it ONLY after P2 and P4 write through `/api/*`.
+- `app/api/*` has 10 route handlers: session, reports, requests, complaints, dispatch, rounds, status, priority, reservoirs and notices. Shared code lives in `app/api/_lib/`.
+- `lib/queries.ts` changes:
+  - New pure rules: `planDispatch`, `loadsNeeded`, the `validate*Input` functions, `computeStreetTrust` and `computeAllStreetTrust`, `explainPriority` and `priorityRows`, `groupComplaints`, `latestReservoirs`, `classifyNotices` and `matchArea`.
+  - New client calls: `getSession`, `startGuestSession`, `startStaffSession`, `endSession`, `getMyRequests`, `getDispatchPlan`, `confirmDispatch`, `getRounds`, `roundAction`, `getTrustStatuses`, `getComplaintGroups`, `getReservoirs`, `getNotices` and `getTankers`.
+  - `postReport`, `postComplaint` and `resolveComplaint` now go through the API. They fall back to the old anon write while the API is not deployed.
+  - `postRequest(streetId, litres)` uses the API. Calling it without litres keeps the old anon insert, so the current Home still works.
+  - `computeStreetStatus` and `computePriority` keep the V2 shape and use the same single rule.
+- `scripts/load-data.ts` loads every reservoir from `reservoir_levels.csv`. It skips prior-year rows, keeps the 7-reservoir aggregate apart, and unifies the name spellings. It also loads `notices.csv` and `supply.csv` when present.
+- `scripts/seed-demo.ts` replaces DEMO complaints only and no longer wipes the table.
+- `scripts/test-sql.ts` runs every migration in in-memory Postgres (PGlite) and checks 42 rules.
+
+### Needs from others
+- **P1:**
+  - Confirm or adjust the contract proposal, especially the guest session (decision 1 there).
+  - Run `sql/v3.sql` after v2.
+  - Set `DRIVER_ACCESS_CODE` and `OPS_ACCESS_CODE` on Vercel, or `KD_DEMO_ACCESS=1` to allow the labelled demo codes.
+  - Make sure `SUPABASE_SERVICE_ROLE_KEY` is set on Vercel. Without it every `/api/*` route answers 503 and the screens use the legacy path.
+- **P2:**
+  - The "Continue as guest" button calls `startGuestSession()`.
+  - The request form calls `postRequest(streetId, litres)`, from 1 to 1000 L.
+  - Show request progress with `getMyRequests()`.
+  - Handle the `throttled` error code: `ApiError.detail.retry_after_s` says when the next report is allowed.
+- **P4:**
+  - The driver signs in with `startStaffSession("driver", code, tankerId)`, then `getRounds()` shows only its own round.
+  - Round actions are `roundAction({action: "start" | "serve" | "end" | "position"})`.
+  - Ops signs in with `startStaffSession("ops", code)`. The dispatch preview is `getDispatchPlan({capacity: 100, tankers: 1})` for the 120 L example, and confirming is `confirmDispatch(tankerId, key)`. Reuse the same key on retry.
+  - Complaint groups come from `getComplaintGroups()`. The resident map follows the right tanker with `getRounds(streetId)`.
+- **P5:** add `data/notices.csv` and `data/supply.csv` in the formats in the proposal, but only with verified rows.
+
+### Blocked
+- Nothing in V3 has run against the real Supabase. There is no `.env.local` on this machine.
+- The SQL is tested in PGlite, which is real Postgres 18 with Supabase roles emulated. The route handlers are type-checked, built and smoke-tested without keys. They have not run against a live PostgREST.
+
+### How to test
+- `npx tsx lib/queries.ts` prints `queries ok`. This covers capacity, split, validation, trust, priority, complaints, reservoirs and notices.
+- `npm i --no-save @electric-sql/pglite && npx tsx scripts/test-sql.ts` prints `sql ok`. It covers the 120 L / 100 L case, the same key giving the same round, a busy tanker being refused, driver 2 being unable to serve driver 1's stop, a late request staying waiting, split and release, and anon being locked out.
+- `npm run build` and `npm run lint` pass. Every `/api/*` route is dynamic.
+- With keys, run `npm run dev`. Then in the browser console:
+  1. `await startGuestSession()`
+  2. `await postRequest(<street>, 200)` twice. It returns the same id.
+  3. `await startStaffSession("ops", "demo-ops")`, then `await getDispatchPlan({capacity: 100, tankers: 1})`.
+  4. `await confirmDispatch(1, "test-key-1")`.
+
+## V2 and earlier
+
 ## Changed
 - `lib/queries.ts`: contract ops 1, 2, 3, 10, 11 on the anon Supabase client.
   - `getAreas()`, `getStreets(areaId?)` -> street picker (driving order)
