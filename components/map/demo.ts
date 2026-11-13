@@ -6,7 +6,7 @@ import { MOCK_STREETS } from "@/lib/mock";
 import { ASSUMED_REQUEST_L, type Plan } from "@/components/ops/dispatch";
 import type { RecentReport } from "@/components/ops/rules";
 import type { ScheduleRow } from "@/components/map/layers";
-import type { LiveRound, Stop, Street, WaitingRequest } from "@/components/map/data";
+import type { LiveRound, Stop, Street, WaitingRequest, WaterPoint } from "@/components/map/data";
 
 export const DEMO_STREETS: Street[] = MOCK_STREETS;
 export const DEMO_AREA = { id: MOCK_STREETS[0].area_id, name: "Demo area (mock streets)" };
@@ -40,6 +40,12 @@ export function demoHistory(now = Date.now()): RecentReport[] {
   }
   return [...out, ...demoRecentReports(now)];
 }
+
+/** Two sample water points next to the mock streets. Not real places: demo mode only, never shown live. */
+export const DEMO_WATER_POINTS: WaterPoint[] = [
+  { name: "Static tank (demo, not a real place)", kind: "static tank", lat: -20.2458, lng: 57.4962, source_url: null },
+  { name: "Tanker stop (demo, not a real place)", kind: "tanker stop", lat: -20.2528, lng: 57.5082, source_url: null },
+];
 
 /** Every second day 03:00 to 08:00, the pattern of the real Vacoas notice, around today. Labelled as a sample. */
 export function demoSchedule(now = new Date()): ScheduleRow[] {

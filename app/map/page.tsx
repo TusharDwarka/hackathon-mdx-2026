@@ -2,7 +2,8 @@
 
 // Resident map (contracts/api.md ops 1, 8, 9; docs/NEXT-TASK-SPLIT.md P4 steps 1-4, 7).
 // Several tankers can be out: the map follows the round that carries MY street and shows the others greyed.
-// Layers: live tankers, resident reports (last 3 h), supply reliability (last 14 days), official notices.
+// Layers: live tankers, resident reports (last 3 h), supply reliability (last 14 days), official notices,
+// tanker stops / water points (nearest to my street highlighted; no river suggestions, DECISIONS #7).
 // Phones: map on top, panel below. From 1024px: panel on the right. The map resizes with its container.
 // My street: ?street=<id>, else localStorage "kotdelo.street" (same key as /resident), else the first street.
 // Fallback: Supabase unreachable OR no streets loaded yet -> demo mode with simulated tankers.
@@ -10,11 +11,11 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Layers as LayersIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { etaMinutes } from "@/lib/eta";
-import { LiveMap, type AreaNotice, type Layers, type TankerMarker } from "@/components/map/LiveMap";
-import { errText, loadActiveRounds, loadAreas, loadLatestFixes, loadReports, loadSchedule, loadStreets, type Area, type Fix, type LiveRound, type Street } from "@/components/map/data";
+import { etaMinutes, km } from "@/lib/eta";
+import { LiveMap, type AreaNotice, type Layers, type TankerMarker, type WaterMarker } from "@/components/map/LiveMap";
+import { errText, loadActiveRounds, loadAreas, loadLatestFixes, loadReports, loadSchedule, loadStreets, loadWaterPoints, type Area, type Fix, type LiveRound, type Street, type WaterPoint } from "@/components/map/data";
 import { areaNotice, noticeTimes, reliabilityLegend, reportSignals, streetReliability, RELIABILITY_DAYS, type ScheduleRow } from "@/components/map/layers";
-import { arrived, DEMO_AREA, DEMO_STREETS, demoHistory, demoRounds, demoSchedule, simulateStep } from "@/components/map/demo";
+import { arrived, DEMO_AREA, DEMO_STREETS, DEMO_WATER_POINTS, demoHistory, demoRounds, demoSchedule, simulateStep } from "@/components/map/demo";
 import type { RecentReport } from "@/components/ops/rules";
 
 const STREET_KEY = "kotdelo.street"; // shared with /resident
@@ -24,6 +25,7 @@ const LAYER_INFO: { key: keyof Layers; label: string }[] = [
   { key: "reports", label: "Resident reports, last 3 h" },
   { key: "reliability", label: `Supply reliability, last ${RELIABILITY_DAYS} days` },
   { key: "notices", label: "Official notices" },
+  { key: "water", label: "Tanker stops and water points" },
 ];
 
 export default function MapPage() {
@@ -34,10 +36,11 @@ export default function MapPage() {
   const [fixes, setFixes] = useState<Record<number, Fix>>({});
   const [reports, setReports] = useState<RecentReport[] | null>(null); // null = layer unavailable
   const [schedule, setSchedule] = useState<ScheduleRow[] | null>(null);
+  const [waterPoints, setWaterPoints] = useState<WaterPoint[] | null>(null); // null = not available
   const [offline, setOffline] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(0);
-  const [layers, setLayers] = useState<Layers>({ tankers: true, reports: true, reliability: true, notices: true });
+  const [layers, setLayers] = useState<Layers>({ tankers: true, reports: true, reliability: true, notices: true, water: true });
   const [layersOpen, setLayersOpen] = useState(false); // phones only; always open from 1024px
   const roundsRef = useRef<LiveRound[]>([]);
   useEffect(() => { roundsRef.current = rounds; }, [rounds]);
@@ -56,6 +59,7 @@ export default function MapPage() {
     setFixes({});
     setReports(demoHistory());
     setSchedule(demoSchedule());
+    setWaterPoints(DEMO_WATER_POINTS);
   }, []);
 
   // Initial load.
@@ -75,6 +79,7 @@ export default function MapPage() {
         // Optional layers: a failure hides that layer, it does not break the tanker map.
         loadReports(RELIABILITY_DAYS).then(setReports).catch(() => setReports(null));
         loadSchedule().then(setSchedule).catch(() => setSchedule(null));
+        loadWaterPoints().then(setWaterPoints).catch(() => setWaterPoints(null)); // table not loaded yet
       })
       .catch((e) => {
         startDemo(errText(e));
@@ -176,6 +181,14 @@ export default function MapPage() {
   }, [schedule, areas, streets, minute]);
 
   const my = streets.find((s) => s.id === myId) ?? null;
+  const water: WaterMarker[] = useMemo(() => {
+    const pts = (waterPoints ?? []).map((p) => ({ ...p, nearest: false, km: my ? km(my, p) : null }));
+    const best = pts.reduce<(typeof pts)[number] | null>((b, p) => (p.km != null && (!b || p.km < b.km!) ? p : b), null);
+    if (best) best.nearest = true;
+    return pts;
+  }, [waterPoints, my]);
+  const nearest = water.find((p) => p.nearest) ?? null;
+  const dist = (k: number) => (k < 1 ? `${Math.round(k * 100) * 10} m` : `${k.toFixed(1)} km`);
   const focus = {
     key: `${myId}|${myRound?.round.id ?? "none"}|${myFix ? "fix" : "nofix"}|${streets.length}`,
     points: my ? (myFix ? [my, myFix] : [my]) : streets,
@@ -198,6 +211,7 @@ export default function MapPage() {
           signals={signals}
           reliability={reliability}
           notices={plotted}
+          water={water}
           layers={layers}
           focus={focus}
         />
@@ -222,6 +236,9 @@ export default function MapPage() {
               {myLitres > 0 && <p className="text-sm text-muted-foreground">About {myLitres} L planned for your street.</p>}
               {!myFix && <p className="text-sm text-muted-foreground">Waiting for the driver&apos;s first GPS fix…</p>}
             </>
+          )}
+          {nearest && layers.water && (
+            <p className="text-sm">Nearest water point: <b>{nearest.name}</b> · {nearest.kind} · about {dist(nearest.km!)} (straight line)</p>
           )}
           {rounds.length > 1 && myRound && <p className="text-xs text-muted-foreground">{rounds.length} tankers out. Yours is in blue, the others are grey.</p>}
         </section>
@@ -261,6 +278,15 @@ export default function MapPage() {
                   <Legend items={reliabilityLegend().map((l) => ({ dot: l.hex, label: l.label }))}
                     note={`Days with a "water is here" report in the last ${RELIABILITY_DAYS} days. Past reports, not a forecast.`} />
                 ) : <p className="text-xs text-muted-foreground">Reports are unavailable right now.</p>
+              )}
+              {key === "water" && (
+                <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                  <p className="flex items-center gap-1.5"><span aria-hidden className="grid size-4 place-items-center rounded bg-cyan-700 text-[9px] font-bold text-white">W</span> tanker stop, public standpipe or static tank. Bigger = nearest to your street.</p>
+                  {waterPoints === null && <p>No sourced water points loaded yet.</p>}
+                  {waterPoints?.length === 0 && <p>No sourced water points listed yet.</p>}
+                  {offline && <p>Demo points next to the mock streets, not real places.</p>}
+                  <p>Only points with a source.</p>
+                </div>
               )}
               {key === "notices" && (
                 <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">

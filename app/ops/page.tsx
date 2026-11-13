@@ -104,7 +104,7 @@ export default function OpsPage() {
       </div>
 
       <div role="tabpanel" id={`panel-${section}`} aria-labelledby={`tab-${section}`}>
-        {section === "overview" && <Overview data={data} go={go} />}
+        {section === "overview" && <Overview data={data} go={go} now={now} />}
         {section === "dispatch" && <DispatchPanel data={data} name={name} setRounds={(rounds) => setData((d) => (d ? { ...d, rounds } : d))} />}
         {section === "complaints" && (
           <Complaints data={data} now={now} name={name} area={area} setComplaints={(fn) => setData((d) => (d ? { ...d, complaints: fn(d.complaints) } : d))} />

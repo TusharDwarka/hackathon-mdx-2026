@@ -118,6 +118,14 @@ export async function loadSchedule(): Promise<ScheduleRow[]> {
   return (data ?? []) as ScheduleRow[];
 }
 
+/** Tanker stops / public water points (docs/WATER-DAY-SPLIT.md P4 item 4): P5's data/water_points.csv, loaded by P3. */
+export type WaterPoint = { name: string; kind: string; lat: number; lng: number; source_url: string | null };
+export async function loadWaterPoints(): Promise<WaterPoint[]> {
+  const { data, error } = await supabase.from("water_points").select("name,kind,lat,lng,source_url");
+  if (error) throw error;
+  return (data ?? []) as WaterPoint[];
+}
+
 /** Reports of the last `days` days (reliability layer uses 14, the report layer the last 3 h of them). */
 export async function loadReports(days: number, now = Date.now()): Promise<RecentReport[]> {
   const since = new Date(now - days * 86_400_000).toISOString();
