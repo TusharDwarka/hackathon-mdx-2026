@@ -26,6 +26,18 @@ Theme: **Live Better** (cost of living / everyday services / daily routines).
 | 2 | Map (/map) | Truck marker live (Supabase Realtime), stops away, ETA | rounds, round_stops, truck_positions |
 | 3 | Driver (/driver) | Start round, live location every 5s, mark stop served, End round | rounds, round_stops, truck_positions |
 
+## V2 scope (Fri 17:30) — this section wins over "3 screens only" above
+One responsive app (phone first, must also work on desktop), five screens, still no login:
+| # | Screen | Purpose |
+|---|--------|---------|
+| 1 | Landing (/) | What Kot Delo? is, area status (reservoir level + supply tier, today's window), three ways in: Resident, Driver, CWA operations |
+| 2 | Resident (/resident) | The old Home, plus: confirmed / unconfirmed water status, likely water time, demo payment before the tanker request, complaint in two taps |
+| 3 | Map (/map) | Unchanged |
+| 4 | Driver (/driver) | Unchanged, plus "Paid Rs X" on each stop |
+| 5 | Operations (/ops, desktop first) | Reservoir status, heat map, priority list with a suggested action per street, open complaints, suspect reports |
+
+Rules for all of it are in `contracts/api.md`, "V2 additions". Nothing else is in scope.
+
 ## ETA rule
 Travel time at 20 km/h to the next stop + 10 min per stop before mine. If GPS is stale (>2 min), fall back to stops remaining x 10 min.
 
