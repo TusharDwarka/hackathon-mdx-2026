@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { BottomWaves, PageHeader } from "@/components/ui/brand";
 import { supabase } from "@/lib/supabase";
 import { ASSUMED_REQUEST_L, fmtL } from "@/components/ops/dispatch";
+import { StopProgress } from "@/components/ops/Bars";
 import { createRound, demandByStreet, errText, finishRound, loadActiveRounds, loadStreets, loadWaitingRequests, serveStop, type LiveRound, type Stop, type Street, type WaitingRequest } from "@/components/map/data";
 import { DEMO_STREETS, demoRounds, readDemoDispatch, simulateStep } from "@/components/map/demo";
 
@@ -268,6 +269,13 @@ export default function DriverPage() {
                 <dd className="text-3xl font-bold tracking-[-0.02em] tabular-nums">{leftL ? fmtL(leftL) : "–"}</dd>
               </div>
             </dl>
+            <div className="surface flex flex-col gap-2 p-4">
+              <p className="flex justify-between text-xs text-muted-foreground">
+                <span>Round progress</span>
+                <span className="tabular-nums">{mine.stops.length - remaining.length} of {mine.stops.length} served</span>
+              </p>
+              <StopProgress served={mine.stops.map((s) => !!s.served_at)} className="h-3" />
+            </div>
             <section className="surface flex flex-col gap-2 p-5">
               <h2 className="font-semibold">Location sharing</h2>
               <p className={`text-sm ${gps === "blocked" ? "text-red-800" : "text-emerald-800"}`} aria-live="polite">
