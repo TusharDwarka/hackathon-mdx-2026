@@ -11,7 +11,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, BadgeCheck, Check, ChevronDown, ChevronRight, CircleHelp, Clock, Droplet, DropletOff, MapPin, MessageSquareWarning, Newspaper, Truck, UserRound, X } from "lucide-react";
+import { ArrowRight, BadgeCheck, Check, ChevronDown, ChevronRight, CircleHelp, Clock, Droplet, DropletOff, MapPin, MessageSquareWarning, Newspaper, Route, Truck, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomWaves, PageHeader } from "@/components/ui/brand";
 import { Gauge } from "@/components/ui/gauge";
@@ -38,7 +38,8 @@ import { supabase } from "@/lib/supabase";
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "schedule", label: "Water schedule" },
-  { id: "report", label: "Report & request" },
+  { id: "report", label: "Report water" },
+  { id: "request", label: "Request a tanker" },
   { id: "reservoirs", label: "Reservoirs" },
   { id: "news", label: "CWA notices" },
 ] as const;
@@ -69,8 +70,6 @@ const COMPLAINTS: { category: ComplaintCategory; label: string }[] = [
   { category: "tanker_no_show", label: "Tanker did not come" },
   { category: "other", label: "Other problem" },
 ];
-const LITRES = [20, 50, 100, 200];
-const TANKER_L = 1000; // demo tanker capacity (sql/v3.sql "Demo tanker 1/2"), for the litres-vs-tank bar
 const hhmm = (t: number) => new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
@@ -96,7 +95,6 @@ export function Resident({ info }: { info: PublicData }) {
   // My report in this session, per street. It wins over what localStorage says (null = the save failed, forget it).
   const [sent, setSent] = useState<{ streetId: number; report: MyReport | null } | null>(null);
   const [request, setRequest] = useState<RequestStatus | null>(null);
-  const [litres, setLitres] = useState<number | null>(null);
   // Complaint: closed -> open (pick a category) -> the category that was sent.
   const [complaint, setComplaint] = useState<"closed" | "open" | ComplaintCategory>("closed");
   const [sendError, setSendError] = useState<"report" | "request" | "complaint" | null>(null);
@@ -195,7 +193,6 @@ export function Resident({ info }: { info: PublicData }) {
     saveStreet(id);
     setComplaint("closed");
     setRequest(null);
-    setLitres(null);
     setSendError(null);
   };
 
@@ -222,12 +219,12 @@ export function Resident({ info }: { info: PublicData }) {
 
   // Op 3, same pattern. Free. The button is replaced by "Tanker requested" at once, so a second tap cannot send twice.
   const requestWater = async () => {
-    if (!street || !litres || request === "waiting") return;
+    if (!street || request === "waiting") return;
     const before = request;
     setRequest("waiting");
     setSendError(null);
     try {
-      if (!demo) await postRequest(street.id, litres);
+      if (!demo) await postRequest(street.id); // V5: no litres, one request = one household
     } catch (e) {
       console.warn("request not saved:", e);
       setRequest(before);
@@ -530,20 +527,20 @@ export function Resident({ info }: { info: PublicData }) {
         <Truck aria-hidden className="size-6" />
       </span>
       <h2 id="tanker-cta-title" className="mt-4 text-lg leading-snug font-bold tracking-[-0.01em]">
-        {request === "waiting" ? `Tanker requested${litres ? ` · ${litres} L` : ""}` : request === "served" ? "Tanker delivered" : "Need the tanker?"}
+        {request === "waiting" ? "Tanker requested" : request === "served" ? "Tanker delivered" : "Need the tanker?"}
       </h2>
       <p className="mt-1 text-sm text-white/85">
         {request === "waiting"
-          ? "Pending: waiting for the driver. Follow the truck live on the map."
+          ? "Waiting for the driver. Follow the truck live."
           : request === "served"
             ? `The tanker has served ${street?.name ?? "your street"}.`
-            : `Free. Ask for water for ${street?.name ?? "your street"} and follow the truck live.`}
+            : `Free, for ${street?.name ?? "your street"}.`}
       </p>
       <Link
-        href={request === "waiting" && street ? `/map?street=${street.id}` : tabHref("report")}
+        href={request === "waiting" && street ? `/map?street=${street.id}` : tabHref("request")}
         className="relative z-10 mt-4 inline-flex min-h-12 items-center justify-center gap-2 self-start rounded-full bg-white px-5 text-sm font-semibold text-primary transition-[scale] duration-150 ease-snap active:scale-[0.97]"
       >
-        {request === "waiting" ? "See it on the map" : "Request water"}
+        {request === "waiting" ? "See it on the map" : "Request a tanker"}
         <ArrowRight aria-hidden className="size-4" />
       </Link>
       <BottomWaves className="h-16 text-white/30" />
@@ -786,30 +783,32 @@ export function Resident({ info }: { info: PublicData }) {
     </div>
   );
 
+  // Report and Request share the same first steps: locality, guest, street.
+  const gate = (what: string) => (
+    <>
+      {base ? placeCard : loading}
+      {area && !guest && (
+        <section className={`flex flex-col gap-3 ${card}`} aria-labelledby="guest-title">
+          <h2 id="guest-title" className={title}>Continue as a guest</h2>
+          <p className="-mt-2 text-sm text-muted-foreground">No account, no name. Saved by street only.</p>
+          <Button size="tap" onClick={() => { saveGuest(); setGuestNow(true); }}>Continue as guest</Button>
+          <p className="text-xs text-muted-foreground">
+            Driver or CWA staff? <Link href="/login" className="text-primary underline underline-offset-2">Sign in here</Link>.
+          </p>
+        </section>
+      )}
+      {area && guest && !street && needStreet(what)}
+    </>
+  );
+
   const reportSection = (
     <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
       <div className={col}>
-        {base ? placeCard : loading}
-        {area && !guest && (
-          <section className={`flex flex-col gap-3 ${card}`} aria-labelledby="guest-title">
-            <span className="grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
-              <UserRound aria-hidden className="size-6" />
-            </span>
-            <h2 id="guest-title" className={title}>Report as a guest</h2>
-            <p className="text-sm text-muted-foreground">
-              No account and no name. What you send is stored by street only, so neighbours and the tanker driver can see it. Reading the schedule, reservoirs and news never needs this.
-            </p>
-            <Button size="tap" onClick={() => { saveGuest(); setGuestNow(true); }}>Continue as guest</Button>
-            <p className="text-xs text-muted-foreground">
-              Tanker driver or CWA staff? Use the <Link href="/#staff" className="text-primary underline underline-offset-2">staff entry</Link>.
-            </p>
-          </section>
-        )}
-        {area && guest && !street && needStreet("report, call the tanker or make a complaint")}
+        {gate("report")}
         {area && guest && street && (
           <section aria-labelledby="report-title" className={`flex flex-col gap-3 ${card}`}>
-            <h2 id="report-title" className={title}>Is water running at your place now?</h2>
-            <p className="-mt-2 text-sm text-muted-foreground">One tap, for {street.name}. Your report alone does not confirm anything: it counts with your neighbours&apos;.</p>
+            <h2 id="report-title" className={title}>Water at your place now?</h2>
+            <p className="-mt-2 text-sm text-muted-foreground">For {street.name}. It counts with your neighbours&apos; reports.</p>
             <div className="grid grid-cols-2 gap-3">
               {REPORTS.map(({ type, label, Icon, style }) => (
                 <button
@@ -827,76 +826,19 @@ export function Resident({ info }: { info: PublicData }) {
             </div>
             {mine && (
               <p role="status" className={`text-sm text-muted-foreground ${enter}`}>
-                Thanks. You reported &quot;{REPORT_LABEL[mine.type]}&quot; at {hhmm(mine.at)}. You can report for this street again at {hhmm(mine.at + REPORT_LIMIT_MS)}.
+                Sent: &quot;{REPORT_LABEL[mine.type]}&quot; at {hhmm(mine.at)}. Next report from {hhmm(mine.at + REPORT_LIMIT_MS)}.
               </p>
             )}
-            {sendError === "report" && <p role="alert" className="text-sm text-red-800">Your report was not sent. Check your connection and tap again.</p>}
+            {sendError === "report" && <p role="alert" className="text-sm text-red-800">Not sent. Check your connection and tap again.</p>}
           </section>
         )}
       </div>
       {area && guest && street && (
         <div className={col}>
-          <section aria-labelledby="tanker-title" className={`flex flex-col gap-3 ${card}`}>
-            <div>
-              <h2 id="tanker-title" className={title}>Need the tanker?</h2>
-              <p className="text-sm text-muted-foreground">Free. Puts {street.name} on the driver&apos;s stop list.</p>
-            </div>
-            {request === "served" && (
-              <p role="status" className={`flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 font-semibold text-emerald-900 ${enter}`}>
-                <Check aria-hidden className="size-5 shrink-0" />
-                Served. The tanker has delivered to {street.name}.
-              </p>
-            )}
-            {request === "waiting" ? (
-              <Link href={street ? `/map?street=${street.id}` : "/map"} role="status" className={`flex min-h-16 items-center gap-3 rounded-2xl bg-primary/10 px-4 py-3 text-primary ${enter}`}>
-                <Truck aria-hidden className="size-6 shrink-0" />
-                <span className="flex-1">
-                  <span className="block font-semibold">Tanker requested{litres && ` · ${litres} L`}</span>
-                  <span className="block text-sm">Pending: waiting for the driver. See it live on the map</span>
-                </span>
-                <ChevronRight aria-hidden className="size-5 shrink-0" />
-              </Link>
-            ) : (
-              <>
-                <div role="group" aria-labelledby="litres-label">
-                  <p id="litres-label" className="text-sm font-medium">How much water do you need?</p>
-                  <div className="mt-2 grid grid-cols-4 gap-2">
-                    {LITRES.map((l) => (
-                      <button
-                        key={l}
-                        type="button"
-                        aria-pressed={litres === l}
-                        onClick={() => setLitres(l)}
-                        className="h-12 rounded-full bg-muted text-sm font-semibold tabular-nums transition-[scale,background-color,color] duration-150 ease-snap hover:bg-primary/10 active:scale-[0.97] aria-pressed:bg-primary aria-pressed:text-primary-foreground"
-                      >
-                        {l} L
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {litres && (
-                  <div className={enter}>
-                    <span aria-hidden className="block h-2.5 overflow-hidden rounded-full bg-muted">
-                      <span className="block h-full rounded-full bg-primary" style={{ width: `${(litres / TANKER_L) * 100}%` }} />
-                    </span>
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      {litres} L is {Math.round((litres / TANKER_L) * 100)}% of one {TANKER_L.toLocaleString("en-GB")} L tanker (demo capacity). Ask only for what you need, so more streets get water.
-                    </p>
-                  </div>
-                )}
-                <Button size="tap" disabled={!litres} onClick={requestWater}>
-                  <Truck aria-hidden />
-                  {litres ? `Request ${litres} L` : "Choose an amount"}
-                </Button>
-              </>
-            )}
-            {sendError === "request" && <p role="alert" className="text-sm text-red-800">Your request was not sent. Check your connection and tap again.</p>}
-          </section>
-
           <section aria-labelledby="complaint-title" className={`flex flex-col gap-3 ${card}`}>
             <div>
               <h2 id="complaint-title" className={title}>Something wrong?</h2>
-              <p className="text-sm text-muted-foreground">Two taps send a complaint for {street.name} to CWA operations. No name, no message.</p>
+              <p className="text-sm text-muted-foreground">Two taps send a complaint for {street.name} to CWA.</p>
             </div>
             {complaint === "closed" ? (
               <Button size="tap" variant="secondary" onClick={() => setComplaint("open")}>
@@ -922,10 +864,59 @@ export function Resident({ info }: { info: PublicData }) {
                 Complaint sent: {COMPLAINTS.find((c) => c.category === complaint)?.label}.
               </p>
             )}
-            {sendError === "complaint" && <p role="alert" className="text-sm text-red-800">Your complaint was not sent. Check your connection and choose the category again.</p>}
+            {sendError === "complaint" && <p role="alert" className="text-sm text-red-800">Not sent. Check your connection and choose again.</p>}
           </section>
         </div>
       )}
+    </div>
+  );
+
+  // Request: one tap, no litres (a household never chooses tank capacity; ops plans the load).
+  const requestSection = (
+    <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
+      <div className={col}>
+        {gate("request a tanker")}
+        {area && guest && street && (
+          <section aria-labelledby="tanker-title" className={`flex flex-col gap-3 ${card}`}>
+            <div>
+              <h2 id="tanker-title" className={title}>Request a tanker</h2>
+              <p className="text-sm text-muted-foreground">Free. Adds {street.name} to the driver&apos;s stops.</p>
+            </div>
+            {request === "served" && (
+              <p role="status" className={`flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 font-semibold text-emerald-900 ${enter}`}>
+                <Check aria-hidden className="size-5 shrink-0" />
+                Served on {street.name}.
+              </p>
+            )}
+            {request === "waiting" ? (
+              <Link href={`/map?street=${street.id}`} role="status" className={`flex min-h-16 items-center gap-3 rounded-2xl bg-primary/10 px-4 py-3 text-primary ${enter}`}>
+                <Truck aria-hidden className="size-6 shrink-0" />
+                <span className="flex-1">
+                  <span className="block font-semibold">Tanker requested</span>
+                  <span className="block text-sm">Waiting for the driver. See it live</span>
+                </span>
+                <ChevronRight aria-hidden className="size-5 shrink-0" />
+              </Link>
+            ) : (
+              <Button size="tap" onClick={requestWater}>
+                <Truck aria-hidden />
+                I need a tanker
+              </Button>
+            )}
+            {sendError === "request" && <p role="alert" className="text-sm text-red-800">Not sent. Check your connection and tap again.</p>}
+          </section>
+        )}
+      </div>
+      <div className={col}>
+        <Link href={street ? `/map?street=${street.id}` : "/map"} className={`flex items-center gap-3 ${card}`}>
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary"><Route aria-hidden className="size-6" /></span>
+          <span className="flex-1">
+            <span className={`block ${title}`}>Follow the tanker live</span>
+            <span className="block text-sm text-muted-foreground">The truck on the map, stop by stop.</span>
+          </span>
+          <ChevronRight aria-hidden className="size-5 shrink-0 text-muted-foreground" />
+        </Link>
+      </div>
     </div>
   );
 
@@ -933,6 +924,7 @@ export function Resident({ info }: { info: PublicData }) {
     overview,
     schedule,
     report: reportSection,
+    request: requestSection,
     reservoirs: <Reservoirs reservoirs={info.reservoirs} combined={info.combined} now={now} />,
     news: <News items={info.news} locality={area?.name ?? null} />,
   };
