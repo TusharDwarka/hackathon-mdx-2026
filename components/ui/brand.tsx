@@ -48,13 +48,14 @@ export function SideWaves() {
   );
 }
 
-/** Decoration only: three horizontal waves along the bottom of a card or band. */
+/** Decoration only: three horizontal waves along the bottom of a card or band, flowing at different
+ *  speeds. Each path is two seamless 400-unit periods wide and slides one period (transform only). */
 export function BottomWaves({ className }: { className?: string }) {
   return (
-    <svg aria-hidden viewBox="0 0 400 80" preserveAspectRatio="none" className={cn("pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full", className)}>
-      <path d="M0 40C60 15 120 15 200 38S340 62 400 34V80H0Z" fill="currentColor" fillOpacity="0.15" />
-      <path d="M0 52C70 30 140 70 220 50S350 30 400 52V80H0Z" fill="currentColor" fillOpacity="0.35" />
-      <path d="M0 64C80 50 160 78 240 62S360 52 400 66V80H0Z" fill="currentColor" />
+    <svg aria-hidden viewBox="0 0 400 80" preserveAspectRatio="none" className={cn("pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full overflow-hidden", className)}>
+      <path d="M0 38C60 16 140 16 200 38S340 60 400 38S540 16 600 38S740 60 800 38V80H0Z" fill="currentColor" fillOpacity="0.15" className="animate-[flow-svg_14s_linear_infinite]" />
+      <path d="M0 52C70 70 130 70 200 52S330 34 400 52S530 70 600 52S730 34 800 52V80H0Z" fill="currentColor" fillOpacity="0.35" className="animate-[flow-svg_10s_linear_infinite_reverse]" />
+      <path d="M0 64C60 54 140 54 200 64S340 74 400 64S540 54 600 64S740 74 800 64V80H0Z" fill="currentColor" className="animate-[flow-svg_7s_linear_infinite]" />
     </svg>
   );
 }

@@ -91,7 +91,7 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
   };
 
   return (
-    <section className={`${card} lg:p-6`} aria-labelledby="planner-title">
+    <section data-tour="day" className={`${card} lg:p-6`} aria-labelledby="planner-title">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="planner-title" className={title}>Your water day</h2>
         {sample ? (
@@ -140,7 +140,7 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
             <Bell aria-hidden className="size-5 text-primary" />
             Remind me 30 min before
           </p>
-          <Button size="tap" disabled={sample} onClick={addToCalendar} className="h-12 text-sm">
+          <Button data-tour="calendar" size="tap" disabled={sample} onClick={addToCalendar} className="h-12 text-sm">
             <CalendarPlus aria-hidden className="size-5" />
             Add to calendar
           </Button>

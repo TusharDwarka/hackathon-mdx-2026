@@ -148,6 +148,31 @@
     z-index: -1;
     background: linear-gradient(180deg, oklch(0.86 0.07 236) 0%, oklch(0.925 0.04 235) 42%, oklch(0.965 0.018 235) 100%);
   }
+  /* Water flowing along the bottom of every screen: two wave layers drifting at different speeds,
+     seen through the glass tab bar on phones. Transform-only (GPU), one tile per 25% so the loop is seamless. */
+  body::after,
+  html::after {
+    content: "";
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: -1;
+    width: 200vw;
+    height: 7.5rem;
+    pointer-events: none;
+    background-repeat: repeat-x;
+    background-size: 25% 100%;
+    animation: flow-x 26s linear infinite;
+  }
+  body::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 120' preserveAspectRatio='none'%3E%3Cpath d='M0 50C50 32 150 32 200 50S350 68 400 50V120H0Z' fill='%2338bdf8' fill-opacity='.22'/%3E%3C/svg%3E");
+  }
+  html::after {
+    height: 5.5rem;
+    animation-duration: 17s;
+    animation-direction: reverse;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 120' preserveAspectRatio='none'%3E%3Cpath d='M0 70C50 88 150 88 200 70S350 52 400 70V120H0Z' fill='%233b82f6' fill-opacity='.16'/%3E%3C/svg%3E");
+  }
   html {
     @apply font-sans;
   }
@@ -173,19 +198,30 @@
 
 /* Shared building blocks for every screen (P2 owns them, everyone uses them). */
 @utility surface {
-  /* White card: 24px corners, soft shadow, no border. Put all text on one of these. */
-  @apply rounded-3xl bg-card text-card-foreground shadow-card;
+  /* Glossy white card: 24px corners, soft shadow, no border. Slightly see-through (no blur, so it stays
+     cheap on phones) with a light sheen on top and a bright top edge. Put all text on one of these. */
+  @apply rounded-3xl text-card-foreground shadow-card;
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.75), oklch(1 0 0 / 0) 42%), color-mix(in oklch, var(--card) 86%, transparent);
+  --tw-inset-shadow: inset 0 1px 0 oklch(1 0 0 / 0.95), inset 0 -1px 0 oklch(0.55 0.1 250 / 0.08); /* joins shadow-card */
+  @media (prefers-reduced-transparency: reduce) {
+    background: var(--card);
+  }
 }
 @utility glass {
-  /* Translucent bar or small surface (nav, floating panels). Opaque white where blur is missing or
-     the user asks for less transparency. Static blur only: never animate it. */
+  /* Glossy frosted glass (nav, floating panels, the tour card): blur + a sheen layer + bright inner
+     edges, like polished glass. Opaque white where blur is missing or the user asks for less
+     transparency. Static blur only: never animate it. Pair with shadow-card / shadow-nav for the edges. */
   background: var(--card);
   outline: 1px solid oklch(1 0 0 / 0.6); /* hairline edge; outline so it never fights the shadow-* utilities */
   outline-offset: -1px;
+  --tw-inset-shadow: inset 0 1px 0 oklch(1 0 0 / 0.9), inset 0 -1px 0 oklch(1 0 0 / 0.35), inset 0 10px 18px -12px oklch(1 0 0 / 0.7);
   @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
-    background: color-mix(in oklch, var(--card) 72%, transparent);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
+    background:
+      radial-gradient(90% 140% at 30% -40%, oklch(1 0 0 / 0.55), transparent 60%),
+      linear-gradient(180deg, oklch(1 0 0 / 0.3), oklch(1 0 0 / 0.04) 55%, oklch(1 0 0 / 0.12)),
+      color-mix(in oklch, var(--card) 55%, transparent);
+    -webkit-backdrop-filter: blur(20px) saturate(1.8) brightness(1.06);
+    backdrop-filter: blur(20px) saturate(1.8) brightness(1.06);
   }
   @media (prefers-reduced-transparency: reduce) {
     background: var(--card);
@@ -216,6 +252,9 @@
 @keyframes ripple { from { transform: scale(0.2); opacity: 0.9; } to { transform: scale(1); opacity: 0; } }
 @keyframes word-up { from { transform: translateY(110%); } }
 @keyframes bob { 50% { transform: translateY(-8px) rotate(-3deg); } }
+@keyframes flow-x { to { transform: translateX(-50%); } }
+@keyframes flow-svg { to { transform: translateX(-400px); } }
+@keyframes spot-pulse { 50% { outline-offset: 10px; outline-color: oklch(1 0 0 / 0); } }
 
 @utility reveal {
   /* Fades and rises into place as it scrolls into view. Cards already on screen at load show at once. */

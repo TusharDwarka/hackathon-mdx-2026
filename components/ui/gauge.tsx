@@ -14,13 +14,14 @@ export function Gauge({ value, label, children, className }: { value: number; la
           const a = ((START + (i * 270) / (TICKS - 1)) * Math.PI) / 180;
           const long = i % 10 === 0;
           const r1 = long ? 78 : 82;
+          const p = (n: number) => n.toFixed(2); // fixed decimals: server and browser Math.cos differ in the last digit
           return (
             <line
               key={i}
-              x1={100 + r1 * Math.cos(a)}
-              y1={100 + r1 * Math.sin(a)}
-              x2={100 + 94 * Math.cos(a)}
-              y2={100 + 94 * Math.sin(a)}
+              x1={p(100 + r1 * Math.cos(a))}
+              y1={p(100 + r1 * Math.sin(a))}
+              x2={p(100 + 94 * Math.cos(a))}
+              y2={p(100 + 94 * Math.sin(a))}
               strokeWidth={long ? 3 : 2.2}
               strokeLinecap="round"
               className={i <= filled ? "stroke-primary" : "stroke-primary/15"}
