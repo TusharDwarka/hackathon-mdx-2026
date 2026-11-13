@@ -36,3 +36,9 @@ Branch: feat/data. Own: sql/, scripts/, lib/queries.ts, app/api/*. Contract: con
 - [x] 6. Self-checks per function in npx tsx lib/queries.ts; shapes published in HANDOFF
 - [ ] P1: ops 24-27 in contracts/api.md, run sql/v4.sql; P5: quality_notices.csv + more reservoir readings
 - [ ] Surprise card: if the constraint needs data, it goes here first
+
+## After merge 8 (integration)
+- [x] P4 dispatch Confirm body supported on /api/dispatch
+- [x] water_points table + loader for P4's map layer
+- [x] planDay offset for P2's WaterDay swap; districtOf for PublicInfo
+- [ ] Live run: needs .env.local (P1) then v3, v4, load-data, seed-demo

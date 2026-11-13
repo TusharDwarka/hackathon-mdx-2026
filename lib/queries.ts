@@ -825,6 +825,10 @@ export function mauritiusNow(at = new Date()): Date {
   return new Date(at.getTime() + (240 + at.getTimezoneOffset()) * 60_000);
 }
 
+/** District of each supported locality, to find its district-level CWA notices. null = unknown, never guessed. */
+export const AREA_DISTRICT: Record<string, string> = { Vacoas: "Plaines-Wilhems" };
+export const districtOf = (area: string): string | null => AREA_DISTRICT[area.trim()] ?? null;
+
 /** Which reservoir feeds an area. Demo: Vacoas (and any area we do not know) -> Mare aux Vacoas. */
 export const AREA_RESERVOIR: Record<string, string> = { Vacoas: "Mare aux Vacoas" };
 export const DEFAULT_RESERVOIR = "Mare aux Vacoas";
@@ -1063,7 +1067,7 @@ export async function waterQuality(areaId: number, now = new Date(), client: Sup
 
 // ---------- op 27: water-day planner (pure, no IO) ----------
 
-export type PlanStep = { time: string; label: string; kind: "remind" | "arrive" | "task" | "end" };
+export type PlanStep = { time: string; label: string; kind: "remind" | "arrive" | "task" | "end"; offset: number }; // offset = minutes from the window start (reminder = -30)
 
 /**
  * Pure. Reminder 30 min before the window, water arrives at the start. Default tasks: fill the tank
@@ -1099,7 +1103,7 @@ export function planDay(window: { start_time: string; end_time: string }, tasks?
     });
   }
   steps.push({ m: end, label: "Water ends", kind: "end" });
-  return steps.sort((a, b) => a.m - b.m).map((s) => ({ time: fmt(s.m), label: s.label, kind: s.kind }));
+  return steps.sort((a, b) => a.m - b.m).map((s) => ({ time: fmt(s.m), label: s.label, kind: s.kind, offset: s.m - start }));
 }
 
 // ---------- V4 client calls (routes fall back to labelled demo data; `demo: true`) ----------
@@ -1376,7 +1380,10 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
 
   // op 27 planner
   const plan = planDay({ start_time: "03:00", end_time: "08:00" });
-  ok(plan[0].kind === "remind" && plan[0].time === "02:30", "reminder = start - 30 min");
+  ok(plan[0].kind === "remind" && plan[0].time === "02:30" && plan[0].offset === -30, "reminder = start - 30 min (offset -30)");
+  ok(plan.map((p) => p.offset).join() === "-30,0,0,180,270,300", "offsets in minutes from the window start");
+  ok(planDay({ start_time: "23:00", end_time: "02:00" }).at(-1)?.offset === 180, "offset counts across midnight");
+  ok(districtOf("Vacoas") === "Plaines-Wilhems" && districtOf("Triolet") === null, "district map; unknown stays null");
   ok(plan.map((p) => p.time).join() === "02:30,03:00,03:00,06:00,07:30,08:00" && plan[1].kind === "arrive" && plan[5].kind === "end", "03:00-08:00 plan");
   const night = planDay({ start_time: "23:00:00", end_time: "02:00:00" });
   ok(night[0].time === "22:30" && night[night.length - 1].time === "02:00" && !night.some((p) => p.label === "Washing machine"), "3 h window over midnight; no room for the machine");

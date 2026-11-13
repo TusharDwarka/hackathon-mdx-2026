@@ -1,5 +1,31 @@
 # HANDOFF (p3-backend)
 
+## After merge 8 — integration with P2 and P4 (4bbce48 on feat/data, main merged in)
+I read P2's and P4's merge-8 code against my API and closed the gaps on P3's side.
+
+### For P4
+- **Your dispatch Confirm now works.** `POST /api/dispatch` accepts your plan body `{key, capacity_l, loads: [{tanker, trip, deliveries}]}` and answers `{rounds: [{round_id, tanker, tanker_id, litres, duplicate, round}], deferred: [{tanker, trip, reason}]}`.
+  - "Tanker A" is the first active tanker by id, "Tanker B" the second, and so on. A number means that tanker id.
+  - The server does not take your litres. It allocates the real outstanding litres in street order, capped at `capacity_l` and at the tanker's own capacity. The same rule as your preview gives the same result on the same demand.
+  - Trip 2 and later loads come back in `deferred` with reason `refill_trip`. They are allocated when the driver ends trip 1 and taps Start again.
+  - A busy tanker or no demand also goes to `deferred`. If nothing at all is allocated, the answer is 409 `nothing_allocated`.
+  - A retry with the same `key` returns the same rounds.
+  - It needs an ops session (sign in on `/login`); without one the answer is 401.
+- **Litres are real now.** Your preview still uses `ASSUMED_REQUEST_L = 20`. Real outstanding litres per request are in `GET /api/dispatch` (`plan.loads`, `requests_without_litres`), and per street in `GET /api/priority` (`waiting_litres`).
+- **Water points table.** `water_points (name, kind, lat, lng, source_url)` is in `sql/v4.sql`, readable by anon, and loaded from `data/water_points.csv`. Your query in `components/map/data.ts` matches.
+- **Trend days count from today**, the same as yours. Your self-check and my route give the same Mare aux Vacoas numbers: -0.124 % per day, 14 days to 30%, 95 days to 20%. One difference: my `projection` starts today, while yours starts at the latest reading.
+- `/api/reservoirs/trend` answers `null` with 200 for a reservoir with too few recent readings. Your loader then shows "no trend", which is right.
+
+### For P2
+- My water-day functions are on main. Your stand-ins in `components/home/water-day.ts` can go.
+- **`planDay(window, tasks?)`** returns `offset` now (minutes from the window start, reminder = -30), so `WaterDay.tsx` can import it unchanged. Timings match yours. The labels are shorter; if you want your wording, map `kind` and `offset` to your own text when you render.
+- **`forecastNext`** is the async loader (`forecastNext(areaId, now)`). The pure rule is `computeForecast(rows, tier, likely, now)`, where `rows` are the schedule rows `{day, start_time, end_time, source_url, source_date}`. From the browser it is simplest to call `getForecast(areaId)`.
+- **`waterQuality`** is the async loader; `getWaterQuality(areaId)` calls the API. The pure rule is `computeWaterQuality(notices, tier, now)`, where notices are `{title, day, category, source_url}`.
+- **`districtOf("Vacoas")`** returns `"Plaines-Wilhems"`. The `DISTRICT` map in `PublicInfo.tsx` can use it, and unknown areas return null.
+
+### Still blocked
+- No `.env.local` here. Nothing has run against the real Supabase. P1 runs `sql/v3.sql` then `sql/v4.sql`, then `npm run load-data` and `npm run seed-demo`.
+
 ## Round 3 water day (docs/WATER-DAY-SPLIT.md, P3) — bb82343 on feat/data
 Ops 24 to 27 are built against the shapes in the brief. All three routes answer even without a database: they fall back to the real timetable and Mare aux Vacoas readings, with `demo: true`, and the UI must label that.
 
