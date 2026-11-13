@@ -943,9 +943,8 @@ export function Resident({ info }: { info: PublicData }) {
 
   return (
     <main className="mx-auto w-full max-w-md px-4 pt-5 pb-6 md:max-w-3xl lg:max-w-7xl lg:px-8 lg:pt-8">
-      <PageHeader eyebrow={`${hello}${today ? ` · ${today}` : ""}`} title={heading}>
+      <PageHeader eyebrow={`${hello}${today ? ` · ${today}` : ""}`} title={heading} logo={<OnboardingTour drop />}>
         <div className="flex flex-wrap gap-2">
-        <OnboardingTour auto />
         <Link
           href={tabHref("report")}
           className={`chip shrink-0 shadow-card ${guest ? "bg-card" : "bg-primary text-primary-foreground"}`}

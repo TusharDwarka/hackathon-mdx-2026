@@ -3,13 +3,13 @@
 // How to use Kot Delo?: the same steps feed the first-visit tour on /resident (a modal you can skip and
 // reopen with "How it works") and the full /guide page (resident, tanker driver, CWA staff).
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState, useSyncExternalStore } from "react";
 import {
   ArrowLeft, ArrowRight, Bell, CalendarClock, CircleHelp, ClipboardList, Droplets, KeyRound, LayoutDashboard, LineChart, MapPin, Megaphone,
-  MessageSquareWarning, Newspaper, Play, Route, Square, Truck, type LucideIcon,
+  MessageSquareWarning, Newspaper, Play, Route, Square, Truck, X, type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageHeader, type Role } from "@/components/ui/brand";
+import { LogoMark, PageHeader, type Role } from "@/components/ui/brand";
 import { tilt } from "@/components/ui/motion";
 
 type Step = { title: string; text: string; Icon: LucideIcon; href?: string; cta?: string };
@@ -61,24 +61,25 @@ export const GUIDE: Record<Role, { label: string; Icon: LucideIcon; intro: strin
 type TourStep = { target?: string; title: string; text: string; Icon: LucideIcon };
 const TOURS: Record<"resident" | "landing", TourStep[]> = {
   landing: [
-    { title: "Welcome to Kot Delo?", text: "Know when the water comes, tell your street, and follow the tanker. This short tour shows you what to tap. Skip it any time.", Icon: Droplets },
-    { target: "preview", title: "Today's real window", text: "This is today's official CWA water time for the demo area, straight from the communiqué.", Icon: CalendarClock },
-    { target: "browse", title: "Tap here to try it", text: "Just browse opens the resident app at once. No account, no name.", Icon: MapPin },
-    { target: "open", title: "Drivers and CWA staff", text: "Open the app to choose your role. Tanker drivers and CWA staff sign in with an access code.", Icon: KeyRound },
+    { title: "Welcome to Kot Delo?", text: "Know when water comes, tell your street, follow the tanker. Here is what to tap.", Icon: Droplets },
+    { target: "preview", title: "Today's real window", text: "Today's official CWA water time for the demo area.", Icon: CalendarClock },
+    { target: "browse", title: "Try it now", text: "Opens the resident app. No account needed.", Icon: MapPin },
+    { target: "open", title: "Drivers and CWA staff", text: "Choose your role here. Drivers and CWA staff sign in with a code.", Icon: KeyRound },
   ],
   resident: [
-    { title: "Welcome to Kot Delo?", text: "A 30-second tour of what to tap. Skip it any time, and replay it with How it works.", Icon: Droplets },
-    { target: "place", title: "Start here: your locality", text: "Search and tap where you live. Today's official CWA window shows at once. No account, no name.", Icon: MapPin },
-    { target: "day", title: "Your water day", text: "This card turns the window into a plan: start the pump, fill the tank first, then the washing machine.", Icon: CalendarClock },
-    { target: "calendar", title: "Never miss the water", text: "Tap Add to calendar. Your phone rings 30 minutes before the water comes, even with Kot Delo? closed.", Icon: Bell },
-    { target: "nav-report", title: "Tell your street", text: "Tap Report, then Water is here or No water. No water for too long? Request the tanker there, it is free.", Icon: Megaphone },
-    { target: "nav-map", title: "Follow the tanker live", text: "Tap here to watch the truck move on the map and count the stops before yours.", Icon: Route },
-    { target: "nav-news", title: "Stay informed", text: "CWA notices and reservoir levels, always with a date and a source.", Icon: Newspaper },
-    { target: "help", title: "That's it", text: "Tap How it works whenever you want this tour again.", Icon: CircleHelp },
+    { title: "Welcome to Kot Delo?", text: "30 seconds on what to tap. Skip any time.", Icon: Droplets },
+    { target: "place", title: "Start here", text: "Search where you live. Today's CWA water window shows at once.", Icon: MapPin },
+    { target: "day", title: "Your water day", text: "The window as a plan: pump, tank, then washing machine.", Icon: CalendarClock },
+    { target: "calendar", title: "Never miss the water", text: "Your phone rings 30 min before the water, even with the app closed.", Icon: Bell },
+    { target: "nav-report", title: "Tell your street", text: "Water is here, or no water? One tap in Report.", Icon: Megaphone },
+    { target: "nav-map", title: "Follow the tanker", text: "Watch the truck move and count the stops before yours.", Icon: Route },
+    { target: "nav-news", title: "CWA notices", text: "Every notice with its date and source.", Icon: Newspaper },
+    { target: "help", title: "That's it", text: "Tap the drop to see this tour again.", Icon: CircleHelp },
   ],
 };
 const TOUR_KEY = { resident: "kotdelo.onboarded", landing: "kotdelo.tour.landing" };
 const seen = (k: string) => { try { return localStorage.getItem(k) === "1"; } catch { return true; } };
+const noSubscribe = () => () => {};
 const markSeen = (k: string) => { try { localStorage.setItem(k, "1"); } catch { /* private mode */ } };
 const findTarget = (t?: string) =>
   t ? [...document.querySelectorAll<HTMLElement>(`[data-tour="${t}"]`)].find((el) => el.getClientRects().length > 0) : undefined;
@@ -86,10 +87,15 @@ const enter = "transition-[opacity,translate] duration-300 ease-snap starting:tr
 type Box = { x: number; y: number; w: number; h: number };
 const PAD = 8;
 
-/** "How it works" button + the spotlight tour. `auto` opens it on the first visit to this phone. */
-export function OnboardingTour({ tour = "resident", auto = false, label = "How it works", className = "chip shrink-0 bg-card shadow-card" }: {
-  tour?: keyof typeof TOURS; auto?: boolean; label?: string; className?: string;
+/** The spotlight tour and its button: a "How it works" chip, or `drop` = the droplet logo, which pulses
+ *  with a "Tap the drop" bubble until this phone has opened or dismissed the tour once. */
+export function OnboardingTour({ tour = "resident", drop = false, label = "How it works", className = "chip shrink-0 bg-card shadow-card" }: {
+  tour?: keyof typeof TOURS; drop?: boolean; label?: string; className?: string;
 }) {
+  const stored = useSyncExternalStore(noSubscribe, () => seen(TOUR_KEY[tour]), () => true); // server: no hint
+  const [hidden, setHidden] = useState(false);
+  const hint = drop && !stored && !hidden;
+  const dismiss = () => { markSeen(TOUR_KEY[tour]); setHidden(true); };
   const ref = useRef<HTMLDialogElement>(null);
   const at = useRef(0); // current step, read by the frame loop
   const scrolledTo = useRef(-1); // the step whose element was last scrolled into view
@@ -124,11 +130,8 @@ export function OnboardingTour({ tour = "resident", auto = false, label = "How i
     };
     follow();
   }, [steps]);
-  const close = () => { markSeen(TOUR_KEY[tour]); ref.current?.close(); };
-
-  useEffect(() => {
-    if (auto && !seen(TOUR_KEY[tour])) open();
-  }, [auto, tour, open]);
+  const close = () => ref.current?.close(); // onClose marks it seen (also Esc)
+  const start = () => { dismiss(); go(0); open(); };
 
   // Card goes on the half of the screen away from the lit element; centred when nothing is lit.
   const place = !box ? "top-1/2 -translate-y-1/2" : box.y + box.h / 2 > view.h / 2 ? "top-[max(1rem,env(safe-area-inset-top))]" : "bottom-[max(1rem,env(safe-area-inset-bottom))]";
@@ -138,9 +141,27 @@ export function OnboardingTour({ tour = "resident", auto = false, label = "How i
 
   return (
     <>
-      <button type="button" data-tour="help" onClick={() => { go(0); open(); }} className={className}>
-        <CircleHelp aria-hidden className="size-4 text-primary" /> {label}
-      </button>
+      {drop ? (
+        <span className="relative shrink-0">
+          <button type="button" data-tour="help" onClick={start} aria-label="Quick guide" className="relative grid size-11 place-items-center rounded-2xl transition-[scale] duration-150 ease-snap active:scale-[0.95]">
+            {hint && <span aria-hidden className="absolute inset-0 rounded-2xl border-2 border-primary/50 animate-[ripple_2s_ease-out_infinite]" />}
+            <LogoMark className="size-11 rounded-2xl" />
+          </button>
+          {hint && (
+            <span role="status" className={`absolute top-full left-0 z-40 mt-3 flex items-center gap-1 rounded-2xl bg-primary py-1 pr-1 pl-3.5 text-sm font-semibold whitespace-nowrap text-primary-foreground shadow-nav ${enter}`}>
+              <span aria-hidden className="absolute -top-1.5 left-4 size-3 rotate-45 rounded-[2px] bg-primary" />
+              Tap the drop for a quick guide
+              <button type="button" onClick={dismiss} aria-label="Hide the tip" className="relative grid size-9 shrink-0 place-items-center rounded-full hover:bg-white/15">
+                <X aria-hidden className="size-4" />
+              </button>
+            </span>
+          )}
+        </span>
+      ) : (
+        <button type="button" data-tour="help" onClick={start} className={className}>
+          <CircleHelp aria-hidden className="size-4 text-primary" /> {label}
+        </button>
+      )}
       <dialog
         ref={ref}
         aria-labelledby="tour-title"
@@ -195,9 +216,7 @@ export function OnboardingTour({ tour = "resident", auto = false, label = "How i
 export function GuidePage() {
   return (
     <main className="mx-auto w-full max-w-md px-4 pt-5 pb-10 md:max-w-3xl lg:max-w-5xl lg:px-8 lg:pt-8">
-      <PageHeader eyebrow="Guide" title="How to use Kot Delo?">
-        <OnboardingTour />
-      </PageHeader>
+      <PageHeader eyebrow="Guide" title="How to use Kot Delo?" logo={<OnboardingTour drop />} />
       <nav aria-label="Guide sections" className="mt-6 flex flex-wrap gap-2">
         {(Object.keys(GUIDE) as Role[]).map((r) => {
           const { label, Icon } = GUIDE[r];

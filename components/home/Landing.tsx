@@ -72,7 +72,11 @@ export function Landing({ info }: { info: PublicData }) {
       {/* Top bar: see-through at the top, frosted once the page scrolls. */}
       <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 lg:px-6">
         <div className="glass bar-on-scroll mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 rounded-full pr-2 pl-3 shadow-card sm:pl-4">
-          <Link href="/" aria-label="Kot Delo? home"><Logo /></Link>
+          {/* The drop opens the quick guide (and pulses with a tip on the first visit). */}
+          <span className="flex items-center gap-2.5 text-lg font-bold tracking-[-0.02em]">
+            <OnboardingTour tour="landing" drop />
+            Kot Delo?
+          </span>
           <nav aria-label="Sections" className="hidden items-center gap-7 text-sm font-medium text-muted-foreground md:flex">
             <a href="#how" className="hover:text-foreground">How it works</a>
             <a href="#features" className="hover:text-foreground">Features</a>
@@ -237,8 +241,7 @@ export function Landing({ info }: { info: PublicData }) {
         </section>
 
         <div className="mx-auto -mt-8 flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 pb-16 lg:-mt-16 lg:px-6 lg:pb-24">
-          {/* Opens by itself on the first visit; this button replays it. */}
-          <OnboardingTour tour="landing" auto label="Take the 30-second tour" className="chip min-h-11 shadow-card" />
+                    <OnboardingTour tour="landing" label="Take the 30-second tour" className="chip min-h-11 shadow-card" />
           <Link href="/guide" className="inline-flex min-h-11 items-center gap-1.5 font-semibold text-primary">
             Read the full guide for residents, drivers and CWA staff <ArrowRight aria-hidden className="size-4" />
           </Link>
