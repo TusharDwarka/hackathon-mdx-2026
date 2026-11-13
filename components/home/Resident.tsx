@@ -20,7 +20,9 @@ import { HEAT_LEGEND, HeatMap, heatHex } from "@/components/home/HeatMap";
 import { SurpriseCard } from "@/components/home/SurpriseCard";
 import { MoreLink, News, ReadingDate, Reservoirs, Source } from "@/components/home/PublicInfo";
 import type { PublicData } from "@/components/home/public-data";
-import { minOfDay, windowStatus } from "@/components/home/time";
+import { minOfDay, toMin, windowStatus } from "@/components/home/time";
+import { ForecastCard, Planner, QualityCard, SaveWaterCard } from "@/components/home/WaterDay";
+import { forecastNext, waterQuality } from "@/components/home/water-day";
 import { likelyWaterTime, streetStatus } from "@/components/home/rules";
 import {
   DemoBanner, REPORT_LIMIT_MS, Skeleton, fmtDate, fmtHours, isoDay, loadArea, loadStreetData, plural, readArea, readGuest, readMyReport, readStreet,
@@ -64,6 +66,7 @@ const COMPLAINTS: { category: ComplaintCategory; label: string }[] = [
   { category: "other", label: "Other problem" },
 ];
 const LITRES = [20, 50, 100, 200];
+const TANKER_L = 1000; // demo tanker capacity (sql/v3.sql "Demo tanker 1/2"), for the litres-vs-tank bar
 const hhmm = (t: number) => new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
@@ -232,6 +235,23 @@ export function Resident({ info }: { info: PublicData }) {
   const state = STATE[live?.status ?? "none"];
   const matches = areas.filter((a) => fold(a.name).includes(fold(query)));
   const mav = info.reservoirs[0];
+
+  // Water day (docs/WATER-DAY-SPLIT.md): forecast (op 24), the window to plan around (op 27), quality (op 26).
+  const tier = mav.pct === null ? null : reservoirTier(mav.pct);
+  const todayIso = now ? isoDay(now) : null;
+  const known = place && !place.failed ? (place.week ?? (place.win && todayIso ? [{ day: todayIso, win: place.win }] : [])) : null;
+  const forecast = known && todayIso ? forecastNext({ today: todayIso, official: known, likely, tier }) : null;
+  // Today's window while it is still ahead or running, else the next official one, else the forecast (labelled estimate).
+  const upcoming =
+    place && !place.failed && now && todayIso
+      ? place.win && minOfDay(now) < toMin(place.win.end_time)
+        ? { day: todayIso, win: place.win, kind: "official" as const }
+        : (() => {
+            const next = place.week?.find((d) => d.day > todayIso && d.win);
+            return next?.win ? { day: next.day, win: next.win, kind: "official" as const } : forecast ? { day: forecast.next.day, win: forecast.next, kind: "estimate" as const } : null;
+          })()
+      : null;
+  const quality = waterQuality(tier, info.quality, area?.name ?? null, todayIso ?? "");
 
   // ---------- pieces used by several sections ----------
 
@@ -605,6 +625,12 @@ export function Resident({ info }: { info: PublicData }) {
             <p className="text-muted-foreground">
               {!street ? "Choose your street to see them." : !data ? "Loading…" : todayReports.length ? `${plural(saidOn, "report", "reports")} of water, ${plural(saidOff, "report", "reports")} of no water` : "None yet today."}
             </p>
+            {street && data && todayReports.length > 0 && (
+              <span aria-hidden className="mt-2 flex h-2 gap-0.5 overflow-hidden rounded-full">
+                <span className="rounded-full bg-emerald-600" style={{ width: `${(saidOn / todayReports.length) * 100}%` }} />
+                <span className="flex-1 rounded-full bg-red-500" />
+              </span>
+            )}
           </div>
           <div className="py-3.5 text-sm">
             <p className="flex items-center gap-2 font-medium">
@@ -659,15 +685,40 @@ export function Resident({ info }: { info: PublicData }) {
   // Dashboard: 1 column on phones, 2 on tablets, 3 from 1280px.
   const overview = (
     <div className="grid gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+      {/* P1 passes the revealed constraint here (title, body, href); renders nothing until then. */}
       <SurpriseCard />
-      <div className="md:col-span-2">{!base ? loading : area ? todayHero : placeCard}</div>
-      {reservoirDial}
+      {!area && (
+        <>
+          <div className="md:col-span-2">{base ? placeCard : loading}</div>
+          {reservoirDial}
+        </>
+      )}
+      <div className="md:col-span-2">
+        {area && !place ? (
+          loading
+        ) : (
+          <Planner place={area?.name ?? null} day={upcoming?.day ?? null} win={upcoming?.win ?? null} kind={upcoming?.kind ?? "sample"} now={now} today={todayIso} />
+        )}
+      </div>
+      <div className="flex flex-col gap-4 md:col-span-2 md:grid md:grid-cols-2 lg:gap-6 xl:col-span-1 xl:flex">
+        <ForecastCard forecast={forecast} loading={!!area && !place} today={todayIso} />
+        <QualityCard quality={quality} />
+      </div>
+      {area && (
+        <>
+          <div className="md:col-span-2">{todayHero}</div>
+          {reservoirDial}
+        </>
+      )}
       {area && street && statusCard}
       {area && !street && <div className="xl:col-span-1">{needStreet("see what your neighbours report and track the tanker")}</div>}
       {tankerCard}
       {area && street && reliabilityCard}
       {area && <div className="md:col-span-2">{heatCard}</div>}
       {noticesCard}
+      <div className="md:col-span-2 xl:col-span-3">
+        <SaveWaterCard points={info.points} from={street ? { lat: street.lat, lng: street.lng, name: street.name } : null} />
+      </div>
     </div>
   );
 
@@ -795,6 +846,16 @@ export function Resident({ info }: { info: PublicData }) {
                     ))}
                   </div>
                 </div>
+                {litres && (
+                  <div className={enter}>
+                    <span aria-hidden className="block h-2.5 overflow-hidden rounded-full bg-muted">
+                      <span className="block h-full rounded-full bg-primary" style={{ width: `${(litres / TANKER_L) * 100}%` }} />
+                    </span>
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {litres} L is {Math.round((litres / TANKER_L) * 100)}% of one {TANKER_L.toLocaleString("en-GB")} L tanker (demo capacity). Ask only for what you need, so more streets get water.
+                    </p>
+                  </div>
+                )}
                 <Button size="tap" disabled={!litres} onClick={requestWater}>
                   <Truck aria-hidden />
                   {litres ? `Request ${litres} L` : "Choose an amount"}

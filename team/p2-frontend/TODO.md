@@ -25,3 +25,14 @@ Until P3's queries exist, use a small local fake-data object so screens render; 
 - [x] 5. Request litres + pending/served (needs P3)
 - [x] 6. Searchable reservoir view (needs P5/P3 data)
 - [x] 7. Short transitions polish
+
+## Water-day split (docs/WATER-DAY-SPLIT.md, P2)
+- [x] 1. Reservoir tank diagram `components/ui/level-tank.tsx` (landing + Reservoirs tab; P4 imports it)
+- [x] 2. Water-day planner, top of Overview (sample day labelled when no locality)
+- [x] 3. Reminders: Add to calendar (.ics, VALARM 30 min before) + in-tab alert + "Test reminder now (5 s)"
+- [x] 4. Next water forecast card (op 24 shape; stand-in until P3)
+- [x] 5. Water quality card (op 26 shape; stand-in until P3)
+- [x] 6. Save water + nearby help (reads data/water_points.csv when P5 adds it)
+- [x] 7. Diagram pass: tanks, report split bar, litres vs tanker bar
+- [x] SurpriseCard shell with props { title, body, href }: waiting for P1's text (DECISIONS #9)
+- [ ] Swap stand-ins in components/home/water-day.ts for P3's planDay / forecastNext / waterQuality when on main

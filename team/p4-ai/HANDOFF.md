@@ -57,3 +57,20 @@
 - P5: verified official notices beyond the timetable.
 ### Not verified
 - Live database (no keys here). Browser checks ran in demo mode only. When Supabase is unreachable, demo mode starts after about 7 s of supabase-js retries.
+
+## WATER-DAY-SPLIT P4 (Fri 13 Nov, round 3)
+### Changed
+- `components/ops/forecast.ts`: op 24/25 shapes + LOCAL STAND-INS (`trendOf` least squares, `forecastFrom` official > every-second-day, `needsTankers` = next window > 36 h or low confidence) and loaders that call P3's API first (`/api/reservoirs`, `/api/reservoirs/trend`, `/api/forecast`) then fall back to real data-file figures. Self-check `npx tsx components/ops/forecast.ts` (MaV: -0.124 %/day, 30% in ~14 days, 20% in ~95 days ≈ mid-Feb).
+- `/ops` Overview: reservoir tank row (worst first, stale/missing visible), `components/ops/TrendChart.tsx` (inline SVG: solid readings, dashed projection to the 20% crossing, 30%/20% lines, today line, press "20% by end of November" link shown next to our slower estimate), `components/ops/Forecasts.tsx` (next window per area, Official CWA link vs Estimate chip, confidence, "Plan tankers" flag sorted first). The old single reservoir card is replaced by the tank row.
+- `components/ops/Tank.tsx`: LOCAL STAND-IN for P2's `components/ui/level-tank.tsx` (not on main yet). Swap the import in Overview when P2 publishes it.
+- `components/ops/Bars.tsx`: `FillBar`, `StopProgress`. Used for priority dry hours, demand vs fleet capacity + litres per load (Dispatch), tankers on the road progress, driver round progress (`app/driver`).
+- `/map`: water points layer ("W" squares, nearest to my street larger + labelled, distance in the panel), toggle like the others. Reads table `water_points(name,kind,lat,lng,source_url)`. Demo mode shows 2 points labelled "demo, not a real place"; live shows only sourced rows. No river suggestions (DECISIONS #7).
+### Needs from others
+- P1: ops 24-27 in contracts/api.md. I built against the shapes in docs/WATER-DAY-SPLIT.md. Note: my `days_to_30/20` count from TODAY, not from latest_day; P3 please match or tell me.
+- P3: routes `/api/forecast`, `/api/reservoirs/trend` (falls back today), and a `water_points` table loaded from P5's `data/water_points.csv` (anon read).
+- P2: `components/ui/level-tank.tsx`; I will import it instead of my stand-in.
+- P5: `data/water_points.csv` with sourced points (layer says "No sourced water points loaded yet" until then).
+### How to test
+- `npm run build && npx next start`, open /ops (no keys = demo): 7 tanks (MaV 33% Watch first), trend chart "reaches 20% in ~95 days", forecast card. /ops#dispatch: dry bars; Add all -> demand vs capacity bar + per-load bars; Confirm -> tankers on the road with stop progress. /driver: pick Tanker A -> round progress bar. /map: "Tanker stops and water points" layer, nearest highlighted.
+### Verified
+- Lint, tsc, build, all self-checks pass. Headless Chrome screenshots at 360 (CDP mobile emulation, scrollWidth = 360) and 1440 of /ops, /ops#dispatch, /map in demo mode. Not verified with a live database (no keys here) or the driver progress bar visually.

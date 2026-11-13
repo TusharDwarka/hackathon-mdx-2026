@@ -11,6 +11,7 @@ import { cn } from "cn";
 import { buttonVariants } from "@/components/ui/button";
 import { BottomWaves, Logo } from "@/components/ui/brand";
 import { Gauge } from "@/components/ui/gauge";
+import { LevelTank } from "@/components/ui/level-tank";
 import { DayTrack } from "@/components/home/DayTrack";
 import { minOfDay, windowStatus } from "@/components/home/time";
 import { Skeleton, fmtDate, loadArea, useBase, useNow, type AreaData } from "@/components/home/shared";
@@ -229,25 +230,18 @@ export function Landing({ info }: { info: PublicData }) {
             title="Every reservoir at a glance"
             text="The latest published fill level of the island's reservoirs, each with its date and source. Old readings are marked as stale, never passed off as today's."
           >
-            <ul className="surface flex w-full max-w-md flex-col gap-4 p-6">
-              {info.reservoirs.filter((r) => r.pct !== null).slice(0, 5).map((r) => (
-                <li key={r.name}>
-                  <p className="flex items-baseline justify-between gap-3 text-sm">
-                    <span className="font-semibold">{r.name}</span>
-                    <span className="font-bold tabular-nums">{r.pct!.toFixed(1)}%</span>
-                  </p>
-                  <span aria-hidden className="mt-1.5 block h-2.5 overflow-hidden rounded-full bg-muted">
-                    <span className="block h-full rounded-full bg-gradient-to-r from-sky-400 to-primary" style={{ width: `${Math.min(100, r.pct!)}%` }} />
-                  </span>
-                  {r.date && <p className="mt-1 text-xs text-muted-foreground">{r.basis === "measured" ? "Measured" : "Published"} {fmtDate(r.date, long)}</p>}
-                </li>
-              ))}
-              <li>
-                <Link href="/resident?tab=reservoirs" className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary">
-                  All reservoirs <ArrowRight aria-hidden className="size-4" />
-                </Link>
-              </li>
-            </ul>
+            <div className="surface w-full max-w-md p-6">
+              <ul className="grid grid-cols-3 gap-x-3 gap-y-5">
+                {info.reservoirs.filter((r) => r.pct !== null).slice(0, 6).map((r) => (
+                  <li key={r.name}>
+                    <LevelTank name={r.name} pct={r.pct} day={r.date} />
+                  </li>
+                ))}
+              </ul>
+              <Link href="/resident?tab=reservoirs" className="mt-4 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-primary">
+                All reservoirs <ArrowRight aria-hidden className="size-4" />
+              </Link>
+            </div>
           </Feature>
         </section>
 

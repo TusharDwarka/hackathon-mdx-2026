@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ChevronRight, ExternalLink, Search, ShieldQuestion } from "lucide-react";
 import type { NewsItem, Reading } from "@/components/home/public-data";
 import { daysOld, fmtDate } from "@/components/home/shared";
+import { LevelTank } from "@/components/ui/level-tank";
 
 /** A reading older than this is shown as stale (P5's sources publish every few weeks at best). */
 export const STALE_DAYS = 14;
@@ -67,23 +68,18 @@ export function Reservoirs({ reservoirs, combined, now }: { reservoirs: Reading[
         <p className="mt-1 text-sm text-muted-foreground">
           The latest published fill level of each of the seven reservoirs, with its date and source. A fill level is stored water, not what reaches your tap, and it never tells whether water is safe to drink.
         </p>
+        <p className="mt-2 text-xs text-muted-foreground">Tank colour: blue normal (60%+), amber watch (30 to 60%), red critical (under 30%). Dashed lines mark 30% and 20%. Demo thresholds, not official CWA levels.</p>
         <SearchBox label="Search a reservoir" value={q} onChange={setQ} placeholder="e.g. Midlands" />
       </section>
       {shown.length ? (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6">
           {shown.map((r) => (
-            <li key={r.name} className="surface flex flex-col p-5">
-              <h3 className="font-semibold">{r.name}</h3>
+            <li key={r.name} className="surface flex flex-col p-4 sm:p-5">
+              <LevelTank name={r.name} pct={r.pct} day={r.date} />
               {r.pct === null ? (
-                <p className="mt-2 text-sm text-muted-foreground">No verified reading in our sources yet. Kot Delo? does not guess a number.</p>
+                <p className="mt-2 text-center text-xs text-muted-foreground">Not in our sources yet. Kot Delo? does not guess a number.</p>
               ) : (
                 <>
-                  <p className="mt-2 text-3xl leading-none font-bold tracking-[-0.02em] tabular-nums">
-                    {r.pct.toFixed(1)}%<span className="ml-1.5 text-sm font-medium text-muted-foreground">full</span>
-                  </p>
-                  <span aria-hidden className="mt-3 block h-2 overflow-hidden rounded-full bg-muted">
-                    <span className="block h-full rounded-full bg-primary" style={{ width: `${Math.min(100, r.pct)}%` }} />
-                  </span>
                   <ReadingDate r={r} now={now} />
                   {r.note && <p className="mt-1 text-xs text-muted-foreground">Note: {r.note}</p>}
                   <div className="mt-auto pt-1">

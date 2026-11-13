@@ -5,16 +5,18 @@
 // Fills its parent: a ResizeObserver calls invalidateSize() so resize, minimize/restore and
 // panel changes never leave blank tiles. Leaflet touches `window`, so it is imported in the effect.
 // Layers, each separately toggled: reliability (blue dots), resident reports (rings, never house pins),
-// official notices (hatched area labels, never solid blue), live tankers (+ my tanker's stops).
+// official notices (hatched area labels, never solid blue), live tankers (+ my tanker's stops),
+// tanker stops / public water points (nearest to my street highlighted).
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
-import type { Fix, Stop, Street } from "@/components/map/data";
+import type { Fix, Stop, Street, WaterPoint } from "@/components/map/data";
 import { noticeTimes, reliabilityHex, RELIABILITY_DAYS, type Notice, type Reliability, type Signal } from "@/components/map/layers";
 
 type Lf = typeof import("leaflet");
 export type TankerMarker = { id: number; label: string; fix: Fix; mine: boolean; stale: boolean };
 export type AreaNotice = { area_id: number; name: string; lat: number; lng: number; notice: Notice };
-export type Layers = { reliability: boolean; reports: boolean; notices: boolean; tankers: boolean };
+export type Layers = { reliability: boolean; reports: boolean; notices: boolean; tankers: boolean; water: boolean };
+export type WaterMarker = WaterPoint & { nearest: boolean; km: number | null };
 type Props = {
   streets: Street[];
   stops: Stop[]; // my tanker's route
@@ -23,6 +25,7 @@ type Props = {
   signals: Record<number, Signal>;
   reliability: Record<number, Reliability>;
   notices: AreaNotice[];
+  water: WaterMarker[];
   layers: Layers;
   focus: { key: string; points: { lat: number; lng: number }[] };
 };
@@ -30,7 +33,7 @@ type Props = {
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliability, notices, layers, focus }: Props) {
+export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliability, notices, water, layers, focus }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const lf = useRef<Lf | null>(null);
   const map = useRef<import("leaflet").Map | null>(null);
@@ -52,7 +55,7 @@ export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliabil
       const m = L.map(el.current, { center: [-20.3, 57.48], zoom: 15 });
       m.attributionControl.setPrefix(false);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap contributors", maxZoom: 19 }).addTo(m);
-      groups.current = { reliability: L.layerGroup(), reports: L.layerGroup(), notices: L.layerGroup(), tankers: L.layerGroup(), mine: L.layerGroup().addTo(m) };
+      groups.current = { reliability: L.layerGroup(), reports: L.layerGroup(), notices: L.layerGroup(), tankers: L.layerGroup(), water: L.layerGroup(), mine: L.layerGroup().addTo(m) };
       map.current = m;
       observer = new ResizeObserver(resize);
       observer.observe(el.current);
@@ -126,6 +129,24 @@ export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliabil
         .addTo(g);
     }
   }, [ready, notices]);
+
+  // Water-day split item 4: tanker stops / public water points. Square tap icon; the nearest one is larger with a label.
+  useEffect(() => {
+    const L = lf.current, g = groups.current?.water;
+    if (!L || !g) return;
+    g.clearLayers();
+    for (const p of water) {
+      const size = p.nearest ? 30 : 22;
+      const html = `<div style="display:flex;align-items:center;gap:4px;width:max-content">
+        <span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:8px;background:#0e7490;color:#fff;font:700 ${p.nearest ? 15 : 12}px system-ui,sans-serif;box-shadow:0 0 0 ${p.nearest ? 4 : 2}px #fff,0 2px 6px rgb(0 0 0/.35)">W</span>
+        ${p.nearest ? `<span style="padding:2px 8px;border-radius:999px;background:#0e7490;color:#fff;font:600 12px system-ui,sans-serif">nearest water point</span>` : ""}</div>`;
+      const dist = p.km != null ? `<br>About ${p.km < 1 ? `${Math.round(p.km * 1000)} m` : `${p.km.toFixed(1)} km`} from your street (straight line)` : "";
+      const source = p.source_url ? `<br><a href="${esc(p.source_url)}" target="_blank" rel="noreferrer">source</a>` : "<br>Demo point, not a real place";
+      L.marker([p.lat, p.lng], { icon: L.divIcon({ html, className: "", iconSize: [0, 0], iconAnchor: [size / 2, size / 2] }), zIndexOffset: p.nearest ? 700 : 400, title: p.name })
+        .bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.kind)}${dist}${source}`)
+        .addTo(g);
+    }
+  }, [ready, water]);
 
   // Step 7: my tanker's stops (next = amber, served = grey).
   useEffect(() => {

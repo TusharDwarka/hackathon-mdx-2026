@@ -9,6 +9,7 @@ import { useMemo, useState } from "react";
 import { Minus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { heatHex } from "@/components/home/HeatMap";
+import { FillBar, StopProgress } from "@/components/ops/Bars";
 import { demandByStreet, errText, type LiveRound } from "@/components/map/data";
 import { dispatchFromPlan, saveDemoDispatch, demoRounds } from "@/components/map/demo";
 import { ASSUMED_REQUEST_L, confirmDispatch, DEMO_TANK_L, fmtL, LIVE_TANK_L, planDispatch, type Demand, type Plan } from "@/components/ops/dispatch";
@@ -91,6 +92,8 @@ export function DispatchPanel({ data, name, setRounds }: Props) {
 
   const confirmBlocked = !plan ? planError : !plan.loads.length ? (rows.length ? "No tanker can take a load: add a tanker." : "Add at least one street with waiting requests.") : null;
   const num = "min-h-11 w-28 rounded-xl border bg-card px-3 tabular-nums";
+  const dryMax = Math.max(24, ...data.priorities.map((p) => p.hours_dry ?? 0));
+  const fleetL = plan ? plan.tankers * plan.capacity_l * plan.max_trips : 0;
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
@@ -123,6 +126,10 @@ export function DispatchPanel({ data, name, setRounds }: Props) {
                   <p className="text-muted-foreground">
                     {p.waiting ? <b className="text-foreground">{fmtL(p.litres)} waiting ({p.waiting} request{p.waiting === 1 ? "" : "s"})</b> : "No requests"} · dry for {dryFor(p.hours_dry)} · {evidence(status[p.street_id])}
                   </p>
+                  <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <FillBar value={p.hours_dry ?? 0} max={dryMax} hex={heatHex(p.hours_dry)} className="w-full max-w-48" />
+                    {p.hours_dry == null ? "dryness unknown" : `dry ${dryFor(p.hours_dry)}`}
+                  </span>
                   <p className="text-xs text-muted-foreground">Why here: {p.reasons.join("; ")}.</p>
                 </div>
                 <div className="flex flex-col items-start gap-1 sm:items-end">
@@ -185,10 +192,15 @@ export function DispatchPanel({ data, name, setRounds }: Props) {
                 <div><dt className="text-xs text-muted-foreground">Refill needed</dt><dd className="font-semibold">{plan.refill_needed ? "Yes" : "No"}</dd></div>
                 <div><dt className="text-xs text-muted-foreground">Capacity</dt><dd className="font-semibold tabular-nums">{plan.tankers} × {fmtL(plan.capacity_l)}</dd></div>
               </dl>
+              <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                <FillBar value={plan.total_l} max={fleetL} hex={plan.total_l > fleetL ? "#dc2626" : undefined} className="h-3" />
+                <span>Demand {fmtL(plan.total_l)} of {fmtL(fleetL)} fleet capacity ({plan.tankers} × {fmtL(plan.capacity_l)}{plan.max_trips > 1 ? " × 2 trips" : ""}){plan.total_l > fleetL ? ": over capacity" : ""}</span>
+              </div>
               <ol className="flex flex-col gap-1.5 text-sm">
                 {plan.loads.map((l, i) => (
                   <li key={i} className="rounded-xl bg-muted/60 p-2">
                     <b>{l.tanker}</b>, trip {l.trip}{l.trip > 1 ? " (after a refill)" : ""} · {fmtL(l.litres)} of {fmtL(plan.capacity_l)}
+                    <FillBar value={l.litres} max={plan.capacity_l} className="my-1" />
                     <span className="block text-xs text-muted-foreground">{l.deliveries.map((d) => `${d.name} ${fmtL(d.litres)}${d.split ? " (split)" : ""}`).join(" → ")}</span>
                   </li>
                 ))}
@@ -230,8 +242,9 @@ export function DispatchPanel({ data, name, setRounds }: Props) {
               const litres = left.reduce((sum, s) => sum + (s.litres ?? roundDemand?.[s.street_id]?.litres ?? 0), 0);
               return (
                 <li key={r.round.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border p-3 text-sm">
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <p className="font-medium">{r.label}</p>
+                    <StopProgress served={r.stops.map((s) => !!s.served_at)} className="my-1 max-w-64" />
                     <p className="text-xs text-muted-foreground">{left.length} of {r.stops.length} stops left{litres ? ` · ${fmtL(litres)} to deliver` : ""}{left[0] ? ` · next: ${left[0].street.name}` : ""}</p>
                   </div>
                   <Link className="chip border" href={data.demo ? "/driver" : `/driver?round=${r.round.id}`}>Driver view</Link>
