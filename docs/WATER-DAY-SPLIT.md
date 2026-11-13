@@ -32,7 +32,7 @@ Main moved a lot (merges 5 and 6). Do not start on a stale branch.
 
 - Official notices only for quality or health alerts. **Never claim water is safe (or unsafe) to drink.** Feature E says "may be cloudy when levels are low" and "follow official advice"; "Boil before drinking" appears only when a dated official notice says so, with its source link.
 - Every forecast is labelled **Estimate**, shows what it is based on, and never overrides an official CWA window.
-- River idea (F): washing cars or using detergent in rivers pollutes them and may be illegal. Do **not** send people to rivers unless P5 finds an official source saying it is allowed. Default: nearest tanker stop / public water point + save-water tips.
+- River idea (F): already dropped in DECISIONS #7 (we do not point people to untreated water), and washing cars or using detergent in rivers pollutes them. Do **not** send people to rivers unless P1 reopens #7 with an official source from P5. Default: nearest tanker stop / public water point + save-water tips.
 - English only. No house pins, no person data. Fallback for every new card.
 
 ## P1 — contract V4 (do first, small)
@@ -124,8 +124,20 @@ Own: `data/*.csv`, `README.md`, `team/p5-pitch/`.
 2. **Every-second-day rule source**: the official CWA notice(s) stating the alternate-day schedule per area, dates in `data/schedule.csv`.
 3. **Quality notices**: `data/quality_notices.csv` `area,day,title,category,source_url` (category `boil`/`quality`) from official CWA / Ministry of Health notices only. Empty file is fine; no invented rows.
 4. **Water points**: `data/water_points.csv` `name,kind,lat,lng,source_url` (tanker stop, public standpipe, static tank). Only sourced points.
-5. **River question**: is washing cars in rivers allowed in Mauritius? One line + source in your notes. Answer decides whether F mentions rivers at all.
-6. **Pitch**: one slide on the prediction model (inputs: official schedule, alternate-day rule, reservoir trend, resident reports; output: next window + days to 20%), one on the water-day planner. Explain in 30 s why it is an estimate, not a promise.
+5. **River question** (only if the team wants to reopen DECISIONS #7): official source on using or washing cars in rivers in Mauritius. Otherwise skip.
+6. **Refresh the feature/claims list** in README and pitch notes. The old "Do not claim yet" list is out of date: V2 (landing, ops, complaints, reservoir, likely water time) is on main since merges 5 and 6. Re-check the live site and list only what works there, keeping "demo data" labels where the database is still seeded.
+7. **Pitch**: one slide on the prediction model (inputs: official schedule, alternate-day rule, reservoir trend, resident reports; output: next window + days to 20%), one on the water-day planner. Explain in 30 s why it is an estimate, not a promise.
+
+## Surprise card (judged: "visibly built in, not bolted on")
+
+The slot exists: `components/home/SurpriseCard.tsx` renders `null`, mounted first in the resident Overview (`components/home/Resident.tsx`). DECISIONS #9 is still empty.
+
+- **P1:** write the revealed constraint word for word in DECISIONS #9, plus our one-line answer, and add it to SPEC.md. 15-minute huddle rule (PLAYBOOK §8): smallest change that visibly satisfies it.
+- **P2:** fill `SurpriseCard.tsx`: a short title naming the constraint, 1 to 2 lines on how the app meets it, and a link or button into the feature that meets it (planner, reminder, forecast, tank). It must point to real working features, not just text. Fallback: hide the card if there is no content.
+- **P3 / P4:** if the constraint needs data or a map/ops change, it goes on your list ahead of the round 3 items, same ownership rules.
+- **P5:** fill the README "Surprise card" section (currently "TBD") and give it its own pitch moment in the live demo, not a closing slide.
+
+If the constraint is unknown when you start, P2 builds the card shell with props `{ title, body, href }` and waits for P1's text.
 
 ## New files and owners
 
@@ -143,7 +155,7 @@ Resident picks Vacoas -> planner shows tonight 03:00 to 08:00 with tasks -> taps
 
 ## Copy/paste messages
 
-- **P2:** Pull main first (`git pull origin main && git merge main` on feat/home, build). Then read docs/WATER-DAY-SPLIT.md and do the P2 section in order: level-tank diagram, planner, reminders (.ics must work), forecast, quality, save-water cards. Use P3's shapes; mock them until the API lands. Never say water is safe or unsafe to drink. Commit small, update DONE/HANDOFF.
+- **P2:** Pull main first (`git pull origin main && git merge main` on feat/home, build). Then read docs/WATER-DAY-SPLIT.md and do the P2 section in order: level-tank diagram, planner, reminders (.ics must work), forecast, quality, save-water cards, then the SurpriseCard. Use P3's shapes; mock them until the API lands. Never say water is safe or unsafe to drink. Commit small, update DONE/HANDOFF.
 - **P3:** Pull main first (`git pull origin main && git merge main` on feat/data, build). Then read docs/WATER-DAY-SPLIT.md and do the P3 section: forecastNext, reservoirTrend, waterQuality, planDay + 3 routes, one self-check each. Publish stub shapes in your HANDOFF early. Commit small.
 - **P4:** Pull main first (`git pull origin main && git merge main` on feat/driver-map, build). Then read docs/WATER-DAY-SPLIT.md and do the P4 section: reservoir tanks + SVG trend chart in ops, forecast per area, water-points map layer, diagram pass. Import P2's level-tank, do not edit it. Commit small.
-- **P5:** Pull main first (`git pull origin main && git merge main` on feat/data-files). Then read docs/WATER-DAY-SPLIT.md and do the P5 section: reservoir history, alternate-day source, quality notices, water points, river legality, two pitch slides. Sourced data only. Commit small.
+- **P5:** Pull main first (`git pull origin main && git merge main` on feat/data-files). Then read docs/WATER-DAY-SPLIT.md and do the P5 section: reservoir history, alternate-day source, quality notices, water points, refresh the claims list, README surprise card section, two pitch slides. Sourced data only. Commit small.
