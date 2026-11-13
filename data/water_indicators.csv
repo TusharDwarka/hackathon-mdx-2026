@@ -1,0 +1,23 @@
+metric,value,unit,period,note,source_url
+rainfall_summer_total,889,mm,summer 2025-2026,66% of seasonal mean (1352 mm),https://fr.allafrica.com/stories/202608030656.html
+rainfall_summer_pct_of_normal,66,%,summer 2025-2026,,https://fr.allafrica.com/stories/202608030656.html
+rainfall_forecast_june,83,mm,2026-06,70% of long-term mean,https://fr.allafrica.com/stories/202608030656.html
+rainfall_forecast_july,80,mm,2026-07,60% of long-term mean,https://fr.allafrica.com/stories/202608030656.html
+rainfall_forecast_august,63,mm,2026-08,60% of long-term mean,https://fr.allafrica.com/stories/202608030656.html
+feb_2026_dryness_rank,4,rank,2026-02,4th driest February since 1904,https://www.expat.com/en/expat-mag/13112-mauritius-water-crisis-when-island-life-means-an-empty-tap.html
+cwa_water_produced,332,million m3,2024,Statistics Mauritius via Mauritius Times,https://www.mauritiustimes.com/mt/water-bills-should-match-electricity-and-telecom-costs-to-reflect-the-vital-importance-of-the-resource/
+cwa_water_sold,115,million m3,2024,,https://www.mauritiustimes.com/mt/water-bills-should-match-electricity-and-telecom-costs-to-reflect-the-vital-importance-of-the-resource/
+daily_production,830000,m3/day,2026,nearly 60% lost (former CWA chief engineer),https://lexpress.mu/node/559261
+water_lost_share,60,%,2026,approx.; leaks and non-revenue water,https://lexpress.mu/node/559261
+mav_to_la_marie_normal,110000,m3/day,2026-10,normal flow to La Marie treatment plant,https://fr.allafrica.com/stories/202610100075.html
+mav_to_la_marie_crisis_low,56000,m3/day,2026-10,"range 56,000-61,000",https://fr.allafrica.com/stories/202610100075.html
+mav_to_la_marie_crisis_high,61000,m3/day,2026-10,,https://fr.allafrica.com/stories/202610100075.html
+boreholes_commissioned_plan,9,count,2026-10,"~30,000 m3/day extra for MaV zone by end Oct",https://fr.allafrica.com/stories/202610100075.html
+borehole_valentina_yield,4840,m3/day,2026-10-19,"serves Phoenix, Midlands and other areas",https://www.riotimesonline.com/mauritius-boreholes-water-crisis-2026/
+extra_boreholes_sought,15-20,count,2026-10-24,,https://www.riotimesonline.com/mauritius-boreholes-water-crisis-2026/
+pipes_to_replace,1500,km,2026,"of ~5,400 km network",https://afrique.le360.ma/societe/maurice-les-canalisations-vetustes-pesent-jusqua-60-de-leau-non-generatrice-de-revenus_AKHO7THEWVFUBDDAAXVX2Y6QB4/
+pipe_programme_credit,2.9,billion MUR,starts 2026-10,Indian line of credit,https://fr.allafrica.com/stories/202606080768.html
+treated_wastewater_discharged,55000,m3/day,2026,currently not reused,https://www.expat.com/en/expat-mag/13112-mauritius-water-crisis-when-island-life-means-an-empty-tap.html
+la_nicoliere_consumers,90000-95000,consumers,2026-09,,https://fr.allafrica.com/stories/202609290585.html
+cwa_deficit,755,million MUR,2026-06,,https://fr.allafrica.com/stories/202607010555.html
+cwa_debt,11,billion MUR (more than),2026-06,,https://fr.allafrica.com/stories/202607010555.html
