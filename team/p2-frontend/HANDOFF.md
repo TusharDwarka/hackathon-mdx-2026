@@ -1,4 +1,9 @@
-# HANDOFF (p2-frontend) — V2, all four steps done
+# HANDOFF (p2-frontend) — V2 done, next split step 1 done
+
+## Next split step 1 (docs/NEXT-TASK-SPLIT.md)
+- **Changed:** new shared class `glass` in `app/globals.css`: translucent white + static 20px blur + white hairline. Falls back to opaque white when the browser has no backdrop-filter or the user turns on "reduce transparency". The nav uses it (phone tab bar and desktop top bar). Reduced motion: every transition/animation finishes at once.
+- **For P4:** use `glass` for small floating panels over the map (legend, layer switch, bottom sheet); keep `surface` for text-heavy cards. Do not animate the blur.
+- **How to test:** `npm run build`, `npm run dev`, scroll `/` and `/resident` at 390 and 1280px: the sky and cards show softly through the bars. Windows: Settings > Accessibility > Visual effects > Transparency effects off, or devtools "Emulate prefers-reduced-transparency": bars turn solid white.
 
 ## Changed
 - **Shell + look (step 1).** `app/layout.tsx` renders the shared nav (`components/ui/app-nav.tsx`) on every screen: a floating rounded tab bar at the bottom on phones (Home, Resident, Map, Operations), a top bar from 1024px. `app/globals.css`: sky-blue gradient, bright blue `primary`, dark navy text, and three shared classes: `surface` (white card, 24px corners, soft shadow), `chip` (pill), `icon-btn` (round 48px). Buttons are pills; `size="tap"` is the big one. `components/ui/progress-ring.tsx` is the ring.
