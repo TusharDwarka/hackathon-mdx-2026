@@ -5,7 +5,7 @@
 // truck_positions insert every 5s, screen Wake Lock. Served -> round_stops +
 // requests. End round -> rounds.status 'done' and tracking stops.
 // Fallbacks: no waiting requests -> all streets; no GPS -> simulated drive;
-// Supabase unreachable -> local demo mode (nothing is saved).
+// Supabase unreachable or no streets loaded yet -> local demo mode (nothing is saved).
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,8 @@ export default function DriverPage() {
           setRound(active.round);
           setStops(active.stops);
         } else {
+          const all = await loadStreets();
+          if (all.length === 0) throw new Error("no streets loaded yet"); // empty DB -> same demo mode as unreachable
           setRound(null);
           setStops([]);
           setWaiting(await loadWaitingStreets());
@@ -202,7 +204,7 @@ export default function DriverPage() {
           </Button>
         </>
       )}
-      <Link href="/" className="text-center text-sm text-zinc-500">Home</Link>
+      <Link href="/resident" className="text-center text-sm text-zinc-500">Home</Link>
     </main>
   );
 }

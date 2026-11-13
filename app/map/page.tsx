@@ -3,8 +3,8 @@
 // Resident map (contracts/api.md ops 8-9). Truck marker moves on Realtime
 // inserts to truck_positions; "N stops away, about X min" from lib/eta.ts;
 // status flips to Served when the driver marks my stop.
-// My street: ?street=<id>, else localStorage "kot-delo:street_id", else first street.
-// Fallback: Supabase unreachable -> simulated truck over the mock streets.
+// My street: ?street=<id>, else localStorage "kotdelo.street" (same key as Home), else first street.
+// Fallback: Supabase unreachable OR no streets loaded yet -> demo mode, simulated truck over the mock streets.
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -13,7 +13,7 @@ import { MOCK_STREETS } from "@/lib/mock";
 import { TruckMap } from "@/components/map/TruckMap";
 import { loadActiveRound, loadLatestFix, loadStreets, type Fix, type Round, type Stop, type Street } from "@/components/map/data";
 
-const STREET_KEY = "kot-delo:street_id";
+const STREET_KEY = "kotdelo.street"; // shared with Home (/resident)
 
 export default function MapPage() {
   const [streets, setStreets] = useState<Street[]>([]);
@@ -34,6 +34,7 @@ export default function MapPage() {
     try { stored = Number(localStorage.getItem(STREET_KEY)); } catch { /* private mode */ }
     Promise.all([loadStreets(), loadActiveRound()])
       .then(async ([ss, active]) => {
+        if (ss.length === 0) throw new Error("no streets loaded yet"); // empty DB -> same demo mode as unreachable
         setStreets(ss);
         setMyId(fromUrl || stored || ss[0]?.id || null);
         setRound(active?.round ?? null);
@@ -145,7 +146,7 @@ export default function MapPage() {
             ))}
           </select>
         </label>
-        <Link href="/" className="text-sm text-sky-700 underline">← Back</Link>
+        <Link href="/resident" className="text-sm text-sky-700 underline">← Back</Link>
       </section>
     </main>
   );
