@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "load-data": "node --env-file=.env.local --import tsx scripts/load-data.ts"
+    "load-data": "node --env-file=.env.local --import tsx scripts/load-data.ts",
+    "seed-demo": "node --env-file=.env.local --import tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
