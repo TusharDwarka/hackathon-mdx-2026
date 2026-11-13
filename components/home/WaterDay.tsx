@@ -171,7 +171,7 @@ export function ForecastCard({ forecast, loading, today }: { forecast: Forecast 
         {forecast && <span className={`${tag} ${official ? "bg-primary/10 text-primary" : "bg-muted"}`}>{official ? "Official CWA" : "Estimate"}</span>}
       </div>
       {loading ? (
-        <div className="mt-3 h-10 w-48 animate-pulse rounded-lg bg-muted motion-reduce:animate-none" />
+        <div aria-hidden className="wave-load mt-3 h-10 w-48 rounded-lg" />
       ) : !forecast ? (
         <p className="mt-2 text-sm text-muted-foreground">Not enough information for a forecast yet: no official window and too few neighbours&apos; reports. Choose your locality and street.</p>
       ) : (

@@ -676,7 +676,7 @@ export function Resident({ info }: { info: PublicData }) {
           <div className="py-3.5 text-sm">
             <p className="font-medium">Reports today</p>
             <p className="text-muted-foreground">
-              {!street ? "Choose your street to see them." : !data ? "Loading…" : todayReports.length ? `${plural(saidOn, "report", "reports")} of water, ${plural(saidOff, "report", "reports")} of no water` : "None yet today."}
+              {!street ? "Choose your street to see them." : !data ? <Skeleton className="inline-block h-4 w-32 align-middle" /> : todayReports.length ? `${plural(saidOn, "report", "reports")} of water, ${plural(saidOff, "report", "reports")} of no water` : "None yet today."}
             </p>
             {street && data && todayReports.length > 0 && (
               <span aria-hidden className="mt-2 flex h-2 gap-0.5 overflow-hidden rounded-full">
@@ -690,7 +690,7 @@ export function Resident({ info }: { info: PublicData }) {
               Water usually comes <span className={`${tag} min-h-5 bg-card`}>Estimate</span>
             </p>
             <p className="text-muted-foreground">
-              {!street ? "Choose your street to see it." : !data ? "Loading…" : likely ? <><strong className="font-semibold text-foreground tabular-nums">{likely.from} – {likely.to}</strong> on {likely.days_hit} of {likely.days_total} days</> : "Not enough reports yet."}
+              {!street ? "Choose your street to see it." : !data ? <Skeleton className="inline-block h-4 w-32 align-middle" /> : likely ? <><strong className="font-semibold text-foreground tabular-nums">{likely.from} – {likely.to}</strong> on {likely.days_hit} of {likely.days_total} days</> : "Not enough reports yet."}
             </p>
           </div>
         </div>
