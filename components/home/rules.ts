@@ -16,10 +16,8 @@ export type StreetStatus = { state: ReportType | null; trust: "confirmed" | "unc
 
 /** Reports of the last 3 h: confirmed when there are >= 2 reports and >= 2/3 of them agree. */
 export function streetStatus(reports: Report[], now: Date): StreetStatus {
-  const recent = reports.filter((r) => {
-    const age = now.getTime() - new Date(r.created_at).getTime();
-    return age >= 0 && age <= 3 * 3600_000;
-  });
+  // No lower bound on purpose: a report sent a few seconds "after" now (the page clock ticks every 30 s) still counts.
+  const recent = reports.filter((r) => now.getTime() - new Date(r.created_at).getTime() <= 3 * 3600_000);
   if (!recent.length) return { state: null, trust: "unconfirmed", total: 0, agree: 0 };
   const on = recent.filter((r) => r.type === "water_on").length;
   const off = recent.length - on;
@@ -39,7 +37,7 @@ export function likelyWaterTime(reports: Report[], now: Date): LikelyTime | null
   const hoursByDay = new Map<string, Set<number>>(); // local day -> hours with a water_on report
   for (const r of reports) {
     const d = new Date(r.created_at);
-    if (r.type !== "water_on" || d.getTime() < since || d.getTime() > now.getTime()) continue;
+    if (r.type !== "water_on" || d.getTime() < since) continue;
     const day = d.toLocaleDateString("en-CA");
     if (!hoursByDay.has(day)) hoursByDay.set(day, new Set());
     hoursByDay.get(day)!.add(d.getHours());
@@ -68,6 +66,7 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("rules.ts")) {
   console.assert(two.state === "water_off" && two.trust === "confirmed" && two.agree === 2 && two.total === 3, "2 of 3 agree");
   const split = streetStatus([r("water_off", 0, 10), r("water_on", 0, 11)], now);
   console.assert(split.state === "water_on" && split.trust === "unconfirmed", "tie: newest wins, unconfirmed");
+  console.assert(streetStatus([r("water_on", 0, 12, 0), { type: "water_on", created_at: new Date(now.getTime() + 20_000).toISOString() }], now).total === 2, "a report from the last seconds counts");
 
   console.assert(likelyWaterTime([r("water_on", 1, 5), r("water_on", 2, 6)], now) === null, "under 3 days");
   const likely = likelyWaterTime([r("water_on", 1, 5, 30), r("water_on", 2, 6, 10), r("water_on", 3, 6, 50), r("water_on", 4, 14), r("water_off", 5, 6), r("water_on", 20, 6)], now);

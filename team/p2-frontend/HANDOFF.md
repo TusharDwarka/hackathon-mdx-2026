@@ -20,8 +20,14 @@
 - Shared loading code for both screens: `components/home/shared.tsx`. Rules as pure functions with a self-check: `components/home/rules.ts`.
 - Screenshots for P1: `team/p2-frontend/design/` (landing and resident at 390px and 1280px, taken against the real CSVs through a local stand-in database).
 
+## V2 step 3 (done): resident V2 features
+- "Water on <street> now" card: what neighbours reported in the last 3 hours, with a Confirmed / Unconfirmed chip and "2 of 3 reports" (op 15), and "Water usually comes between 04:00 and 06:00" (op 16).
+- One report per street per 30 minutes: after a tap both buttons lock and a line says when you can report again. Remembered in localStorage on that phone only (`kotdelo.report.<street id>`); nothing about the phone is sent.
+- "Something wrong?": tap "Make a complaint", tap a category (no water / dirty water / tanker did not come / other). Inserts `{street_id, category}` into `complaints` (op 14). No free text.
+- "I need water" is unchanged: free, one tap.
+- Ops 15 and 16 run on REAL reports through local copies of the rules in `components/home/rules.ts` (pure, self-checked). Op 14 is a direct insert in `components/home/shared.tsx`.
+
 ## Not done yet (next steps)
-- Step 3: resident V2 features (status with trust, likely water time, complaint, 30-minute report limit).
 - Step 4: database wait 8 s + "Try again".
 
 ## Needs from others
