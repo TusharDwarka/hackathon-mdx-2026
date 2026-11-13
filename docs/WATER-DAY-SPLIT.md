@@ -82,7 +82,7 @@ Own: `app/page.tsx`, `app/resident/`, `components/home/`, `components/ui/`, `app
    - Demo button "Test reminder now" fires the notification in 5 s.
 4. **Tomorrow forecast card**: from op 24. Big time range, "Estimate" badge, basis + confidence chip, note. Official basis shows "Official CWA" with the link instead.
 5. **Water quality card**: from op 26. Neutral info style for `cloudy_possible` ("When reservoirs are low, tap water can look cloudy. Report dirty water. Follow official CWA / Ministry of Health advice."), alert style + source only for `official_notice`. Link to the existing `dirty_water` complaint.
-6. **Save water + nearby help card**: 3 tips (skip car wash, bucket not hose, reuse rinse water for plants/toilet) and "Nearest tanker stop / water point" from P5's data with distance. No river suggestion unless P5 confirms (see rules).
+6. **Save water + nearby help card**: 3 tips (skip car wash, bucket not hose, reuse rinse water for plants/toilet) and "Nearest tanker stop / water point" from P5's data with distance. No river suggestion (DECISIONS #7).
 7. Diagram pass: anywhere landing/resident shows a % (reliability "4 of 7 days", reservoir, litres requested vs tank) use a bar, ring or tank, not a bare number.
 
 Acceptance: 360 and 1440 px; .ics opens in phone calendar with the alarm; test reminder fires; every card has a labelled fallback; no text says water is safe/unsafe to drink.
