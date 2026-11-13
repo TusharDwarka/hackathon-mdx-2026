@@ -79,9 +79,9 @@ export async function postReport(streetId: number, type: ReportType): Promise<vo
 /**
  * "I need a tanker" for the street (V5: one request = one household, no litres) through
  * POST /api/requests. Returns the request id; a repeat click returns the SAME id.
- * Guests may request. The second argument is ignored (old callers that still pass litres).
+ * Guests may request.
  */
-export async function postRequest(streetId: number, _ignoredLitres?: number): Promise<number> {
+export async function postRequest(streetId: number): Promise<number> {
   try {
     await ensureGuestSession();
     return (await api<{ id: number; duplicate: boolean }>("/api/requests", { method: "POST", body: { street_id: streetId } })).id;
