@@ -1,4 +1,37 @@
-# HANDOFF (p2-frontend) — V2 done, next split step 1 done
+# HANDOFF (p2-frontend) — next split (docs/NEXT-TASK-SPLIT.md) steps 1 to 7 done
+
+## Next split steps 2 to 7
+- **Changed.** `/resident` is now five tabs: Overview, Schedule, Report, Reservoirs, News (real links `?tab=...`, so Back, reload and sharing work; the bar is sticky glass and scrolls sideways inside itself on small phones). Screen code moved to `components/home/Resident.tsx`; `app/resident/page.tsx` is a small server wrapper. Same for the landing: `components/home/Landing.tsx` + `app/page.tsx`.
+- **Locality first (step 4).** "Where do you live?" with a search; the official window and the next 7 days show for the locality with NO street. Street is "optional" with the reason shown; asked only to report, call the tanker or see neighbours' reports. Locality, street and guest are remembered on the phone. A locality we do not have says so ("no CWA timetable for X yet, supported now: ...").
+- **Official vs estimate.** Official windows carry an "Official CWA" tag and "the planned supply time, not a promise"; the likely time carries an "Estimate" tag and "not an official time and not a promise".
+- **Guest flow (step 3).** Report tab: "Report as a guest" card with "Continue as guest" before any report/request/complaint. Reading never needs it. Landing: Resident is the main entry; Driver and CWA operations sit under "For staff" with a "Demo: open access" tag (`/#staff`).
+- **Litres + trust wording (step 5).** Tanker request asks 20 / 50 / 100 / 200 L, then shows "Tanker requested · 100 L, Pending" and flips to Served live (unchanged Realtime). The button is replaced at once, so a double tap sends one request. One report shows "Reported: no water" + "A resident reported no water near this street", never a flat fact.
+- **Reservoirs (step 6).** All seven, searchable, with % , "Measured on" vs "Published on", a "Stale: N days old" tag over 14 days, the note and the source link; a reservoir with no row shows "No verified reading". The all-seven aggregate is a separate line, not an 8th reservoir. Landing ring now uses the REAL latest Mare aux Vacoas figure (33% on 5 Nov 2026, sourced), the sample figure is gone.
+- **News (step 6).** CWA cut notices + crisis timeline, newest first, searchable by place/topic, each with kind, date, areas and source; "not a live outage feed". "unrest" rows are left out (they name a private person). Advisory card: "No verified local advisory available. That does not mean the water is safe or unsafe."
+- **Data.** `components/home/public-data.ts` reads P5's CSVs (`reservoir_levels.csv`, `reservoir.csv`, `water_cut_announcements.csv`, `crisis_timeline.csv`) at BUILD time (pages stay static). New CSV rows show after the next deploy.
+- **Swapped to P3's code.** Ops 14, 15, 16 now use `postComplaint`, `computeStreetStatus`, `computeLikelyWaterTime` from `lib/queries.ts`; my copies are gone. Likely time now uses P3's fixed 2-hour slots.
+- **Motion (step 7).** Tabs and new status lines fade in (opacity + 4px, 200 ms); none with reduced motion. No animated blur.
+
+## Stand-ins (labelled `ponytail:` in code)
+- Litres are NOT saved yet: shown on screen only. Needs P3: `requests.litres` + `postRequest(streetId, litres)`; then one line in `requestWater`.
+- "Guest" is a yes/no on the phone (`kotdelo.guest`), nothing is sent. Needs P3's session API; swap in `saveGuest`.
+- Staff screens are open in the demo (tagged on the landing). Needs P3/P1 sign-in for real driver/ops access.
+- Area -> district for news: one entry (Vacoas -> Plaines-Wilhems) in `PublicInfo.tsx`. P3/P5 own the real mapping.
+
+## For P4 (shared look)
+- `glass` = small floating panels over the map (legend, layer switch, bottom sheet). `surface` = text cards. `chip` = pills/tags. Tags in use: `bg-primary/10 text-primary` "Official", `bg-muted` "Estimate", `bg-amber-100 text-amber-950` "Stale"/"Demo".
+- Reusable from `components/home/PublicInfo.tsx`: `Source` (source link), `SearchBox`, `ReadingDate` (date + stale tag).
+
+## Needs from others (new)
+- P3: `requests.litres` + `postRequest(streetId, litres)`; guest session API; schedule rows by date stay ISO `YYYY-MM-DD` (the 7-day list reads them).
+- P5: keep `data/*.csv` headers as they are (public-data.ts reads them by name); more reservoir readings fix the "Stale" tags.
+
+## How to test (steps 2 to 7)
+1. `npm run build`, `npm run lint`; `npx tsx components/home/public-data.ts` -> `public-data ok`; `npx tsx components/home/rules.ts` -> `rules ok`.
+2. `/resident`: choose the locality chip -> today's window shows without a street. Type "Curepipe" -> honest "no timetable" line. Schedule tab -> 7 days + Estimate card.
+3. Report tab -> "Continue as guest" -> choose a street -> No water (locks 30 min) -> 100 L -> Request -> "Tanker requested · 100 L". Complaint in two taps. Reload: locality, street, guest remembered.
+4. Reservoirs: search "midl" -> one card. News: search "Moka"; advisory card says no verified advisory.
+5. Widths 360, 390, 768, 1024, 1366x768, 1440: no sideways page scroll (checked with a scripted browser, all sections). Reduced motion and reduced transparency checked (transitions off, bars opaque).
 
 ## Next split step 1 (docs/NEXT-TASK-SPLIT.md)
 - **Changed:** new shared class `glass` in `app/globals.css`: translucent white + static 20px blur + white hairline. Falls back to opaque white when the browser has no backdrop-filter or the user turns on "reduce transparency". The nav uses it (phone tab bar and desktop top bar). Reduced motion: every transition/animation finishes at once.

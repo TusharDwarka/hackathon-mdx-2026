@@ -6,22 +6,32 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase";
 import { getAreas, getHoursDry, getReliability, getStreets, getTodayWindow, type Reliability, type ReportType, type Street, type Window } from "@/lib/queries";
+export type { ComplaintCategory } from "@/lib/queries";
 import { MOCK_AREA, MOCK_HOURS_DRY, MOCK_STREETS, MOCK_WINDOW } from "@/lib/mock";
-import { reservoirTier, type Report, type ReservoirStatus } from "@/components/home/rules";
+import type { Report } from "@/components/home/rules";
 
 export type RequestStatus = "waiting" | "served"; // requests.status in contracts/api.md
 export type Base = { streets: Street[]; areaNames: Record<number, string>; hoursDry: Record<number, number | null>; demo: boolean };
 /** `reports` = the street's reports of the last 14 days, oldest first. */
-export type StreetData = { id: number; failed?: boolean; win: Window | null; reliability: Reliability; reports: Report[] };
+export type StreetData = { id: number; failed?: boolean; reliability: Reliability; reports: Report[] };
 
-// ---------- the resident's street (remembered on this phone only) ----------
-const STREET_KEY = "kotdelo.street";
-export const readStreet = () => {
-  try { return Number(localStorage.getItem(STREET_KEY)); } catch { return 0; } // private mode
+// ---------- remembered on this phone only (locality, street, guest choice); nothing here is sent ----------
+const read = (key: string) => {
+  try { return localStorage.getItem(key); } catch { return null; } // private mode
 };
-export const saveStreet = (id: number) => {
-  try { localStorage.setItem(STREET_KEY, String(id)); } catch { /* private mode */ }
+const save = (key: string, value: string | null) => {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch { /* private mode: forgotten when the page closes */ }
 };
+export const readArea = () => Number(read("kotdelo.area")) || null;
+export const saveArea = (id: number | null) => save("kotdelo.area", id === null ? null : String(id));
+export const readStreet = () => Number(read("kotdelo.street")) || null;
+export const saveStreet = (id: number | null) => save("kotdelo.street", id === null ? null : String(id));
+// ponytail: "guest" is a local yes/no until P3's session API exists; then this asks P3 for a guest session.
+export const readGuest = () => read("kotdelo.guest") === "1";
+export const saveGuest = () => save("kotdelo.guest", "1");
 
 // ---------- one report per street per 30 minutes (this phone only, no device id is sent) ----------
 export const REPORT_LIMIT_MS = 30 * 60_000;
@@ -30,12 +40,7 @@ const reportKey = (streetId: number) => `kotdelo.report.${streetId}`;
 export const readMyReport = (streetId: number): MyReport | null => {
   try { return JSON.parse(localStorage.getItem(reportKey(streetId)) ?? "null"); } catch { return null; }
 };
-export const saveMyReport = (streetId: number, report: MyReport | null) => {
-  try {
-    if (report) localStorage.setItem(reportKey(streetId), JSON.stringify(report));
-    else localStorage.removeItem(reportKey(streetId));
-  } catch { /* private mode: the limit only lasts until the page is closed */ }
-};
+export const saveMyReport = (streetId: number, report: MyReport | null) => save(reportKey(streetId), report && JSON.stringify(report));
 
 // ---------- a clock that re-renders every 30 s ----------
 // null on the server and the first hydration pass: pages are prerendered, so anything that needs "now" waits for the browser.
@@ -113,38 +118,60 @@ function demoStreetData(id: number): StreetData {
     .filter((r) => r.at.getTime() < Date.now())
     .sort((a, b) => a.at.getTime() - b.at.getTime())
     .map((r) => ({ type: r.type, created_at: r.at.toISOString() }));
-  return { id, win: MOCK_WINDOW, reliability: { onTime: perDay.filter((p) => p.onTime).length, days: perDay.length, perDay }, reports };
+  return { id, reliability: { onTime: perDay.filter((p) => p.onTime).length, days: perDay.length, perDay }, reports };
 }
 
-/** Today's window (op 1), reliability (op 10) and recent reports for one street. Never throws: `failed` is set instead. */
+/** Reliability (op 10) and recent reports for one street. Never throws: `failed` is set instead. */
 export function loadStreetData(streetId: number, demo: boolean): Promise<StreetData> {
   const load: Promise<StreetData> = demo
     ? Promise.resolve(demoStreetData(streetId))
-    : Promise.all([getTodayWindow(streetId), getReliability(streetId), getRecentReports(streetId)]).then(([win, reliability, reports]) => ({ id: streetId, win, reliability, reports }));
+    : Promise.all([getReliability(streetId), getRecentReports(streetId)]).then(([reliability, reports]) => ({ id: streetId, reliability, reports }));
   return load.catch((e): StreetData => {
     console.warn("street data not loaded:", e);
-    return { id: streetId, failed: true, win: null, reliability: EMPTY_RELIABILITY, reports: [] };
+    return { id: streetId, failed: true, reliability: EMPTY_RELIABILITY, reports: [] };
   });
 }
 
-// ---------- V2 stand-ins until P3's functions are on main (same shapes as contracts/api.md) ----------
+// ---------- one locality: the official timetable is per area, so no street is needed ----------
+export const isoDay = (d: Date) => d.toLocaleDateString("en-CA"); // YYYY-MM-DD, local time
+/** `week`: the next 7 days from today, each with its official window or null. null = that part failed to load. */
+export type AreaData = { id: number; failed?: boolean; win: Window | null; week: { day: string; win: Window | null }[] | null };
 
-/** Op 12. SAMPLE figure (`sample: true`): there is no reservoir_levels table or data/reservoir.csv yet. */
-export async function getReservoirStatus(): Promise<ReservoirStatus & { sample: boolean }> {
-  const level_pct = 35.9; // Mare aux Vacoas, October 2026, as reported in the press (see team/p5-pitch/numbers/README.md)
-  return { level_pct, day: "2026-10-01", tier: reservoirTier(level_pct), sample: true };
-}
+const next7 = () =>
+  Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    return isoDay(d);
+  });
 
-/** Op 14, insert only. Needs the `complaints` table from sql/v2.sql. */
-export type ComplaintCategory = "no_water" | "dirty_water" | "tanker_no_show" | "other";
-export async function postComplaint(streetId: number, category: ComplaintCategory): Promise<void> {
-  const { error } = await supabase.from("complaints").insert({ street_id: streetId, category });
-  if (error) throw error;
+/** Today's window (op 1, through any street of the area) and the coming week. Never throws. */
+export function loadArea(areaId: number, anyStreetId: number, demo: boolean): Promise<AreaData> {
+  const days = next7();
+  if (demo) return Promise.resolve({ id: areaId, win: MOCK_WINDOW, week: days.map((day, i) => ({ day, win: i % 2 ? null : MOCK_WINDOW })) });
+  // Date-based timetables only (P5's schedule.csv uses dates); weekday rows are still covered by "today" through op 1.
+  const week = (async () => {
+    const { data, error } = await supabase.from("schedule").select("day,start_time,end_time,source_url,source_date").eq("area_id", areaId).in("day", days).order("start_time");
+    if (error) throw error;
+    const rows = (data ?? []).map((w): Window => ({ ...w, start_time: w.start_time.slice(0, 5), end_time: w.end_time.slice(0, 5) }));
+    return days.map((day) => ({ day, win: rows.find((w) => w.day === day) ?? null }));
+  })().catch((e) => {
+    console.warn("week not loaded:", e); // the week list says so; today's window still shows
+    return null;
+  });
+  return Promise.all([getTodayWindow(anyStreetId), week])
+    .then(([win, wk]): AreaData => ({ id: areaId, win, week: wk }))
+    .catch((e): AreaData => {
+      console.warn("timetable not loaded:", e);
+      return { id: areaId, failed: true, win: null, week: null };
+    });
 }
 
 // ---------- small display helpers ----------
 export const fmtHours = (h: number | null | undefined) => (h == null ? "no reports yet" : h < 1 ? "under 1 h" : `${Math.round(h)} h`);
-export const fmtDate = (iso: string, opts: Intl.DateTimeFormatOptions) => new Date(`${iso}T00:00`).toLocaleDateString("en-GB", opts);
+/** "2026-10" (month only, some sources give no day) shows as "October 2026". */
+export const fmtDate = (iso: string, opts: Intl.DateTimeFormatOptions) =>
+  iso.length === 7 ? new Date(`${iso}-01T00:00`).toLocaleDateString("en-GB", { month: "long", year: "numeric" }) : new Date(`${iso}T00:00`).toLocaleDateString("en-GB", opts);
+export const daysOld = (iso: string, now: Date) => Math.floor((now.getTime() - new Date(`${iso}T00:00`).getTime()) / 86_400_000);
 export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export function Skeleton({ className }: { className: string }) {
