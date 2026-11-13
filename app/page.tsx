@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { SurpriseCard } from "@/components/home/SurpriseCard";
 import { supabase } from "@/lib/supabase";
@@ -17,6 +17,7 @@ const noSubscribe = () => () => {};
 const REPORT_TYPES = ["water_on", "water_off"] as const; // reports.type in contracts/api.md
 type ReportType = (typeof REPORT_TYPES)[number];
 const REPORT_LABEL: Record<ReportType, string> = { water_on: "Water is here", water_off: "No water" };
+type RequestStatus = "waiting" | "served"; // requests.status in contracts/api.md
 
 function Label({ text }: { text: string }) {
   return <span className="font-semibold">{text}</span>;
@@ -31,10 +32,11 @@ export default function Home() {
   const street = MOCK_STREETS.find((s) => s.id === (picked ?? saved)) ?? MOCK_STREETS[2];
   const today = mounted ? new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Indian/Mauritius" }) : "";
   const [reported, setReported] = useState<ReportType | null>(null);
-  const [requested, setRequested] = useState(false);
+  const [request, setRequest] = useState<RequestStatus | null>(null);
   const pickStreet = (id: number) => {
     setPicked(id);
     setReported(null);
+    setRequest(null);
     localStorage.setItem(STREET_KEY, String(id));
   };
   const report = async (type: ReportType) => {
@@ -44,6 +46,32 @@ export default function Home() {
     // yet, mock street ids) is only logged so the demo never breaks; show an error if it must be real.
     const { error } = await supabase.from("reports").insert({ street_id: street.id, type });
     if (error) console.warn("report not saved:", error.message);
+  };
+
+  // Status of the latest request for my street (requests are per street, never per household),
+  // kept live by Realtime: it flips to "served" when the driver serves the stop (op 6).
+  const streetId = street.id;
+  useEffect(() => {
+    let current = true;
+    const load = async () => {
+      const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString(); // ignore old rounds
+      const { data, error } = await supabase.from("requests").select("status").eq("street_id", streetId).gte("created_at", since).order("created_at", { ascending: false }).limit(1);
+      if (current && !error) setRequest(data[0]?.status ?? null); // on error keep what is shown
+    };
+    load();
+    const channel = supabase
+      .channel(`requests-${streetId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "requests", filter: `street_id=eq.${streetId}` }, load)
+      .subscribe();
+    return () => {
+      current = false;
+      supabase.removeChannel(channel);
+    };
+  }, [streetId]);
+  const requestWater = async () => {
+    setRequest("waiting"); // optimistic, same fallback as report()
+    const { error } = await supabase.from("requests").insert({ street_id: streetId }); // op 3, status defaults to 'waiting'
+    if (error) console.warn("request not saved:", error.message);
   };
 
   return (
@@ -91,13 +119,19 @@ export default function Home() {
         </p>
       )}
 
-      <Button className="h-16 text-lg" disabled={requested} onClick={() => setRequested(true)}>
+      <Button className="h-16 text-lg" disabled={request === "waiting"} onClick={requestWater}>
         <Label text="I need water (request the tanker)" />
       </Button>
-      {requested && (
-        <Link href="/map" className="rounded-xl border-2 border-sky-600 p-3 text-center font-semibold text-sky-700">
-          Tanker on the way → see it live
-        </Link>
+      {request && (
+        <div role="status" className="flex flex-col text-center font-semibold">
+          {request === "waiting" ? (
+            <Link href="/map" className="rounded-xl border-2 border-sky-600 p-3 text-sky-700">
+              Waiting for the tanker · {street.name} → see it live
+            </Link>
+          ) : (
+            <p className="rounded-xl border-2 border-emerald-600 p-3 text-emerald-700">Served · the tanker has delivered to {street.name}</p>
+          )}
+        </div>
       )}
 
       <SurpriseCard />
