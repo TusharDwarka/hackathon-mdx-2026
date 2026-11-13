@@ -1,7 +1,7 @@
 # HANDOFF (p3-backend)
 
 ## Changed
-- `lib/queries.ts` (new): contract ops 1, 2, 3, 10, 11 on the anon Supabase client.
+- `lib/queries.ts`: contract ops 1, 2, 3, 10, 11 on the anon Supabase client.
   - `getAreas()`, `getStreets(areaId?)` -> street picker (driving order)
   - `getTodayWindow(streetId)` -> `Window | null` (op 1; `day` matches 'Mon'..'Sun' or 'YYYY-MM-DD', times as "HH:MM")
   - `postReport(streetId, 'water_on' | 'water_off')` (op 2)
@@ -9,20 +9,20 @@
   - `getReliability(streetId, days = 7)` -> `{ onTime, days, perDay[] }` (op 10)
   - `getHoursDry(areaId?)` -> `Record<street_id, hours | null>` (op 11; null = never reported water_on)
   - All functions throw on Supabase error: wrap in try/catch and fall back to `lib/mock.ts`.
-  - Types `Street`, `Window` are the same shape as `lib/mock.ts`.
-- `scripts/seed-demo.ts` (new): 7 days of demo `reports` with `is_demo = true`, deterministic (same data every run),
-  mix of on time / late / no water, later streets worse. Deletes old `is_demo` rows first, keeps real reports.
-  Run after load-data: `node --env-file=.env.local --import tsx scripts/seed-demo.ts`
+- `scripts/seed-demo.ts`: 7 days of demo `reports` with `is_demo = true`, deterministic, mix of on time / late / no water.
+  Deletes old `is_demo` rows first, keeps real reports. `npm run seed-demo`.
+- `sql/v2.sql` (V2 step 2): tables `complaints` and `reservoir_levels`, RLS (anon reads all, inserts complaints,
+  updates complaints.status), Realtime on `complaints`. No payment or fee columns. Re-runnable.
 
 ## Needs from others
-- P1: Supabase project + `.env.local` keys (1b) so the queries can be run against real tables.
-- P5: `data/schedule.csv` + `data/streets.csv`, then `npm run load-data`.
-- P1 (optional): add `"seed-demo": "node --env-file=.env.local --import tsx scripts/seed-demo.ts"` to package.json scripts.
+- P1: run `sql/v2.sql` in the Supabase SQL editor (after `sql/schema.sql`).
+- P1: `.env.local` with `SUPABASE_SERVICE_ROLE_KEY` on P3's machine, or P1 runs `npm run load-data` then `npm run seed-demo` (TASKS V2 step 9).
+- P5: `data/reservoir.csv` (`reservoir,day,level_pct,source_url`) for the reservoir status (op 12).
 
 ## Blocked
-- Nothing can be tested against a real database until 1b + 1c are done.
+- V2 step 1 (load-data + seed-demo against Supabase): no `.env.local` on P3's machine. Nothing in lib/queries.ts has run against a real database yet.
 
 ## How to test
-- `npx tsx lib/queries.ts` -> prints `queries ok` (pure date logic, no database).
-- `npx tsx scripts/seed-demo.ts --dry-run` -> prints the 7-day demo reports it would insert (no database).
-- With `.env.local` set: in any client component `await getTodayWindow(1)` / `await getStreets()`.
+- `npx tsx lib/queries.ts` -> prints `queries ok` (pure rules, no database).
+- `npx tsx scripts/seed-demo.ts --dry-run` -> prints the demo reports it would insert (no database).
+- With keys: `npm run load-data` (expect "Loaded 1 areas, 21 streets, 26 schedule rows."), then `npm run seed-demo`.
