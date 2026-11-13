@@ -1,0 +1,559 @@
+locality,district,region,frequency,start_time,end_time,valid_from,source_url,source_date,basis
+Vacoas,Plaines Wilhems,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://cwa.govmu.org/cwa/wp-content/uploads/2026/10/Press-Notice-09102026.pdf,2026-10-10,locality_notice
+Phoenix,Plaines Wilhems,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://cwa.govmu.org/cwa/wp-content/uploads/2026/10/Press-Notice-09102026.pdf,2026-10-10,locality_notice
+Saint-Pierre Centre,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Saint Pierre,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Valetta,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+L'Assurance,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+L’Assurance,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Lower Dagotière,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Dagotière,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Upper Dagotière,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Résidence NHDC Dagotière,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Verdun,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+L'Avenir,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Morcellement Circonstance MDA,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Rivière Baptiste,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Vuillemin H.E et NHDC,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Vuillemin,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Betuel Road,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Quartier-Militaire Media,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Quartier Militaire,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Quartier-Militaire Royal Road,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Malinga,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Malenga,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+La Laura,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Quartier-Militaire terminus area,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Beau Bois H.E et Ripailles,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Ripailles,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Nouvelle Découverte,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+L'Espérance,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Espérance,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Alma Village,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Alma,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Alma H. Est,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Bonne Veine Road et H.E,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Côte d'Or,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Côte d’Or,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Helvetia,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+L'Agrément,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Petit Verger,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Bois Chéri,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Circonstance,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Moka,Moka,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Gentilly,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Allée d'Helvetia,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Telfair,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Marketing Board et Camp Samy,,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Curepipe Centre,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Curepipe,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Forest Side,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Floréal,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Bigara,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+L'Islet Geoffroy,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Cité Joachim,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Cité Atlee,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Résidence Saint-Luc,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Cité La Brasserie,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Robinson,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Paratian,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Camp Cavale,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Rochecouste,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Castel,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Cité Mangalkhan,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Mangalkhan,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Cité L'Oiseau,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Cité Malherbes,Plaines Wilhems,Mare-aux-Vacoas group B,every_2_days,03:00,08:00,2026-10-11,https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h,2026-10-14,locality_notice
+Vacoas-Phoenix,Plaines Wilhems,Mare-aux-Vacoas group A,every_2_days,03:00,08:00,2026-10-10,https://cwa.govmu.org/cwa/wp-content/uploads/2026/10/Press-Notice-09102026.pdf,2026-10-10,locality_notice
+Albion,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Bambous,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Beaux Songes,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Canot,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Cascavelle,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Chamarel,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Coteau Raffin,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Domaine de Palmyre,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Flic en Flac,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Grande Case Noyale,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Grande Rivière Noire,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Gros Cailloux,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+La Gaulette,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+La Preneuse,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+La Source,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Le Morne,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Les Salines,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Médine,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Palma,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Palmyre,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Petit Verger,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Petite Case Noyale,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Petite Rivière,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Petite Rivière Noire,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Pointe aux Sables,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Richelieu,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Tamarin,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Trois Cavernes,Black River,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Bel Air Rivière Sèche,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bel Air Rivière Sèche,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Mare,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Mare,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Rive,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Rive,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Rose,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Rose,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bon Accueil,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bon Accueil,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bonne Mère,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bonne Mère,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bramsthan,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bramsthan,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bras d’Eau,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bras d’Eau,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Brisée Verdière,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Brisée Verdière,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Bonne Mère,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Bonne Mère,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Ithier,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Ithier,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp de Masque,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp de Masque,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp de Masque Pavé,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp de Masque Pavé,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Centre de Flacq,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Centre de Flacq,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Choisy,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Choisy,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Clémencia,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Clémencia,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Deep River,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Deep River,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand River South-East,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand River South-East,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grande Retraite,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grande Retraite,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Hermitage,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Hermitage,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Ilot Lievres,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Ilot Lievres,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Isidor Rose,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Isidor Rose,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Kewal Nagar,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Kewal Nagar,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Nourrice,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Nourrice,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Roche,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Roche,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Lalmatie,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Lalmatie,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Laventure,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Laventure,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mare La Chaux,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mare La Chaux,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mare du Puits,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mare du Puits,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Médine Camp de Masque,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Médine Camp de Masque,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Olivia,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Olivia,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Palmar Beach,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Palmar Beach,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaine Bananes,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaine Bananes,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe de Flacq,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe de Flacq,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pont Blanc,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pont Blanc,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Poste Lafayette,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Poste Lafayette,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Poste de Flacq,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Poste de Flacq,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Quatre Cocos,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Quatre Cocos,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Queen Victoria,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Queen Victoria,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rich Fund,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rich Fund,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Saint-Julien d’Hotman,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Saint-Julien d’Hotman,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+St. Julien,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+St. Julien,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Sébastopol,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Sébastopol,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Trou d'Eau Douce,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Trou d'Eau Douce,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Union Flacq,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Union Flacq,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Écroignard,Flacq,East,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Écroignard,Flacq,East,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Astroea Rochecouste,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Astroea Rochecouste,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Balisson,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Balisson,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bambous Virieux,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bambous Virieux,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bananes,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bananes,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Beau Vallon,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Beau Vallon,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Blue Bay,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Blue Bay,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bois des Amourettes,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bois des Amourettes,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Acacia,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Acacia,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Carol,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Carol,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Carreau Esnouf,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Carreau Esnouf,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Cluny,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Cluny,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Coral Residence,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Coral Residence,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Deux Frères,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Deux Frères,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Eau Bleue,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Eau Bleue,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand Bel Air,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand Bel Air,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand Sable,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand Sable,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Gros Bois,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Gros Bois,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Barraque,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Barraque,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Cambuse,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Cambuse,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Le Bouchon,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Le Bouchon,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Le Chaland,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Le Chaland,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Le Val,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Le Val,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+L’Escalier,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+L’Escalier,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mahébourg,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mahébourg,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Malakoff,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Malakoff,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mare Chicose,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mare Chicose,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mare Tabac,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mare Tabac,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mare d’Albert,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mare d’Albert,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Marie Jeanne,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Marie Jeanne,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mon Desert,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mon Desert,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+New Grove,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+New Grove,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Nouvelle France,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Nouvelle France,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Old Grand Port,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Old Grand Port,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petit Bel Air,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petit Bel Air,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petit Sable,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petit Sable,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaine Magnien,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaine Magnien,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaisance,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaisance,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plein Bois,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plein Bois,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe Bambou,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe Bambou,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe d’Esny,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe d’Esny,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pont Colville,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pont Colville,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Quatre Sœurs,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Quatre Sœurs,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Riche en Eau,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Riche en Eau,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rivière des Créoles,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rivière des Créoles,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rivière du Poste,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rivière du Poste,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rose Belle,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rose Belle,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Résidence Union Park,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Résidence Union Park,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+St. Hubert,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+St. Hubert,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Trois Boutiques,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Trois Boutiques,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Union Park,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Union Park,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Union Vale,Grand Port,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Union Vale,Grand Port,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Rive,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Camp Auguste,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Camp Thorel,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Courchamps,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Dubreuil,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Melrose,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Montagne Blanche,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Mount Ory,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Pailles,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Providence,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Réduit,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Vivéa,Moka,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Arsenal,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Arsenal,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Baie du Tombeau,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Baie du Tombeau,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Balaclava,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Balaclava,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Beau Plan,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Beau Plan,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Vue Harel,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Vue Harel,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Vue Pitot,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Vue Pitot,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bois Rouge,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bois Rouge,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Boulingrin,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Boulingrin,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Calebasses,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Calebasses,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp la Boue,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp la Boue,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Congomah,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Congomah,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Crève Coeur,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Crève Coeur,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+D’Epinay,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+D’Epinay,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Fond du Sac,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Fond du Sac,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Island,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Island,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Khoyratty,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Khoyratty,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Le Goulet,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Le Goulet,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Le Hochet,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Le Hochet,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Les Mariannes,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Les Mariannes,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Long Mountain,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Long Mountain,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Melotte,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Melotte,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mon Choisy,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mon Choisy,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mont Piton,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mont Piton,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Morcellement Choisy,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Morcellement Choisy,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Morcellement Saint-André,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Morcellement Saint-André,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Notre Dame,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Notre Dame,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pamplemousses,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pamplemousses,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petit Gamin,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petit Gamin,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petite Julie,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petite Julie,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaine des Papayes,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaine des Papayes,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe aux Biches,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe aux Biches,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe aux Piments,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe aux Piments,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Robinson,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Robinson,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rouge Terre,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rouge Terre,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Résidence Balaclava,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Résidence Balaclava,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Sinatambou,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Sinatambou,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Terre Rouge,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Terre Rouge,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+The Mount,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+The Mount,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Thomassin,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Thomassin,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Triolet,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Triolet,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Trou aux Biches,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Trou aux Biches,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Vallonbruse,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Vallonbruse,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Ville Valio,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Ville Valio,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Villebague,Pamplemousses,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Villebague,Pamplemousses,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Barkly,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Bassin,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Beau Bassin,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Beau Bassin-Rose Hill,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Belle Rose,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Camp Fouquereaux,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Camp Levieux,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Candos,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Chebel,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Coromandel,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+La Marie,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+La Source,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+La Vigie,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Mesnil,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Midlands,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Montréal,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Plaisance,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Quatre Bornes,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Roches Brunes,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Rose Hill,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Saint Paul,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Saint-Jean,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Seizième Mille,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Sodnac,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Solferino,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Stanley,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Tres bon,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Triangle de la paix,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Ébène,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Ébène Cybercity,Plaines Wilhems,Plaines Wilhems / Moka / Black River (17 Jun restrictions),,,,,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,unknown
+Cité la Cure,Port Louis,Port-Louis,daily,04:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Cité la Cure,Port Louis,Port-Louis,daily,16:00,20:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Tour Koenig,Port Louis,Port-Louis,daily,04:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Tour Koenig,Port Louis,Port-Louis,daily,16:00,20:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mer Rouge,Port Louis,Port-Louis,daily,04:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mer Rouge,Port Louis,Port-Louis,daily,16:00,20:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaine Verte,Port Louis,Port-Louis,daily,04:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaine Verte,Port Louis,Port-Louis,daily,16:00,20:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Port Louis,Port Louis,Port-Louis,daily,04:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Port Louis,Port Louis,Port-Louis,daily,16:00,20:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Roche Bois,Port Louis,Port-Louis,daily,04:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Roche Bois,Port Louis,Port-Louis,daily,16:00,20:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Sainte-Croix,Port Louis,Port-Louis,daily,04:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Sainte-Croix,Port Louis,Port-Louis,daily,16:00,20:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Vallée Pitot,Port Louis,Port-Louis,daily,04:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Vallée Pitot,Port Louis,Port-Louis,daily,16:00,20:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Vallée des Prêtres,Port Louis,Port-Louis,daily,04:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Vallée des Prêtres,Port Louis,Port-Louis,daily,16:00,20:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Amaury,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Amaury,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Amitié,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Amitié,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Azuri Village,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Azuri Village,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Vue Maurel,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belle Vue Maurel,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belmont,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Belmont,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Butte à l’Herbe,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Butte à l’Herbe,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Domaingue,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Domaingue,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Cap Malheureux,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Cap Malheureux,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Cottage,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Cottage,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Espérance Trébuchet,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Espérance Trébuchet,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Gokhoola,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Gokhoola,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Goodlands,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Goodlands,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand Baie,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand Baie,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand Gaube,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand Gaube,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Labourdonnais,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Labourdonnais,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mapou,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mapou,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Melville,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Melville,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mon Loisir,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mon Loisir,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petit Raffray,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petit Raffray,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petit Village Saint-Antoine,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Petit Village Saint-Antoine,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Piton,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Piton,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaines des Roches,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Plaines des Roches,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe d'Azur,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Pointe d'Azur,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Poudre d'Or,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Poudre d'Or,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Poudre d’Or Hamlet,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Poudre d’Or Hamlet,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rivière du Rempart,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rivière du Rempart,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Roche Terre,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Roche Terre,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Roches Noires,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Roches Noires,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Saint-François,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Saint-François,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+The Vale,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+The Vale,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Union Daruty,Rivière du Rempart,North,daily,04:00,07:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Union Daruty,Rivière du Rempart,North,daily,16:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Baie du Cap,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Baie du Cap,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Batimarais,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Batimarais,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Beau Bois,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Beau Bois,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Beau Champ,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Beau Champ,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bel Air,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bel Air,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bel Ombre,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bel Ombre,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bois Chéri,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Bois Chéri,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Britannia,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Britannia,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Diable,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Camp Diable,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Caroe,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Caroe,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Chamouny,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Chamouny,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Chemin Grenier,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Chemin Grenier,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Choisy,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Choisy,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Château Bénarès,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Château Bénarès,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Colmar,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Colmar,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand Bois,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Grand Bois,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Flora,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+La Flora,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mont Blanc,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Mont Blanc,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Riambel,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Riambel,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Riche Bois,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Riche Bois,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rivière des Anguilles,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rivière des Anguilles,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rivière des Galets,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Rivière des Galets,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Saint-Aubin,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Saint-Aubin,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Saint-Martin,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Saint-Martin,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Savannah,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Savannah,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Senneville,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Senneville,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Souillac,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Souillac,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Surinam,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Surinam,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Tyack,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Tyack,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Union Ducray,Savanne,South,daily,05:00,08:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable
+Union Ducray,Savanne,South,daily,17:00,19:00,2026-08-05,https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf,2026-08-05,regional_timetable

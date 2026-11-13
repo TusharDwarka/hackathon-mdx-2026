@@ -11,3 +11,7 @@ One line per finished task: what, files, commit hash.
 - Fri 13 Nov: pitch slides prediction-model.md + water-day-planner.md — fb79036
 - Fri 13 Nov: data/context/cwa-supply-localities-oct-2026.csv (53 localities) + cwa-tankers-oct-2026.csv (10 facts); no public tanker timetable exists — a94702b
 - Fri 13 Nov: data/context/cwa-hours-of-supply-2026-06.csv (234 localities, MAV Upper + Lower, via water.cyber.mu) — b111e55
+- Fri 13 Nov: V5 #1 data/supply_rules.csv, 347 localities (66 locality_notice, 211 regional_timetable, 70 unknown) — 6accd7b
+- Fri 13 Nov: V5 #2 no official tanker timetable; only CWA level is 20 % (TANKER-TIMETABLE.md) — 39993a8
+- Fri 13 Nov: V5 #3 water-safety sources (CWA, Health, WHO, MMS); no 2026 quality notice — e347e21
+- Fri 13 Nov: V5 #4 notice source URLs, all checked (NOTICE-SOURCES.md) — b84cf89

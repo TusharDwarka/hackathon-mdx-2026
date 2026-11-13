@@ -21,3 +21,13 @@ area,name,lat,lng,order_index
 - `order_index`: the order the truck drives through them (1, 2, 3 ...)
 
 Note the source of every file in the README "Data sources" section.
+
+## supply_rules.csv: supply rule per locality (V5)
+```
+locality,district,region,frequency,start_time,end_time,valid_from,source_url,source_date,basis
+```
+- One row per slot: a locality with a morning and an afternoon slot has two rows.
+- `frequency`: `every_2_days` (counted from `valid_from`) or `daily`. Blank when `basis=unknown`.
+- `basis`: `locality_notice` > `regional_timetable` > `unknown`. With `unknown`, times stay blank: show "Not known yet".
+- Same name in two districts (e.g. Robinson in Curepipe and in Pamplemousses): match on `locality` + `district`. Blank `district` = the notice doesn't say.
+- Rebuild: `python team/p5-pitch/build_supply_rules.py public/places.json`
