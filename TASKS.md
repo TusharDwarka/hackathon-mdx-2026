@@ -5,12 +5,12 @@ Prompt source: docs/BUILD-PROMPT.md (wins over the playbook on the product).
 ## Step 0 — planning (no app code)
 - [x] SPEC.md, contracts/api.md, TASKS.md, README.md, docs/DECISIONS.md filled
 - [ ] P1 reviews and approves Step 0
-- [ ] BLOCKER: `/data/schedule.csv` and `/data/streets.csv` exist (real CWA timetable + streets for [LOCALITY]). If missing, STOP, do not invent data.
+- [x] BLOCKER: `/data/schedule.csv` and `/data/streets.csv` exist (real CWA timetable + streets for La Caverne, Vacoas; PR #5, Fri 16:53). If missing, STOP, do not invent data.
 
 ## Build order (demo path first)
 - [x] 1a. Code (P1): Next.js + TypeScript + Tailwind + shadcn app, Supabase clients, `sql/schema.sql`, `scripts/load-data.ts`; `npm run build` passes
 - [x] 1b. By hand (P1): create Supabase project, run `sql/schema.sql`, put keys in `.env.local` + Vercel env vars, deploy to Vercel (checked Fri 16:20: the live build reaches Supabase, the 8 tables exist, all EMPTY)
-- [ ] 1c. (P5 -> P1) data files `data/schedule.csv` + `data/streets.csv`, then `npm run load-data`, then `npm run seed-demo` (BLOCKED: files missing)
+- [ ] 1c. (P5 -> P1) data files `data/schedule.csv` + `data/streets.csv`, then `npm run load-data`, then `npm run seed-demo` — files are on main (PR #5). Left (P1 or P3, needs `.env.local`): run both; load-data should print "Loaded 1 areas, 21 streets, 26 schedule rows."
 
 ## Fri 14:45 — clickable mockup on main (mock data in lib/mock.ts, live at the Vercel URL)
 3 builders, 3 branches, no shared files. Each swaps their screen from `lib/mock.ts` to real Supabase calls.

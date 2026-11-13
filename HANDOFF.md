@@ -52,3 +52,12 @@ Format per step: **Step N — done / changed / blocked** + 5 beginner bullets. P
   5. P3 (small): `seed-demo` writes nothing for today, so on demo day every street is about a day dry and the heat map has no green. Add a few `water_on` rows for today.
   6. All: two-phone test on the Vercel URL (GPS needs https). Nothing has run against real rows yet.
 - Not done: P4 reported that `next dev` rewrites AGENTS.md. `next build` did not touch it, so `next.config.ts` is unchanged until someone sees it again.
+
+## Merge 2 — Fri 16:53 (P1)
+- Done: PR #5 feat/data-files merged into main (772f4e6). Real data is in the repo: `data/schedule.csv` (Vacoas, every second day from 10 Oct 2026, 03:00–08:00, 26 rows) and `data/streets.csv` (21 OpenStreetMap streets in La Caverne). Checked: columns match `scripts/load-data.ts`, one area in both files, `order_index` 1..21, dates two days apart, times match the CWA communiqué copy in `data/sources/`, both source links open.
+- Changed (P1): decision #8 (locality) logged in `docs/DECISIONS.md`. TASKS.md: data blocker ticked.
+- The database is still EMPTY: the files are merged, not loaded.
+- Left, in order (items 2 to 6 of Merge 1 are still open too):
+  1. P1 or P3 (needs `.env.local`): `git pull origin main`, `npm run load-data` (expect "Loaded 1 areas, 21 streets, 26 schedule rows."), then `npm run seed-demo`.
+  2. P2: demo day (Sat 14 Nov) is NOT a water day for Vacoas (windows are 13 and 15 Nov). `getTodayWindow()` returns null then, so Home needs a "no supply today" state, not an empty card.
+  3. P2: `getReliability()` only counts days that have a window, so with every-second-day supply it reads "on time X of 3" or "of 4", not "of 7".
