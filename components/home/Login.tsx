@@ -6,11 +6,28 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Droplets, KeyRound, LayoutDashboard, Truck } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Droplets, KeyRound, LayoutDashboard, LogOut, Mail, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo, SideWaves, saveRole, type Role } from "@/components/ui/brand";
-import { saveGuest } from "@/components/home/shared";
-import { ApiError, getTankers, startGuestSession, startStaffSession, type Tanker } from "@/lib/queries";
+import { safeNext, saveGuest, useUser } from "@/components/home/shared";
+import { ApiError, MIN_PASSWORD, getTankers, signIn, signOut, signUp, startGuestSession, startStaffSession, type Tanker } from "@/lib/queries";
+
+// Resident accounts (V5): log in, sign up, or stay a guest. Guests report and request; a complaint needs an account.
+type Mode = "login" | "signup" | "guest";
+const MODES: { id: Mode; label: string }[] = [
+  { id: "login", label: "Log in" },
+  { id: "signup", label: "Sign up" },
+  { id: "guest", label: "Guest" },
+];
+const AUTH_ERROR: Record<string, string> = {
+  invalid_credentials: "Wrong email or password.",
+  user_already_exists: "This email already has an account. Log in instead.",
+  weak_password: `Use at least ${MIN_PASSWORD} characters.`,
+  email_address_invalid: "Check the email address.",
+  email_not_confirmed: "Confirm your email first (check your inbox), then log in.",
+  over_request_rate_limit: "Too many tries. Wait a minute, then try again.",
+  over_email_send_rate_limit: "Too many tries. Wait a minute, then try again.",
+};
 
 const ROLES: { id: Role; label: string; Icon: typeof Truck }[] = [
   { id: "resident", label: "Resident", Icon: Droplets },
@@ -30,9 +47,15 @@ const WRONG: Record<string, string> = {
 };
 const input = "h-12 w-full rounded-full bg-muted px-4 text-base text-foreground placeholder:text-muted-foreground";
 
-export function Login({ asked }: { asked: Role }) {
+export function Login({ asked, next, mode: askedMode }: { asked: Role; next?: string; mode?: "login" | "signup" }) {
   const router = useRouter();
   const [role, setRole] = useState<Role>(asked);
+  const [mode, setMode] = useState<Mode>(askedMode ?? (next ? "login" : "guest"));
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [note, setNote] = useState<string | null>(null);
+  const user = useUser();
+  const back = safeNext(next) ?? "/resident";
   const [code, setCode] = useState("");
   const [tankers, setTankers] = useState<Tanker[] | null>(null);
   const [tanker, setTanker] = useState<number | null>(null);
@@ -56,6 +79,30 @@ export function Login({ asked }: { asked: Role }) {
     setError(null);
   };
 
+  // Email + password (Supabase Auth). The email is only ever shown to its owner.
+  const account = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setNote(null);
+    setBusy(true);
+    try {
+      const u = mode === "signup" ? await signUp(email, password) : await signIn(email, password);
+      if (!u) {
+        setBusy(false);
+        setMode("login");
+        return setNote("Account created. Confirm your email from your inbox, then log in.");
+      }
+      saveRole("resident");
+      saveGuest();
+      startGuestSession().catch(() => {}); // reports and requests still use the guest session
+      router.push(back);
+    } catch (err) {
+      setBusy(false);
+      const c = err instanceof ApiError ? err.code : "";
+      setError(AUTH_ERROR[c] ?? "Could not reach the sign-in service. Try again, or continue as guest.");
+    }
+  };
+
   const enter = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -74,7 +121,7 @@ export function Login({ asked }: { asked: Role }) {
     }
     saveRole(role);
     if (role === "resident") saveGuest();
-    router.push(DEST[role]);
+    router.push(role === "resident" ? back : DEST[role]);
   };
 
   const demoCode = role === "driver" ? "demo-driver" : "demo-ops";
@@ -127,13 +174,66 @@ export function Login({ asked }: { asked: Role }) {
             ))}
           </div>
 
-          <form key={role} onSubmit={enter} className="surface mt-5 flex flex-col gap-4 p-6 transition-[opacity,translate] duration-200 ease-snap starting:translate-y-1 starting:opacity-0">
-            {role === "resident" ? (
+          {role === "resident" && user && (
+            <section className="surface mt-5 flex flex-col gap-3 p-6">
+              <p className="flex items-center gap-2 text-sm font-semibold text-emerald-800"><Check aria-hidden className="size-4" /> Signed in</p>
+              <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+              <Button size="tap" onClick={() => router.push(back)}>Open my water <ArrowRight aria-hidden /></Button>
+              <Button size="tap" variant="secondary" onClick={() => signOut().catch(() => {})}><LogOut aria-hidden /> Log out</Button>
+            </section>
+          )}
+          {role === "resident" && !user && (
+            <div role="group" aria-label="How do you want to continue?" className="mt-5 grid grid-cols-3 gap-1 rounded-full bg-muted p-1">
+              {MODES.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  aria-pressed={mode === m.id}
+                  onClick={() => { setMode(m.id); setError(null); setNote(null); }}
+                  className="min-h-11 rounded-full text-sm font-semibold text-muted-foreground transition-[background-color,color] duration-150 ease-snap aria-pressed:bg-card aria-pressed:text-foreground aria-pressed:shadow-card"
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {!(role === "resident" && user) && (
+          <form key={`${role}-${mode}`} onSubmit={role === "resident" && mode !== "guest" ? account : enter} className="surface mt-5 flex flex-col gap-4 p-6 transition-[opacity,translate] duration-200 ease-snap starting:translate-y-1 starting:opacity-0">
+            {role === "resident" && mode !== "guest" ? (
+              <>
+                <div>
+                  <h2 className="text-lg font-bold tracking-[-0.01em]">{mode === "signup" ? "Create an account" : "Log in"}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">Needed only for complaints. No name asked.</p>
+                </div>
+                <label className="flex flex-col gap-1.5 text-sm font-medium">
+                  Email
+                  <span className="relative">
+                    <Mail aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground" />
+                    <input type="email" required autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className={`${input} pl-11`} />
+                  </span>
+                </label>
+                <label className="flex flex-col gap-1.5 text-sm font-medium">
+                  Password
+                  <span className="relative">
+                    <KeyRound aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground" />
+                    <input type="password" required minLength={mode === "signup" ? MIN_PASSWORD : undefined} autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder={mode === "signup" ? `At least ${MIN_PASSWORD} characters` : "Password"} className={`${input} pl-11`} />
+                  </span>
+                </label>
+                {note && <p role="status" className="text-sm text-emerald-800">{note}</p>}
+                {error && <p role="alert" className="text-sm text-red-800">{error}</p>}
+                <Button type="submit" size="tap" disabled={busy}>
+                  {busy ? "One moment…" : mode === "signup" ? "Create account" : "Log in"} <ArrowRight aria-hidden />
+                </Button>
+                <button type="button" onClick={() => { setMode(mode === "signup" ? "login" : "signup"); setError(null); }} className="min-h-11 text-sm font-medium text-primary underline underline-offset-2">
+                  {mode === "signup" ? "Have an account? Log in" : "New here? Create an account"}
+                </button>
+              </>
+            ) : role === "resident" ? (
               <>
                 <div>
                   <h2 className="text-lg font-bold tracking-[-0.01em]">Continue as a guest</h2>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    No account, no name. Saved by street only.
+                    Report water and request a tanker. No account, no name.
                   </p>
                 </div>
                 <Button type="submit" size="tap" disabled={busy}>
@@ -179,6 +279,7 @@ export function Login({ asked }: { asked: Role }) {
               </>
             )}
           </form>
+          )}
           <p className="mt-5 text-center text-xs text-muted-foreground">Stored by street, never by house or person.</p>
         </div>
       </section>

@@ -10,13 +10,17 @@
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type { Fix, Stop, Street, WaterPoint } from "@/components/map/data";
+import type { Rivers } from "@/lib/queries";
 import { noticeTimes, RELIABILITY_DAYS, UNKNOWN_HEX, type Notice, type Reliability, type Signal } from "@/components/map/layers";
 
 type Lf = typeof import("leaflet");
 export type TankerMarker = { id: number; label: string; fix: Fix; mine: boolean; stale: boolean };
 export type AreaNotice = { area_id: number; name: string; lat: number; lng: number; notice: Notice };
-export type Layers = { reports: boolean; notices: boolean; tankers: boolean; water: boolean };
+export type Layers = { reports: boolean; notices: boolean; tankers: boolean; water: boolean; rivers: boolean; localities: boolean };
 export type WaterMarker = WaterPoint & { nearest: boolean; km: number | null };
+/** V5 island-wide: one dot per locality, coloured by how sure its supply timetable is. */
+export type LocalityMarker = { name: string; district: string; lat: number; lng: number; basis: "locality_notice" | "regional_timetable" | "unknown"; text: string };
+export const BASIS_HEX = { locality_notice: "#1d4ed8", regional_timetable: "#d97706", unknown: "#a1a1aa" } as const;
 type Props = {
   streets: Street[];
   stops: Stop[]; // my tanker's route
@@ -27,13 +31,16 @@ type Props = {
   notices: AreaNotice[];
   water: WaterMarker[];
   layers: Layers;
-  focus: { key: string; points: { lat: number; lng: number }[] };
+  focus: { key: string; points: { lat: number; lng: number }[]; zoom?: number };
+  rivers?: Rivers | null;
+  localities?: LocalityMarker[];
+  pin?: { lat: number; lng: number; label: string } | null; // a searched place or "my location" (never sent anywhere)
 };
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliability, notices, water, layers, focus }: Props) {
+export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliability, notices, water, layers, focus, rivers = null, localities = [], pin = null }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const lf = useRef<Lf | null>(null);
   const map = useRef<import("leaflet").Map | null>(null);
@@ -55,7 +62,7 @@ export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliabil
       const m = L.map(el.current, { center: [-20.3, 57.48], zoom: 15 });
       m.attributionControl.setPrefix(false);
       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap contributors", maxZoom: 19 }).addTo(m);
-      groups.current = { reports: L.layerGroup(), notices: L.layerGroup(), tankers: L.layerGroup(), water: L.layerGroup(), mine: L.layerGroup().addTo(m) };
+      groups.current = { reports: L.layerGroup(), notices: L.layerGroup(), tankers: L.layerGroup(), water: L.layerGroup(), rivers: L.layerGroup(), localities: L.layerGroup(), mine: L.layerGroup().addTo(m) };
       map.current = m;
       observer = new ResizeObserver(resize);
       observer.observe(el.current);
@@ -150,14 +157,47 @@ export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliabil
     }
   }, [ready, stops]);
 
-  // My street: a pin on the street point (street level, not a house).
+  // V5 rivers and streams (OSM): thin blue lines on one canvas (1,000+ lines stay fast on phones).
+  useEffect(() => {
+    const L = lf.current, g = groups.current?.rivers;
+    if (!L || !g) return;
+    g.clearLayers();
+    if (!rivers) return;
+    const renderer = L.canvas({ padding: 0.5 });
+    for (const f of rivers.features) {
+      L.polyline(f.geometry.coordinates.map(([x, y]) => [y, x] as [number, number]), { color: "#0284c7", weight: f.properties.waterway === "river" ? 2.5 : 1.25, opacity: 0.85, renderer })
+        .bindTooltip(esc(f.properties.name ?? f.properties.waterway), { sticky: true })
+        .addTo(g);
+    }
+  }, [ready, rivers]);
+
+  // V5 every locality of Mauritius: blue = a CWA notice names it, amber = regional timetable only, grey = not known.
+  useEffect(() => {
+    const L = lf.current, g = groups.current?.localities;
+    if (!L || !g) return;
+    g.clearLayers();
+    const renderer = L.canvas({ padding: 0.5 });
+    for (const p of localities) {
+      L.circleMarker([p.lat, p.lng], { radius: 6, weight: 1.5, color: "#ffffff", fillColor: BASIS_HEX[p.basis], fillOpacity: 0.95, renderer })
+        .bindPopup(`<b>${esc(p.name)}</b> · ${esc(p.district)}<br>${esc(p.text)}`)
+        .addTo(g);
+    }
+  }, [ready, localities]);
+
+  // My street: a pin on the street point (street level, not a house). Plus a searched place / my location.
   useEffect(() => {
     const L = lf.current, g = groups.current?.mine;
     if (!L || !g) return;
     g.clearLayers();
     const s = streets.find((x) => x.id === myStreetId);
     if (s) L.marker([s.lat, s.lng], { icon: L.divIcon({ html: `<div style="font-size:30px;line-height:30px;filter:drop-shadow(0 2px 2px rgb(0 0 0/.4))">📍</div>`, className: "", iconSize: [30, 30], iconAnchor: [15, 29] }), zIndexOffset: 900, title: `Your street: ${s.name}` }).addTo(g);
-  }, [ready, streets, myStreetId]);
+    if (pin) {
+      L.marker([pin.lat, pin.lng], {
+        icon: L.divIcon({ html: `<div style="display:flex;align-items:center;gap:4px;width:max-content"><span style="width:18px;height:18px;border-radius:999px;background:#7c3aed;box-shadow:0 0 0 4px #fff,0 2px 6px rgb(0 0 0/.4)"></span><span style="padding:2px 8px;border-radius:999px;background:#7c3aed;color:#fff;font:600 12px system-ui,sans-serif">${esc(pin.label)}</span></div>`, className: "", iconSize: [0, 0], iconAnchor: [9, 9] }),
+        zIndexOffset: 950, title: pin.label,
+      }).addTo(g);
+    }
+  }, [ready, streets, myStreetId, pin]);
 
   // Live tankers: reuse each marker, move it with setLatLng, swap the icon only when its label changes.
   useEffect(() => {
@@ -188,12 +228,13 @@ export function LiveMap({ streets, stops, myStreetId, tankers, signals, reliabil
   // Fit the view when the parent asks (first load, street change, my tanker's first fix).
   const focusKey = focus.key;
   const points = useRef(focus.points);
-  useEffect(() => { points.current = focus.points; });
+  const zoom = useRef(focus.zoom);
+  useEffect(() => { points.current = focus.points; zoom.current = focus.zoom; });
   useEffect(() => {
     const L = lf.current, m = map.current, pts = points.current;
     if (!L || !m || !pts.length) return;
     const animate = !reducedMotion();
-    if (pts.length === 1) m.setView([pts[0].lat, pts[0].lng], 16, { animate });
+    if (pts.length === 1) m.setView([pts[0].lat, pts[0].lng], zoom.current ?? 16, { animate });
     else m.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lng])), { padding: [40, 40], maxZoom: 16, animate });
   }, [ready, focusKey]);
 

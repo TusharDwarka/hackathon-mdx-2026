@@ -15,6 +15,12 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
 }
 
 async function AskedRole({ searchParams }: Pick<PageProps<"/login">, "searchParams">) {
-  const { role } = await searchParams;
-  return <Login asked={role === "driver" || role === "ops" ? role : "resident"} />;
+  const { role, next, mode } = await searchParams;
+  return (
+    <Login
+      asked={role === "driver" || role === "ops" ? role : "resident"}
+      next={typeof next === "string" ? next : undefined}
+      mode={mode === "signup" || mode === "login" ? mode : undefined}
+    />
+  );
 }

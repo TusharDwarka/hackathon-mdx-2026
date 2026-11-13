@@ -13,12 +13,14 @@ import { Overview, type Section } from "@/components/ops/Overview";
 import { DispatchPanel } from "@/components/ops/DispatchPanel";
 import { Complaints } from "@/components/ops/Complaints";
 import { Review } from "@/components/ops/Review";
+import { NoticePaste } from "@/components/ops/NoticePaste";
 
 const SECTIONS: { id: Section; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "dispatch", label: "Dispatch" },
   { id: "complaints", label: "Complaints" },
   { id: "review", label: "Report review" },
+  { id: "notices", label: "Paste a notice" },
 ];
 const isSection = (s: string): s is Section => SECTIONS.some((x) => x.id === s);
 
@@ -110,6 +112,7 @@ export default function OpsPage() {
           <Complaints data={data} now={now} name={name} area={area} setComplaints={(fn) => setData((d) => (d ? { ...d, complaints: fn(d.complaints) } : d))} />
         )}
         {section === "review" && <Review data={data} name={name} />}
+        {section === "notices" && <NoticePaste />}
       </div>
     </main>
   );

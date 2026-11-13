@@ -9,10 +9,12 @@
 // Fallback: Supabase unreachable OR no streets loaded yet -> demo mode with simulated tankers.
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Layers as LayersIcon } from "lucide-react";
+import { Layers as LayersIcon, LocateFixed, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { etaMinutes, km } from "@/lib/eta";
-import { LiveMap, type AreaNotice, type Layers, type TankerMarker, type WaterMarker } from "@/components/map/LiveMap";
+import { NEAR_RIVER_M, foldName, loadPlaces, nearestRiver, placeLabel, searchPlaces, type Place, type Rivers } from "@/lib/queries";
+import { getRivers, loadSupply } from "@/components/home/Locality";
+import { BASIS_HEX, LiveMap, type AreaNotice, type Layers, type LocalityMarker, type TankerMarker, type WaterMarker } from "@/components/map/LiveMap";
 import { errText, loadActiveRounds, loadAreas, loadLatestFixes, loadReports, loadSchedule, loadStreets, loadWaterPoints, type Area, type Fix, type LiveRound, type Street, type WaterPoint } from "@/components/map/data";
 import { areaNotice, noticeTimes, reportSignals, streetReliability, RELIABILITY_DAYS, type ScheduleRow } from "@/components/map/layers";
 import { arrived, DEMO_AREA, DEMO_STREETS, DEMO_WATER_POINTS, demoHistory, demoRounds, demoSchedule, simulateStep } from "@/components/map/demo";
@@ -25,7 +27,12 @@ const LAYER_INFO: { key: keyof Layers; label: string }[] = [
   { key: "reports", label: "Streets: water now" },
   { key: "notices", label: "Official notices" },
   { key: "water", label: "Tanker stops and water points" },
+  { key: "localities", label: "All Mauritius: supply timetable" },
+  { key: "rivers", label: "Rivers and streams" },
 ];
+const FREQ: Record<string, string> = { daily: "Every day", every_2_days: "Every second day" };
+const BASIS_LABEL = { locality_notice: "CWA notice for this locality", regional_timetable: "regional timetable only", unknown: "not known yet" } as const;
+const ISLAND = { lat: -20.25, lng: 57.55 };
 
 export default function MapPage() {
   const [streets, setStreets] = useState<Street[]>([]);
@@ -39,8 +46,17 @@ export default function MapPage() {
   const [offline, setOffline] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [now, setNow] = useState(0);
-  const [layers, setLayers] = useState<Layers>({ tankers: true, reports: true, notices: true, water: true });
+  const [layers, setLayers] = useState<Layers>({ tankers: true, reports: true, notices: true, water: true, rivers: false, localities: false });
   const [layersOpen, setLayersOpen] = useState(false); // phones only; always open from 1024px
+  // V5 island-wide: rivers, every locality by supply basis, place search, "near a river?" (on the phone only).
+  const [rivers, setRivers] = useState<Rivers | null>(null);
+  const [places, setPlaces] = useState<Place[] | null>(null);
+  const [localities, setLocalities] = useState<LocalityMarker[]>([]);
+  const [islandError, setIslandError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [pin, setPin] = useState<{ lat: number; lng: number; label: string } | null>(null);
+  const [jump, setJump] = useState<{ key: string; points: { lat: number; lng: number }[]; zoom?: number } | null>(null);
+  const [geoError, setGeoError] = useState<string | null>(null);
   const roundsRef = useRef<LiveRound[]>([]);
   useEffect(() => { roundsRef.current = rounds; }, [rounds]);
 
@@ -138,6 +154,58 @@ export default function MapPage() {
     return () => { clearInterval(t); window.removeEventListener("storage", onStorage); };
   }, [offline]);
 
+  // V5: load the island files only when a layer, the search or "near a river?" needs them.
+  const needRivers = layers.rivers || pin !== null;
+  useEffect(() => {
+    if (!needRivers || rivers) return;
+    getRivers().then(setRivers).catch(() => setIslandError("The river map did not load."));
+  }, [needRivers, rivers]);
+  const needPlaces = layers.localities || query.trim() !== "";
+  useEffect(() => {
+    if (!needPlaces || places) return;
+    loadPlaces().then(setPlaces).catch(() => setIslandError("The places list did not load."));
+  }, [needPlaces, places]);
+  useEffect(() => {
+    if (!layers.localities || !places || localities.length) return;
+    loadSupply()
+      .then((rules) => {
+        const byName = new Map<string, typeof rules>();
+        for (const r of rules) byName.set(foldName(r.l), [...(byName.get(foldName(r.l)) ?? []), r]);
+        setLocalities(places.filter((p) => p.l === p.n).map((p) => {
+          const known = (byName.get(foldName(p.n)) ?? []).filter((r) => r.b !== "unknown" && r.s);
+          const basis = known[0]?.b ?? "unknown";
+          const text = known.length
+            ? `${FREQ[known[0].f] ?? "Planned"} ${known.map((r) => `${r.s}–${r.e}`).join(" and ")} (${BASIS_LABEL[basis]})`
+            : "Supply hours not known yet.";
+          return { name: p.n, district: p.d, lat: p.lat, lng: p.lng, basis, text };
+        }));
+        setJump({ key: "island", points: [ISLAND], zoom: 10 });
+      })
+      .catch(() => setIslandError("The supply timetable did not load."));
+  }, [layers.localities, places, localities.length]);
+
+  const hits = places && query.trim() ? searchPlaces(places, query, 6) : [];
+  const goTo = (p: Place) => {
+    setPin({ lat: p.lat, lng: p.lng, label: p.n });
+    setJump({ key: `place|${p.n}|${p.lat}`, points: [p], zoom: p.l === p.n ? 14 : 16 });
+    setQuery("");
+  };
+  const locate = () => {
+    setGeoError(null);
+    if (!navigator.geolocation) return setGeoError("This browser cannot share a location.");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setPin({ ...p, label: "You are here" });
+        setJump({ key: `me|${p.lat}|${p.lng}`, points: [p], zoom: 15 });
+      },
+      () => setGeoError("Location not shared."),
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
+    );
+  };
+  const river = pin && rivers ? nearestRiver(pin.lat, pin.lng, rivers) : null;
+  const metres = (m: number) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`);
+
   // ----- derived -----
   const hasMine = (r: LiveRound, unservedOnly: boolean) => r.stops.some((s) => s.street_id === myId && (!unservedOnly || !s.served_at));
   const myRound = rounds.find((r) => hasMine(r, true)) ?? rounds.find((r) => hasMine(r, false)) ?? null;
@@ -188,12 +256,13 @@ export default function MapPage() {
   }, [waterPoints, my]);
   const nearest = water.find((p) => p.nearest) ?? null;
   const dist = (k: number) => (k < 1 ? `${Math.round(k * 100) * 10} m` : `${k.toFixed(1)} km`);
-  const focus = {
+  const focus = jump ?? {
     key: `${myId}|${myRound?.round.id ?? "none"}|${myFix ? "fix" : "nofix"}|${streets.length}`,
     points: my ? (myFix ? [my, myFix] : [my]) : streets,
   };
 
   function pickStreet(id: number) {
+    setJump(null);
     setMyId(id);
     try { localStorage.setItem(STREET_KEY, String(id)); } catch { /* ignore */ }
   }
@@ -213,6 +282,9 @@ export default function MapPage() {
           water={water}
           layers={layers}
           focus={focus}
+          rivers={rivers}
+          localities={localities}
+          pin={pin}
         />
       </div>
 
@@ -249,6 +321,42 @@ export default function MapPage() {
           </select>
         </label>
 
+        <section aria-label="Find a place" className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <label className="relative flex-1">
+              <span className="sr-only">Find any place in Mauritius</span>
+              <Search aria-hidden className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <input type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Find a place, e.g. Chamarel" className="h-11 w-full rounded-xl border bg-card pr-2 pl-9 text-base" />
+            </label>
+            <button type="button" onClick={locate} aria-label="Use my location" className="grid size-11 shrink-0 place-items-center rounded-xl border bg-card text-primary">
+              <LocateFixed aria-hidden className="size-5" />
+            </button>
+          </div>
+          {query.trim() && (
+            !places ? <p className="text-xs text-muted-foreground">Loading places…</p>
+            : hits.length ? (
+              <ul className="flex flex-col divide-y rounded-xl border">
+                {hits.map((p) => (
+                  <li key={`${p.n}|${p.l}|${p.lat}`}>
+                    <button type="button" onClick={() => goTo(p)} className="min-h-11 w-full px-3 py-2 text-left text-sm hover:bg-muted">{placeLabel(p)}</button>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-xs text-muted-foreground">No place called &quot;{query.trim()}&quot;.</p>
+          )}
+          {geoError && <p role="alert" className="text-xs text-red-800">{geoError}</p>}
+          {pin && (
+            <p className={`rounded-xl px-3 py-2 text-sm ${river && river.distance_m <= NEAR_RIVER_M ? "bg-sky-50 text-sky-950" : "bg-muted"}`}>
+              <b>{pin.label}</b>:{" "}
+              {!river ? "checking rivers…"
+                : river.distance_m <= NEAR_RIVER_M ? <>near {river.name ?? `a ${river.waterway}`} (about {metres(river.distance_m)}). After heavy rain, tap water can turn cloudy and low areas can flood.</>
+                : <>about {metres(river.distance_m)} from the nearest {river.waterway}{river.name ? ` (${river.name})` : ""}.</>}
+              <span className="mt-1 block text-xs text-muted-foreground">Worked out on this phone, never sent. River water is not drinking water.</span>
+            </p>
+          )}
+          {islandError && <p role="alert" className="text-xs text-red-800">{islandError}</p>}
+        </section>
+
         <button type="button" className="chip min-h-11 self-start border lg:hidden" aria-expanded={layersOpen} onClick={() => setLayersOpen((o) => !o)}>
           <LayersIcon aria-hidden className="size-4" /> {layersOpen ? "Hide legend" : "Legend and layers"}
         </button>
@@ -278,6 +386,15 @@ export default function MapPage() {
                   {offline && <p>Demo points next to the mock streets, not real places.</p>}
                   <p>Only points with a source.</p>
                 </div>
+              )}
+              {key === "localities" && (
+                <Legend
+                  items={[{ dot: BASIS_HEX.locality_notice, label: "CWA notice" }, { dot: BASIS_HEX.regional_timetable, label: "regional timetable" }, { dot: BASIS_HEX.unknown, label: "not known yet" }]}
+                  note={layers.localities ? (localities.length ? `${localities.length} localities. Tap one for its hours.` : "Loading…") : "Every town and village, by how sure its supply hours are."}
+                />
+              )}
+              {key === "rivers" && (
+                <Legend items={[{ dot: "#0284c7", label: "river or stream (OpenStreetMap)" }]} note={layers.rivers && !rivers ? "Loading…" : "Search a place or use your location to check the distance."} />
               )}
               {key === "notices" && (
                 <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">

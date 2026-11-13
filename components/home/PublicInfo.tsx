@@ -4,7 +4,7 @@
 // Data comes from components/home/public-data.ts (P5's CSVs, read at build time).
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, ExternalLink, Search, ShieldQuestion } from "lucide-react";
+import { ChevronRight, ExternalLink, Search } from "lucide-react";
 import type { NewsItem, Reading } from "@/components/home/public-data";
 import { daysOld, fmtDate } from "@/components/home/shared";
 import { LevelTank } from "@/components/ui/level-tank";
@@ -119,13 +119,6 @@ export function News({ items, locality }: { items: NewsItem[]; locality: string 
               Notices for {district}, where {locality} is
             </button>
           )}
-        </section>
-        <section className="surface p-5" aria-labelledby="advisory-title">
-          <h2 id="advisory-title" className="flex items-center gap-2 font-semibold">
-            <ShieldQuestion aria-hidden className="size-5 text-primary" />
-            Water-quality advisory{locality && ` for ${locality}`}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">No official advisory found. Follow CWA and Ministry of Health notices.</p>
         </section>
       </div>
       {shown.length ? (

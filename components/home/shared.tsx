@@ -5,7 +5,7 @@
 // streets loaded yet -> demo mode on lib/mock.ts with a visible banner.
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase";
-import { getAreas, getHoursDry, getReliability, getStreets, getTodayWindow, type Reliability, type ReportType, type Street, type Window } from "@/lib/queries";
+import { getAreas, getHoursDry, getReliability, getStreets, getTodayWindow, onAuthChange, type Place, type Reliability, type ReportType, type Street, type User, type Window } from "@/lib/queries";
 export type { ComplaintCategory } from "@/lib/queries";
 import { MOCK_AREA, MOCK_HOURS_DRY, MOCK_STREETS, MOCK_WINDOW } from "@/lib/mock";
 import type { Report } from "@/components/home/rules";
@@ -32,6 +32,21 @@ export const saveStreet = (id: number | null) => save("kotdelo.street", id === n
 // ponytail: "guest" is a local yes/no until P3's session API exists; then this asks P3 for a guest session.
 export const readGuest = () => read("kotdelo.guest") === "1";
 export const saveGuest = () => save("kotdelo.guest", "1");
+
+// Any locality of Mauritius picked in the island-wide search (V5), when it is not one of our areas with streets.
+export const readSpot = (): Place | null => {
+  try { return JSON.parse(read("kotdelo.place") ?? "null"); } catch { return null; }
+};
+export const saveSpot = (p: Place | null) => save("kotdelo.place", p && JSON.stringify(p));
+
+// ---------- account (V5): undefined while loading, null = not signed in ----------
+export function useUser(): User | null | undefined {
+  const [user, setUser] = useState<User | null | undefined>(undefined);
+  useEffect(() => onAuthChange(setUser), []);
+  return user;
+}
+/** Only same-site paths, so ?next= can never send someone to another site. */
+export const safeNext = (next: string | null | undefined) => (next && next.startsWith("/") && !next.startsWith("//") ? next : null);
 
 // ---------- one report per street per 30 minutes (this phone only, no device id is sent) ----------
 export const REPORT_LIMIT_MS = 30 * 60_000;

@@ -8,8 +8,10 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useSyncExternalStore } from "react";
-import { ArrowLeftRight, BookOpen, CalendarClock, Info, LayoutDashboard, LayoutGrid, Map, Megaphone, Newspaper, Route, Truck, Waves, type LucideIcon } from "lucide-react";
+import { ArrowLeftRight, BookOpen, CalendarClock, Info, LayoutDashboard, LayoutGrid, LogIn, LogOut, Map, Megaphone, Newspaper, Route, Truck, Waves, type LucideIcon } from "lucide-react";
 import { Logo, ROLE_LABEL, SideWaves, readRole, type Role } from "@/components/ui/brand";
+import { useUser } from "@/components/home/shared";
+import { signOut } from "@/lib/queries";
 
 type Item = { href: string; label: string; short: string; Icon: LucideIcon; wideOnly?: boolean };
 // Spotlight tour anchor for a nav link (the tour picks whichever copy, sidebar or tab bar, is visible).
@@ -70,6 +72,7 @@ function Nav({ role, path, tab }: { role: Role; path: string; tab: string | null
     return path === p && (q ?? "overview") === (p === "/resident" ? (tab ?? "overview") : "overview");
   };
   const phoneItems = [...NAV[role].filter((i) => !i.wideOnly), ...(PHONE_EXTRA[role] ? [PHONE_EXTRA[role]] : [])];
+  const user = useUser();
   return (
     <>
       {/* From 1024px: the blue sidebar. */}
@@ -98,8 +101,18 @@ function Nav({ role, path, tab }: { role: Role; path: string; tab: string | null
         </ul>
         <div className="relative mx-4 mt-auto mb-5 rounded-2xl bg-white/12 p-4 text-sm">
           <p className="text-white/75">Viewing as</p>
-          <p className="font-semibold">{ROLE_LABEL[role]}</p>
+          <p className="font-semibold">{ROLE_LABEL[role]}{role === "resident" && user ? " · Signed in" : ""}</p>
           <div className="mt-3 flex flex-col gap-1">
+            {role === "resident" && user && (
+              <button type="button" onClick={() => signOut().catch(() => {})} className="flex min-h-9 items-center gap-2 text-left font-medium text-white underline-offset-2 hover:underline">
+                <LogOut aria-hidden className="size-4" /> Log out
+              </button>
+            )}
+            {role === "resident" && user === null && (
+              <Link href="/login?mode=login" className="flex min-h-9 items-center gap-2 font-medium text-white underline-offset-2 hover:underline">
+                <LogIn aria-hidden className="size-4" /> Log in or sign up
+              </Link>
+            )}
             <Link href="/login" className="flex min-h-9 items-center gap-2 font-medium text-white underline-offset-2 hover:underline">
               <ArrowLeftRight aria-hidden className="size-4" /> Switch role
             </Link>

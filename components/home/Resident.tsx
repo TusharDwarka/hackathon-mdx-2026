@@ -11,7 +11,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, BadgeCheck, Check, ChevronDown, ChevronRight, CircleHelp, Clock, Droplet, DropletOff, MapPin, MessageSquareWarning, Newspaper, Route, Truck, UserRound, X } from "lucide-react";
+import { ArrowRight, BadgeCheck, Check, ChevronDown, ChevronRight, CircleHelp, Clock, Droplet, DropletOff, LogIn, MapPin, MessageSquareWarning, Route, Search, Truck, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomWaves, PageHeader } from "@/components/ui/brand";
 import { Gauge } from "@/components/ui/gauge";
@@ -21,17 +21,18 @@ import { SurpriseCard } from "@/components/home/SurpriseCard";
 import { MoreLink, News, ReadingDate, Reservoirs, Source } from "@/components/home/PublicInfo";
 import type { PublicData } from "@/components/home/public-data";
 import { minOfDay, toMin, windowStatus } from "@/components/home/time";
-import { ForecastCard, Planner, QualityCard, SaveWaterCard } from "@/components/home/WaterDay";
+import { ForecastCard, Planner, SaveWaterCard } from "@/components/home/WaterDay";
+import { NoticeFeed, RiverCard, SafeToDrink, SupplyCard } from "@/components/home/Locality";
 import { OnboardingTour } from "@/components/home/Guide";
 import { loadWaterPoints, type WaterPoint } from "@/components/map/data";
 import { likelyWaterTime, streetStatus } from "@/components/home/rules";
 import {
-  DemoBanner, REPORT_LIMIT_MS, Skeleton, fmtDate, fmtHours, isoDay, loadArea, loadStreetData, plural, readArea, readGuest, readMyReport, readStreet,
-  saveArea, saveGuest, saveMyReport, saveStreet, useBase, useNow, type AreaData, type ComplaintCategory, type MyReport, type RequestStatus, type StreetData,
+  DemoBanner, REPORT_LIMIT_MS, Skeleton, fmtDate, fmtHours, isoDay, loadArea, loadStreetData, plural, readArea, readGuest, readMyReport, readSpot, readStreet,
+  saveArea, saveGuest, saveMyReport, saveSpot, saveStreet, useBase, useNow, useUser, type AreaData, type ComplaintCategory, type MyReport, type RequestStatus, type StreetData,
 } from "@/components/home/shared";
 import {
-  computeForecast, computeWaterQuality, getForecast, getWaterQuality, postComplaint, postReport, postRequest, reservoirTier,
-  type Forecast, type Quality, type ReportType, type ReservoirTier,
+  ApiError, computeForecast, computeWaterQuality, foldName, getForecast, getMyComplaints, getWaterQuality, loadPlaces, placeLabel, postComplaint, postReport, postRequest, reservoirTier, searchPlaces,
+  type Complaint, type Forecast, type Place, type Quality, type ReportType, type ReservoirTier,
 } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
 
@@ -78,7 +79,6 @@ const COMPLAINTS: { category: ComplaintCategory; label: string }[] = [
   { category: "other", label: "Other problem" },
 ];
 const hhmm = (t: number) => new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
 const card = "surface reveal p-5";
 const title = "text-lg leading-snug font-bold tracking-[-0.01em]";
@@ -106,6 +106,11 @@ export function Resident({ info }: { info: PublicData }) {
   const [complaint, setComplaint] = useState<"closed" | "open" | ComplaintCategory>("closed");
   const [sendError, setSendError] = useState<"report" | "request" | "complaint" | null>(null);
   const [tierOpen, setTierOpen] = useState(false);
+  // V5: account (complaints need it), island-wide places search, any locality of Mauritius.
+  const user = useUser();
+  const [places, setPlaces] = useState<Place[] | "failed" | null>(null);
+  const [pickedSpot, setPickedSpot] = useState<Place | null>();
+  const [mine14, setMine14] = useState<Complaint[] | null>(null); // my own complaints (signed in)
 
   // localStorage is only read once the base data is here (base is null on the server), so the first render matches.
   const areas = base ? Object.entries(base.areaNames).map(([id, name]) => ({ id: Number(id), name })).filter((a) => base.streets.some((s) => s.area_id === a.id)) : [];
@@ -113,9 +118,15 @@ export function Resident({ info }: { info: PublicData }) {
   const areaStreets = area && base ? base.streets.filter((s) => s.area_id === area.id) : [];
   const street = areaStreets.find((s) => s.id === (pickedStreet === undefined ? readStreet() : pickedStreet)) ?? null;
   const streetId = street?.id ?? null;
-  const guest = guestNow || (base ? readGuest() : false);
+  const guest = guestNow || !!user || (base ? readGuest() : false);
   const demo = base?.demo ?? false;
   const areaId = area?.id ?? null;
+  // A searched locality that has no streets in our database: timetable, safety, notices and river still work.
+  const spot = area ? null : base ? (pickedSpot === undefined ? readSpot() : pickedSpot) : null;
+  const localityName = area?.name ?? spot?.l ?? null;
+  const centre = area && areaStreets.length
+    ? { lat: areaStreets.reduce((s, x) => s + x.lat, 0) / areaStreets.length, lng: areaStreets.reduce((s, x) => s + x.lng, 0) / areaStreets.length }
+    : spot ? { lat: spot.lat, lng: spot.lng } : null;
   const firstStreetId = areaStreets[0]?.id ?? null;
   const place = areaData !== null && areaData.id === areaId ? areaData : null; // null = loading this locality
   const data = loaded !== null && loaded.id === streetId ? loaded : null; // null = loading this street
@@ -166,19 +177,53 @@ export function Resident({ info }: { info: PublicData }) {
   }, [streetId, demo]);
 
   // Ops 24 + 26 from P3's routes, per locality. On failure the page computes them itself (see below).
-  const [remote, setRemote] = useState<{ areaId: number; forecast: Forecast | null; quality: Quality } | null>(null);
+  const [remote, setRemote] = useState<{ areaId: number; forecast: Forecast | null } | null>(null);
   useEffect(() => {
     if (areaId === null || demo) return;
     let current = true;
-    Promise.all([getForecast(areaId), getWaterQuality(areaId)])
-      .then(([forecast, quality]) => {
-        if (current) setRemote({ areaId, forecast, quality });
+    getForecast(areaId)
+      .then((forecast) => {
+        if (current) setRemote({ areaId, forecast });
       })
-      .catch((e) => console.warn("forecast/quality API not reachable, computing on the page:", e));
+      .catch((e) => console.warn("forecast API not reachable, computing on the page:", e));
     return () => {
       current = false;
     };
   }, [areaId, demo]);
+
+  // Op 26 V5 "Is my tap water safe to drink?" for any locality (reasons: notice, heavy rain, low reservoir).
+  // The route has its own demo fallback; if it is not reachable at all, the page computes the same rule.
+  const [remoteQ, setRemoteQ] = useState<{ name: string; quality: Quality | null } | null>(null); // quality null = API not reachable
+  useEffect(() => {
+    if (!localityName) return;
+    let current = true;
+    getWaterQuality(undefined, localityName)
+      .catch((e) => (areaId !== null && e instanceof ApiError && e.code === "unknown_locality" ? getWaterQuality(areaId) : Promise.reject(e)))
+      .then((quality) => current && setRemoteQ({ name: localityName, quality }))
+      .catch((e) => {
+        console.warn("quality API not reachable, computing on the page:", e);
+        if (current) setRemoteQ({ name: localityName, quality: null });
+      });
+    return () => {
+      current = false;
+    };
+  }, [localityName, areaId]);
+
+  // Island-wide search index (~0.5 MB), fetched once the visitor starts typing.
+  useEffect(() => {
+    if (!query.trim() || places) return;
+    loadPlaces().then(setPlaces).catch(() => setPlaces("failed"));
+  }, [query, places]);
+
+  // My complaints (signed in only): what I sent, and whether CWA closed it.
+  useEffect(() => {
+    if (!user || demo) return;
+    let current = true;
+    getMyComplaints().then((c) => current && setMine14(c)).catch(() => current && setMine14([]));
+    return () => {
+      current = false;
+    };
+  }, [user, demo, complaint]);
 
   // Public water points (P3's water_points table from P5's file) + any in data/ at build time.
   const [dbPoints, setDbPoints] = useState<WaterPoint[]>([]);
@@ -194,6 +239,27 @@ export function Resident({ info }: { info: PublicData }) {
   const pickArea = (id: number | null) => {
     setPickedArea(id);
     saveArea(id);
+    setQuery("");
+  };
+  const pickSpot = (p: Place | null) => {
+    setPickedSpot(p);
+    saveSpot(p);
+  };
+  const changePlace = () => {
+    pickArea(null);
+    pickSpot(null);
+  };
+  // A search hit: one of our areas (with streets) opens the full screen, any other place opens its locality cards.
+  const pickPlace = (p: Place) => {
+    const a = areas.find((x) => foldName(x.name) === foldName(p.l));
+    if (a) {
+      pickSpot(null);
+      pickArea(a.id);
+      const s = p.l !== p.n ? base?.streets.find((x) => x.area_id === a.id && foldName(x.name) === foldName(p.n)) : undefined;
+      if (s) pickStreet(s.id);
+      return;
+    }
+    pickSpot(p);
     setQuery("");
   };
   const pickStreet = (id: number | null) => {
@@ -249,7 +315,7 @@ export function Resident({ info }: { info: PublicData }) {
       if (!demo) await postComplaint(street.id, category);
     } catch (e) {
       console.warn("complaint not saved:", e);
-      setComplaint("open");
+      setComplaint(e instanceof ApiError && e.code === "sign_in_required" ? "closed" : "open");
       setSendError("complaint");
     }
   };
@@ -264,7 +330,7 @@ export function Resident({ info }: { info: PublicData }) {
   const live = data && now && street && !data.failed ? streetStatus(street.id, data.reports, now) : null; // op 15
   const likely = data && now ? likelyWaterTime(data.reports, now) : null; // op 16
   const state = STATE[live?.status ?? "none"];
-  const matches = areas.filter((a) => fold(a.name).includes(fold(query)));
+  const hits = Array.isArray(places) ? searchPlaces(places, query, 8) : [];
   const mav = info.reservoirs[0];
 
   // Water day (docs/WATER-DAY-SPLIT.md): P3's forecast (op 24) and quality (op 26) from the API; if the API
@@ -274,7 +340,9 @@ export function Resident({ info }: { info: PublicData }) {
   const apiDay = remote && remote.areaId === areaId ? remote : null;
   const rows = place && !place.failed ? (place.week ?? (place.win && todayIso ? [{ day: todayIso, win: place.win }] : [])).flatMap((d) => (d.win ? [{ ...d.win, day: d.day }] : [])) : null;
   const forecast = apiDay ? apiDay.forecast : rows && now ? computeForecast(rows, tier, likely, now) : null;
-  const quality = apiDay ? apiDay.quality : computeWaterQuality([], tier, now ?? undefined);
+  const q = remoteQ && remoteQ.name === localityName ? remoteQ : null;
+  // Offline fallback: the same pure rule; the Mare aux Vacoas tier only stands in for our Plaines Wilhems areas.
+  const quality = q?.quality ?? (q && now ? computeWaterQuality([], area ? tier : null, now, { locality: localityName }) : null);
   // Today's window while it is still ahead or running, else the next official one, else the forecast (labelled estimate).
   const upcoming =
     place && !place.failed && now && todayIso
@@ -319,42 +387,77 @@ export function Resident({ info }: { info: PublicData }) {
             Needed only to report or request a tanker. Never your house.
           </p>
         </>
+      ) : spot ? (
+        <>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm text-muted-foreground">Your locality</p>
+              <h2 id="place-title" className="text-2xl leading-tight font-bold tracking-[-0.02em]">{spot.l}</h2>
+              <p className="text-sm text-muted-foreground">{spot.l !== spot.n ? `${spot.n} · ` : ""}{spot.d}</p>
+            </div>
+            <button type="button" onClick={changePlace} className="chip min-h-11 shrink-0 bg-muted hover:bg-primary/10">Change</button>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Timetable, water safety, notices and rivers work here. Reports and the tanker are live in {areas.map((a) => a.name).join(", ")} for now.
+          </p>
+        </>
       ) : (
         <>
           <h2 id="place-title" className="text-2xl leading-tight font-bold tracking-[-0.02em]">Where do you live?</h2>
-          <p className="mt-1 text-sm text-muted-foreground">See its official CWA timetable. No account needed.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Any town, village or street in Mauritius. No account needed.</p>
           <label className="mt-4 flex flex-col gap-1.5 text-sm font-medium">
-            Search your locality
-            <input
-              type="search"
-              value={query}
-              disabled={!base}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={base ? "e.g. Vacoas" : "Loading…"}
-              className="h-12 w-full rounded-full bg-muted px-4 text-base font-normal text-foreground placeholder:text-muted-foreground"
-            />
+            Search your locality or street
+            <span className="relative">
+              <Search aria-hidden className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                value={query}
+                disabled={!base}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={base ? "e.g. L'Escalier, Chamarel, Rose-Belle" : "Loading…"}
+                className="h-12 w-full rounded-full bg-muted pr-4 pl-11 text-base font-normal text-foreground placeholder:text-muted-foreground"
+              />
+            </span>
           </label>
-          {base &&
-            (matches.length ? (
-              <div className="mt-3">
-                <p className="text-xs text-muted-foreground">With a timetable</p>
-                <ul className="mt-2 flex flex-wrap gap-2">
-                  {matches.map((a) => (
-                    <li key={a.id}>
-                      <button type="button" onClick={() => pickArea(a.id)} className="chip min-h-11 bg-primary/10 text-primary transition-[scale] duration-150 ease-snap active:scale-[0.97]">
-                        <MapPin aria-hidden className="size-4" />
-                        {a.name}
+          {base && query.trim() && (
+            places === null ? (
+              <Skeleton className="mt-3 h-24 w-full" />
+            ) : places === "failed" ? (
+              <p role="alert" className="mt-3 text-sm text-red-800">Search did not load. Pick one of the localities below.</p>
+            ) : hits.length ? (
+              <ul className="mt-3 flex flex-col divide-y rounded-2xl bg-muted/60">
+                {hits.map((p) => {
+                  const live = areas.some((a) => foldName(a.name) === foldName(p.l));
+                  return (
+                    <li key={`${p.n}|${p.l}|${p.lat}`}>
+                      <button type="button" onClick={() => pickPlace(p)} className="flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left text-sm transition-[background-color] duration-150 ease-snap hover:bg-primary/10">
+                        <MapPin aria-hidden className="size-4 shrink-0 text-primary" />
+                        <span className="min-w-0 flex-1 truncate font-medium">{placeLabel(p)}</span>
+                        {live && <span className={`${tag} shrink-0 bg-primary/10 text-primary`}>Live reports</span>}
                       </button>
                     </li>
-                  ))}
-                </ul>
-              </div>
+                  );
+                })}
+              </ul>
             ) : (
-              <p role="status" className="mt-3 text-sm">
-                Kot Delo? has no CWA timetable for &quot;{query.trim()}&quot; yet. Supported now: {areas.map((a) => a.name).join(", ")}.{" "}
-                <Link href={tabHref("news")} className="text-primary underline underline-offset-2">News and notices</Link> cover other places.
-              </p>
-            ))}
+              <p role="status" className="mt-3 text-sm">No place called &quot;{query.trim()}&quot; in Mauritius. Check the spelling.</p>
+            )
+          )}
+          {base && (
+            <div className="mt-4">
+              <p className="text-xs text-muted-foreground">Live reports and tanker</p>
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {areas.map((a) => (
+                  <li key={a.id}>
+                    <button type="button" onClick={() => { pickSpot(null); pickArea(a.id); }} className="chip min-h-11 bg-primary/10 text-primary transition-[scale] duration-150 ease-snap active:scale-[0.97]">
+                      <MapPin aria-hidden className="size-4" />
+                      {a.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </>
       )}
     </section>
@@ -515,35 +618,6 @@ export function Resident({ info }: { info: PublicData }) {
       )}
       <div className="mt-auto">
         <MoreLink href={tabHref("reservoirs")}>All reservoirs</MoreLink>
-      </div>
-    </section>
-  );
-
-  // Latest CWA notices, on the Overview itself (newest first, each dated, full list under CWA notices).
-  const noticesCard = (
-    <section className={`flex flex-col ${card}`} aria-labelledby="notices-title">
-      <div className="flex items-center justify-between gap-2">
-        <h2 id="notices-title" className={`flex items-center gap-2 ${title}`}>
-          <Newspaper aria-hidden className="size-5 text-primary" />
-          CWA notices
-        </h2>
-        <span className={`${tag} bg-muted tabular-nums`}>{info.news.length}</span>
-      </div>
-      {info.news.length ? (
-        <ol className="mt-2 divide-y">
-          {info.news.slice(0, 4).map((n) => (
-            <li key={`${n.date}-${n.title}`} className="py-3">
-              <p className="text-xs text-muted-foreground first-letter:uppercase">{n.kind} · {fmtDate(n.date, { day: "numeric", month: "short", year: "numeric" })}</p>
-              <p className="mt-0.5 line-clamp-2 text-sm font-medium first-letter:uppercase">{n.title}</p>
-              {n.areas && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">Areas: {n.areas}</p>}
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="mt-2 text-sm text-muted-foreground">No notices in our sources yet.</p>
-      )}
-      <div className="mt-auto">
-        <MoreLink href={tabHref("news")}>All notices and advisories</MoreLink>
       </div>
     </section>
   );
@@ -743,20 +817,32 @@ export function Resident({ info }: { info: PublicData }) {
       {!area && (
         <>
           <div className="md:col-span-2">{base ? placeCard : loading}</div>
+          {spot ? <SafeToDrink quality={quality} locality={localityName} /> : reservoirDial}
+        </>
+      )}
+      {spot && (
+        <>
+          <div className="md:col-span-2"><SupplyCard name={spot.l} /></div>
+          <RiverCard name={spot.l} lat={spot.lat} lng={spot.lng} />
+          <div className="md:col-span-2"><NoticeFeed locality={spot.l} limit={4} compact /></div>
           {reservoirDial}
         </>
       )}
-      <div className="md:col-span-2">
-        {area && !place ? (
-          loading
-        ) : (
-          <Planner place={area?.name ?? null} day={upcoming?.day ?? null} win={upcoming?.win ?? null} kind={upcoming?.kind ?? "sample"} now={now} today={todayIso} />
-        )}
-      </div>
-      <div className="flex flex-col gap-4 md:col-span-2 md:grid md:grid-cols-2 lg:gap-6 xl:col-span-1 xl:flex">
-        <ForecastCard forecast={forecast} loading={!!area && !place} today={todayIso} />
-        <QualityCard quality={quality} />
-      </div>
+      {!spot && (
+        <>
+          <div className="md:col-span-2">
+            {area && !place ? (
+              loading
+            ) : (
+              <Planner place={area?.name ?? null} day={upcoming?.day ?? null} win={upcoming?.win ?? null} kind={upcoming?.kind ?? "sample"} now={now} today={todayIso} />
+            )}
+          </div>
+          <div className="flex flex-col gap-4 md:col-span-2 md:grid md:grid-cols-2 lg:gap-6 xl:col-span-1 xl:flex">
+            <SafeToDrink quality={quality} locality={localityName} />
+            <ForecastCard forecast={forecast} loading={!!area && !place} today={todayIso} />
+          </div>
+        </>
+      )}
       {area && (
         <>
           <div className="md:col-span-2">{todayHero}</div>
@@ -768,7 +854,13 @@ export function Resident({ info }: { info: PublicData }) {
       {tankerCard}
       {area && street && reliabilityCard}
       {area && <div className="md:col-span-2">{heatCard}</div>}
-      {noticesCard}
+      {area && <RiverCard name={area.name} lat={centre?.lat ?? null} lng={centre?.lng ?? null} />}
+      {!spot && (
+        <div className="flex flex-col md:col-span-2 xl:col-span-1">
+          <NoticeFeed locality={localityName} limit={3} compact />
+          <MoreLink href={tabHref("news")}>All notices and advisories</MoreLink>
+        </div>
+      )}
       <div className="md:col-span-2 xl:col-span-3">
         <SaveWaterCard points={[...dbPoints, ...info.points.filter((p) => !dbPoints.some((d) => d.name === p.name))]} from={street ? { lat: street.lat, lng: street.lng, name: street.name } : null} />
       </div>
@@ -820,6 +912,9 @@ export function Resident({ info }: { info: PublicData }) {
           <h2 id="guest-title" className={title}>Continue as a guest</h2>
           <p className="-mt-2 text-sm text-muted-foreground">No account, no name. Saved by street only.</p>
           <Button size="tap" onClick={() => { saveGuest(); setGuestNow(true); }}>Continue as guest</Button>
+          <Link href={`/login?mode=login&next=${encodeURIComponent(tabHref(tab))}`} className="inline-flex min-h-11 items-center justify-center gap-2 text-sm font-semibold text-primary underline underline-offset-2">
+            <LogIn aria-hidden className="size-4" /> Have an account? Log in
+          </Link>
           <p className="text-xs text-muted-foreground">
             Driver or CWA staff? <Link href="/login" className="text-primary underline underline-offset-2">Sign in here</Link>.
           </p>
@@ -868,7 +963,18 @@ export function Resident({ info }: { info: PublicData }) {
               <h2 id="complaint-title" className={title}>Something wrong?</h2>
               <p className="text-sm text-muted-foreground">Two taps send a complaint for {street.name} to CWA.</p>
             </div>
-            {complaint === "closed" ? (
+            {!user ? (
+              <>
+                <Link
+                  href={`/login?mode=login&next=${encodeURIComponent(tabHref("report"))}`}
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-secondary px-5 text-sm font-semibold text-secondary-foreground transition-[scale] duration-150 ease-snap active:scale-[0.97]"
+                >
+                  <LogIn aria-hidden className="size-4" />
+                  {user === undefined ? "Checking your account…" : "Sign in to make a complaint"}
+                </Link>
+                <p className="text-xs text-muted-foreground">An account stops fake complaints. Your email is never shown to CWA or anyone else.</p>
+              </>
+            ) : complaint === "closed" ? (
               <Button size="tap" variant="secondary" onClick={() => setComplaint("open")}>
                 <MessageSquareWarning aria-hidden />
                 Make a complaint
@@ -893,6 +999,19 @@ export function Resident({ info }: { info: PublicData }) {
               </p>
             )}
             {sendError === "complaint" && <p role="alert" className="text-sm text-red-800">Not sent. Check your connection and choose again.</p>}
+            {user && mine14 && mine14.length > 0 && (
+              <div className="border-t pt-3">
+                <p className="text-sm font-semibold">My complaints</p>
+                <ul className="mt-1 divide-y text-sm">
+                  {mine14.slice(0, 5).map((c) => (
+                    <li key={c.id} className="flex items-center justify-between gap-3 py-2">
+                      <span className="min-w-0 truncate">{COMPLAINTS.find((x) => x.category === c.category)?.label ?? c.category} · {fmtDate(c.created_at.slice(0, 10), { day: "numeric", month: "short" })}</span>
+                      <span className={`${tag} shrink-0 ${c.status === "open" ? "bg-amber-100 text-amber-950" : "bg-emerald-50 text-emerald-900"}`}>{c.status === "open" ? "Open" : "Resolved"}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </section>
         </div>
       )}
@@ -954,7 +1073,19 @@ export function Resident({ info }: { info: PublicData }) {
     report: reportSection,
     request: requestSection,
     reservoirs: <Reservoirs reservoirs={info.reservoirs} combined={info.combined} now={now} />,
-    news: <News items={info.news} locality={area?.name ?? null} />,
+    news: (
+      <div className="flex flex-col gap-4 lg:gap-6">
+        <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:items-start lg:gap-6">
+          <NoticeFeed locality={localityName} />
+          <div className={col}>
+            <SafeToDrink quality={quality} locality={localityName} />
+            {centre && <RiverCard name={localityName} lat={centre.lat} lng={centre.lng} />}
+          </div>
+        </div>
+        <h2 className="mt-2 text-xl font-bold tracking-[-0.01em]">CWA announcements and timeline</h2>
+        <News items={info.news} locality={area?.name ?? null} />
+      </div>
+    ),
   };
 
   const hour = now?.getHours() ?? 9;
@@ -970,8 +1101,17 @@ export function Resident({ info }: { info: PublicData }) {
           className={`chip shrink-0 shadow-card ${guest ? "bg-card" : "bg-primary text-primary-foreground"}`}
         >
           <UserRound aria-hidden className="size-4" />
-          {guest ? (street ? street.name : "Guest") : "Continue as guest"}
+          {guest ? (street ? street.name : user ? "Choose your street" : "Guest") : "Continue as guest"}
         </Link>
+        {user ? (
+          <Link href="/login" className="chip shrink-0 bg-emerald-50 text-emerald-900 shadow-card">
+            <BadgeCheck aria-hidden className="size-4" /> Signed in
+          </Link>
+        ) : user === null ? (
+          <Link href={`/login?mode=login&next=${encodeURIComponent(`/resident${tab === "overview" ? "" : `?tab=${tab}`}`)}`} className="chip shrink-0 bg-card shadow-card">
+            <LogIn aria-hidden className="size-4" /> Log in
+          </Link>
+        ) : null}
         </div>
       </PageHeader>
       <div className="mt-5 lg:mt-7">

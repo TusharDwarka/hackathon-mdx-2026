@@ -12,7 +12,7 @@ import { Tank } from "@/components/ops/Tank";
 import { TrendChart } from "@/components/ops/TrendChart";
 import type { Tier } from "@/components/ops/rules";
 
-export type Section = "overview" | "dispatch" | "complaints" | "review";
+export type Section = "overview" | "dispatch" | "complaints" | "review" | "notices";
 
 const TIER: Record<Tier, { label: string; style: string }> = {
   normal: { label: "Normal", style: "bg-emerald-100 text-emerald-900" },
