@@ -83,7 +83,7 @@ export function Landing({ info }: { info: PublicData }) {
             <a href="#notices" className="hover:text-foreground">CWA notices</a>
             <Link href="/guide" className="hover:text-foreground">Guide</Link>
           </nav>
-          <Link href="/login" data-tour="open" className={cn(buttonVariants(), "h-12 px-5 text-sm font-semibold")}>Open the app</Link>
+          <Link href="/login" data-tour="open" className={cn(buttonVariants(), "h-12 px-5 text-sm font-semibold")}>Start</Link>
         </div>
       </header>
 
@@ -124,7 +124,7 @@ export function Landing({ info }: { info: PublicData }) {
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/login" className={cta}>
-                Open the app <ArrowRight aria-hidden />
+                Start <ArrowRight aria-hidden />
               </Link>
               <Link href="/resident" data-tour="browse" className={cn(buttonVariants({ size: "tap", variant: "outline" }), "h-14 border-transparent bg-white/80 px-7 shadow-card")}>
                 Just browse
@@ -355,7 +355,7 @@ export function Landing({ info }: { info: PublicData }) {
             <p className="mx-auto mt-3 max-w-[44ch] text-lg text-white/85">One tap for residents. Drivers and CWA staff sign in with a code.</p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/login" className={cn(buttonVariants({ size: "tap" }), "h-14 bg-white px-7 text-primary hover:bg-white/90")}>
-                Open the app <ArrowRight aria-hidden />
+                Start <ArrowRight aria-hidden />
               </Link>
               <Link href="/login?role=driver" className={cn(buttonVariants({ size: "tap" }), "h-14 bg-white/15 px-7 hover:bg-white/25")}>
                 Staff sign-in

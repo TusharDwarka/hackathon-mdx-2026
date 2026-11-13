@@ -11,7 +11,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, BadgeCheck, Check, ChevronDown, ChevronRight, CircleHelp, Clock, Droplet, DropletOff, LogIn, MapPin, MessageSquareWarning, Route, Search, Truck, UserRound, X } from "lucide-react";
+import { ArrowRight, BadgeCheck, Check, ChevronDown, ChevronRight, CircleHelp, Clock, Droplet, DropletOff, LogIn, LogOut, MapPin, MessageSquareWarning, Route, Search, Truck, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomWaves, PageHeader } from "@/components/ui/brand";
 import { Gauge } from "@/components/ui/gauge";
@@ -28,7 +28,7 @@ import { DrinkingWater } from "@/components/home/DrinkingWater";
 import { loadWaterPoints, type WaterPoint } from "@/components/map/data";
 import { likelyWaterTime, streetStatus } from "@/components/home/rules";
 import {
-  DemoBanner, REPORT_LIMIT_MS, Skeleton, fmtDate, fmtHours, isoDay, loadArea, loadStreetData, plural, readArea, readGuest, readMyReport, readSpot, readStreet,
+  DemoBanner, REPORT_LIMIT_MS, Skeleton, fmtDate, logOut, fmtHours, isoDay, loadArea, loadStreetData, plural, readArea, readGuest, readMyReport, readSpot, readStreet,
   saveArea, saveGuest, saveMyReport, saveSpot, saveStreet, useBase, useNow, useUser, type AreaData, type ComplaintCategory, type MyReport, type RequestStatus, type StreetData,
 } from "@/components/home/shared";
 import {
@@ -36,6 +36,8 @@ import {
   type Complaint, type Forecast, type Place, type Quality, type ReportType, type ReservoirTier,
 } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
+
+const SEEN_KEY = "kotdelo.seenResolved";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -113,6 +115,8 @@ export function Resident({ info }: { info: PublicData }) {
   const [places, setPlaces] = useState<Place[] | "failed" | null>(null);
   const [pickedSpot, setPickedSpot] = useState<Place | null>();
   const [mine14, setMine14] = useState<Complaint[] | null>(null); // my own complaints (signed in)
+  // Resolved complaints already shown to me (this phone). Nothing renders from it until mine14 loads, so no hydration gap.
+  const [seenResolved, setSeenResolved] = useState<number[]>(() => { try { return JSON.parse(localStorage.getItem(SEEN_KEY) ?? "[]"); } catch { return []; } });
 
   // localStorage is only read once the base data is here (base is null on the server), so the first render matches.
   const areas = base ? Object.entries(base.areaNames).map(([id, name]) => ({ id: Number(id), name })).filter((a) => base.streets.some((s) => s.area_id === a.id)) : [];
@@ -221,11 +225,20 @@ export function Resident({ info }: { info: PublicData }) {
   useEffect(() => {
     if (!user || demo) return;
     let current = true;
-    getMyComplaints().then((c) => current && setMine14(c)).catch(() => current && setMine14([]));
+    const load = () => getMyComplaints().then((c) => current && setMine14(c)).catch(() => current && setMine14((m) => m ?? []));
+    load();
+    const poll = setInterval(load, 60_000); // CWA resolving it shows up within a minute
     return () => {
       current = false;
+      clearInterval(poll);
     };
   }, [user, demo, complaint]);
+  const newlyResolved = user && mine14 ? mine14.filter((c) => c.status === "resolved" && !seenResolved.includes(c.id)) : [];
+  const dismissResolved = () => {
+    const ids = [...seenResolved, ...newlyResolved.map((c) => c.id)];
+    setSeenResolved(ids);
+    try { localStorage.setItem(SEEN_KEY, JSON.stringify(ids)); } catch { /* private mode */ }
+  };
 
   // Public water points (P3's water_points table from P5's file) + any in data/ at build time.
   const [dbPoints, setDbPoints] = useState<WaterPoint[]>([]);
@@ -1123,15 +1136,16 @@ export function Resident({ info }: { info: PublicData }) {
           <UserRound aria-hidden className="size-4" />
           {guest ? (street ? street.name : user ? "Choose your street" : "Guest") : "Continue as guest"}
         </Link>
-        {user ? (
-          <Link href="/login" className="chip shrink-0 bg-emerald-50 text-emerald-900 shadow-card">
-            <BadgeCheck aria-hidden className="size-4" /> Signed in
-          </Link>
-        ) : user === null ? (
+        {user === null && (
           <Link href={`/login?mode=login&next=${encodeURIComponent(`/resident${tab === "overview" ? "" : `?tab=${tab}`}`)}`} className="chip shrink-0 bg-card shadow-card">
             <LogIn aria-hidden className="size-4" /> Log in
           </Link>
-        ) : null}
+        )}
+        {(user || guest) && (
+          <button type="button" onClick={logOut} className="chip shrink-0 bg-card shadow-card lg:hidden">
+            <LogOut aria-hidden className="size-4" /> Log out
+          </button>
+        )}
         </div>
       </PageHeader>
       <div className="mt-5 lg:mt-7">
@@ -1140,11 +1154,19 @@ export function Resident({ info }: { info: PublicData }) {
             <DemoBanner onRetry={retry} />
           </div>
         )}
+        {newlyResolved.length > 0 && (
+          <div role="status" className={`mb-4 flex items-center gap-3 rounded-3xl bg-emerald-50 py-2 pr-2 pl-5 text-sm text-emerald-900 lg:mb-6 ${enter}`}>
+            <BadgeCheck aria-hidden className="size-5 shrink-0" />
+            <p className="flex-1 py-1">
+              <b>CWA resolved your complaint:</b> {newlyResolved.map((c) => COMPLAINTS.find((x) => x.category === c.category)?.label ?? c.category).join(", ")}.
+            </p>
+            <button type="button" onClick={dismissResolved} className="min-h-11 shrink-0 rounded-full bg-emerald-900 px-4 font-semibold text-emerald-50">OK</button>
+          </div>
+        )}
       </div>
       <div key={tab} className={enter}>
         {sections[tab]}
       </div>
-      <p className="mt-4 text-center text-xs text-muted-foreground lg:mt-6">Stored by street, never by house or person.</p>
     </main>
   );
 }

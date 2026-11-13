@@ -124,8 +124,6 @@ export function Login({ asked, next, mode: askedMode }: { asked: Role; next?: st
     router.push(role === "resident" ? back : DEST[role]);
   };
 
-  const demoCode = role === "driver" ? "demo-driver" : "demo-ops";
-
   return (
     <main className="grid min-h-dvh lg:grid-cols-[1fr_1.15fr]">
       {/* Brand panel, from 1024px */}
@@ -239,7 +237,6 @@ export function Login({ asked, next, mode: askedMode }: { asked: Role; next?: st
                 <Button type="submit" size="tap" disabled={busy}>
                   {busy ? "Opening…" : "Continue as guest"} <ArrowRight aria-hidden />
                 </Button>
-                <Link href="/resident" className="text-center text-sm font-medium text-primary underline underline-offset-2">Just browse, without reporting</Link>
               </>
             ) : (
               <>
@@ -267,11 +264,6 @@ export function Login({ asked, next, mode: askedMode }: { asked: Role; next?: st
                     <input type="password" autoComplete="off" value={code} onChange={(e) => setCode(e.target.value)} placeholder="Access code" className={`${input} pl-11`} />
                   </span>
                 </label>
-                <p className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className="chip min-h-6 bg-amber-100 px-2 text-xs text-amber-950">Demo</span>
-                  The demo code is <code className="font-mono font-semibold text-foreground">{demoCode}</code>
-                  <button type="button" onClick={() => setCode(demoCode)} className="min-h-9 font-semibold text-primary underline underline-offset-2">Use it</button>
-                </p>
                 {error && <p role="alert" className="text-sm text-red-800">{error}</p>}
                 <Button type="submit" size="tap" disabled={busy}>
                   {busy ? "Signing in…" : "Sign in"} <ArrowRight aria-hidden />
