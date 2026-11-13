@@ -9,7 +9,7 @@ export type RecentReport = { street_id: number; type: ReportType; created_at: st
 export type Trust = "confirmed" | "unconfirmed" | "suspect" | "none";
 export type StreetStatus = { street_id: number; status: Trust; type: ReportType | null; reports: number };
 export type Action = "send tanker" | "place a static tank" | "watch";
-export type Priority = { street_id: number; hours_dry: number | null; waiting: number; score: number; action: Action };
+export type Priority = { street_id: number; hours_dry: number | null; waiting: number; litres: number; score: number; action: Action; reasons: string[] };
 
 type OrderedStreet = { id: number; order_index: number };
 
@@ -50,15 +50,37 @@ export function streetStatuses(streets: OrderedStreet[], reports: RecentReport[]
 
 // Op 17. score = hours dry + 12 x waiting requests. Action: send tanker (waiting > 0),
 // place a static tank (dry > 48 h), else watch. Highest score first.
-export function priorityList(streetIds: number[], hoursDry: Record<number, number | null>, waiting: Record<number, number>): Priority[] {
+// `reasons` says why a street ranks where it does. Unknown dryness adds 0 but is named as unknown, never as "0 h dry".
+export function priorityList(
+  streetIds: number[],
+  hoursDry: Record<number, number | null>,
+  waiting: Record<number, number>,
+  litres: Record<number, number> = {}
+): Priority[] {
   return streetIds
     .map((id) => {
       const hours = hoursDry[id] ?? null;
       const w = waiting[id] ?? 0;
       const action: Action = w > 0 ? "send tanker" : (hours ?? 0) > 48 ? "place a static tank" : "watch";
-      return { street_id: id, hours_dry: hours, waiting: w, score: Math.round((hours ?? 0) + 12 * w), action };
+      const reasons: string[] = [];
+      if (w > 0) reasons.push(`${w} waiting request${w === 1 ? "" : "s"}${litres[id] ? `, ${litres[id]} L` : ""} (+${12 * w})`);
+      reasons.push(hours == null ? "dryness unknown: no water report yet (+0)" : `last water report ${Math.round(hours)} h ago (+${Math.round(hours)})`);
+      if (action === "place a static tank") reasons.push("dry over 48 h with no request: a static tank serves it better than a trip");
+      return { street_id: id, hours_dry: hours, waiting: w, litres: litres[id] ?? 0, score: Math.round((hours ?? 0) + 12 * w), action, reasons };
     })
     .sort((a, b) => b.score - a.score);
+}
+
+// Complaints grouped for /ops (P4 step 8): by category, street, area or status, with counts. Records stay inside each group.
+export type ComplaintLike = { id: number; street_id: number; category: string; status: "open" | "resolved"; created_at: string };
+export type ComplaintGroup<T> = { key: string; items: T[]; open: number };
+
+export function groupComplaints<T extends ComplaintLike>(list: T[], keyOf: (c: T) => string): ComplaintGroup<T>[] {
+  const groups = new Map<string, T[]>();
+  for (const c of list) groups.set(keyOf(c), [...(groups.get(keyOf(c)) ?? []), c]);
+  return [...groups.entries()]
+    .map(([key, items]) => ({ key, items: items.sort((a, b) => b.created_at.localeCompare(a.created_at)), open: items.filter((c) => c.status === "open").length }))
+    .sort((a, b) => b.open - a.open || b.items.length - a.items.length || a.key.localeCompare(b.key));
 }
 
 if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("rules.ts")) {
@@ -88,5 +110,15 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("rules.ts")) {
   console.assert(pr[0].street_id === 2 && pr[0].action === "place a static tank" && pr[0].score === 50, "dry > 48 h, no requests");
   console.assert(pr[1].street_id === 1 && pr[1].action === "send tanker" && pr[1].score === 26, "2 + 12 x 2");
   console.assert(pr[2].street_id === 3 && pr[2].action === "watch" && pr[2].score === 0, "no data -> watch");
+  console.assert(pr[2].reasons.some((r) => r.includes("unknown")), "unknown dryness is named, not shown as 0 h");
+  console.assert(priorityList([1], { 1: 5 }, { 1: 2 }, { 1: 40 })[0].reasons[0] === "2 waiting requests, 40 L (+24)", "litres in the reason");
+
+  const g = groupComplaints([
+    { id: 1, street_id: 1, category: "no_water", status: "open", created_at: at(5) },
+    { id: 2, street_id: 2, category: "no_water", status: "resolved", created_at: at(9) },
+    { id: 3, street_id: 2, category: "dirty_water", status: "open", created_at: at(1) },
+    { id: 4, street_id: 3, category: "dirty_water", status: "open", created_at: at(2) },
+  ], (c) => c.category);
+  console.assert(g.length === 2 && g[0].key === "dirty_water" && g[0].open === 2 && g[1].open === 1 && g[1].items.length === 2, "grouped with open counts");
   console.log("ops rules ok");
 }
