@@ -9,6 +9,20 @@
   - No official daily WRC/CWA page with levels was found. The CWA site has none. If one turns up, swap the URLs to it.
   - Same date last year, for the pitch only (not in the CSV): 84.6% (mid-Oct 2025, ionnews), 77.9% (30 Oct 2025, ionnews).
 
+### Official notices on water use during rationing (V2 step 2, searched Fri 13 Nov)
+**CWA / Ministry of Energy and Public Utilities: yes, these are official.**
+1. **CWA (Dry Season) Regulations 2026**, Government Notice No. 141 of 2026. [PDF](https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/141_CWA-Dry-Season_Reg-2026.pdf), listed on the [CWA site](https://cwa.govmu.org/cwa/?p=4837). In force from **10 Aug 2026**. No end date appears in the text. Some news reports say "until 30 Nov 2026", but the PDF doesn't.
+   - No use of domestic water "for any non-essential purpose or in a wasteful manner".
+   - No washing a vehicle, driveway, pavement or building, watering a hedge, lawn or garden, or filling a pool "through a hosepipe, sprinkler, pressure washer or any similar device", in a wasteful manner.
+   - No irrigation from a reservoir or a watercourse feeding one.
+   - Fine up to **Rs 50,000** + up to 2 years in prison for a domestic consumer, up to Rs 200,000 + 2 years otherwise.
+2. **Water Tank Grant Scheme** (CWA + Ministry of Energy and Public Utilities + DBM), communiqué dated 10 Oct 2026. [PDF](https://cwa.govmu.org/cwa/wp-content/uploads/2026/10/Tank-poster-2.pdf), [post](https://cwa.govmu.org/cwa/?p=5009), [online form](https://cwa.govmu.org/cwa/?p=5016). For households with no tank: a grant for a **1000 L + 500 L tank + a pump, Rs 15,000 in total**. Register from Mon 12 Oct 2026, 09:00–15:00, at any CWA office, with ID card + CWA bill.
+3. **Cleaning & disinfection of domestic tanks** (CWA poster, uploaded Jul 2022, still linked from the CWA site): [PDF](https://cwa.govmu.org/cwa/wp-content/uploads/2022/07/cleaning-of-tank-1.pdf). Clean tanks at least every 6 months, keep the cover closed (insects, mosquito larvae), and after a water cut "let the water run for a few minutes" to flush stagnant water.
+   - ⚠️ The poster says treated water "is now safe for consumption". The contract says **the app never says water is safe or unsafe to drink**. If we show this, link to the CWA poster as CWA's own advice. Don't rephrase it as ours.
+4. **CWA appeal to use water judiciously**: reported by Defimedia on 2 Oct 2026 ([article](https://defimedia.info/mare-aux-vacoas-le-niveau-deau-chute-366-la-cwa-appelle-une-utilisation-judicieuse)). The communiqué itself is not on the CWA site, so this is a news report, not an official source.
+
+**Ministry of Health and Wellness: nothing official found.** Its [communiqués page](https://health.govmu.org/health/) (checked 13 Nov 2026) lists no 2026 notice on drinking water, boiling, storing water or hygiene during water cuts. The only related Health advice found is from March 2025 (dengue: keep garden water containers covered), reported by L'Express via [allAfrica](https://fr.allafrica.com/stories/202503240426.html). It is not about rationing, and it's in a news article, not on the ministry's site.
+
 ### Needs from others
 - **P3:** load `data/reservoir.csv` into `reservoir_levels` (columns match `sql/v2.sql`; `level_pct` is a number like `33.8`, `day` is `YYYY-MM-DD`). Op 12 should return `{level_pct: 33, day: "2026-11-05", tier: "watch"}`.
 - **P1:** merge `feat/data-files` when all V2 steps are done.
