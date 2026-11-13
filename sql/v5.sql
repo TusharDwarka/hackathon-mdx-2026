@@ -190,3 +190,26 @@ create table if not exists localities (
 alter table localities enable row level security;
 drop policy if exists "read all" on localities;
 create policy "read all" on localities for select using (true);
+
+-- =====================================================================================
+-- 4. Notices feed: scraped (scripts/scrape-notices.ts) or pasted by ops, read by the AI parser
+--    (POST /api/notices/parse). Extends the v3 notices table; v3 rows keep working (url null).
+-- =====================================================================================
+alter table notices add column if not exists url text;
+create unique index if not exists notices_url_key on notices (url);
+alter table notices add column if not exists published_on date;
+alter table notices add column if not exists source text;            -- cwa | gis | news | ops_paste
+alter table notices add column if not exists raw_text text;
+alter table notices add column if not exists localities text[] not null default '{}';
+alter table notices add column if not exists start_time time;
+alter table notices add column if not exists end_time time;
+alter table notices add column if not exists dates date[] not null default '{}';
+alter table notices add column if not exists summary text;
+alter table notices add column if not exists ai_extracted boolean not null default false;
+alter table notices add column if not exists demo boolean not null default false;
+alter table notices alter column locality drop not null;
+alter table notices alter column title drop not null;
+alter table notices alter column source_date drop not null;
+alter table notices drop constraint if exists notices_kind_check;
+alter table notices add constraint notices_kind_check check (kind in ('interruption','rationing','advisory','other'));
+create index if not exists notices_published_idx on notices (published_on desc);

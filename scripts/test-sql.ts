@@ -235,6 +235,20 @@ async function main() {
   check((await fails("insert into localities (name, kind, district, lat, lng, source) values ('X', 'village', 'Moka', -20.2, 57.5, 'OSM')")) !== null, "anon cannot write localities");
   await db.exec("reset role");
 
+  console.log("V5: notices feed");
+  const ins = (url: string, kind = "rationing") =>
+    `insert into notices (url, published_on, source, raw_text, localities, start_time, end_time, dates, kind, summary, ai_extracted, source_url)
+     values ('${url}', '2026-10-10', 'cwa', 'raw', '{Vacoas,Phoenix}', '03:00', '08:00', '{2026-10-12}', '${kind}', 'New hours', true, '${url}')`;
+  check((await fails(ins("https://cwa.govmu.org/cwa/?p=5001"))) === null, "V5 notice without locality/title/source_date accepted");
+  check((await fails(ins("https://cwa.govmu.org/cwa/?p=5001"))) !== null, "same url twice rejected (dedupe key)");
+  check((await fails(ins("paste:abc", "other"))) === null, "kind other accepted");
+  check((await fails(ins("paste:def", "safe"))) !== null, "unknown kind rejected");
+  check((await fails("insert into notices (kind, locality, title, source_url, source_date) values ('advisory', 'Vacoas', 't', 'u', '2026-10-01')")) === null, "v3-style notice still accepted");
+  await db.exec("set role anon");
+  check((await db.query("select summary from notices where url is not null")).rows.length === 2, "anon reads the feed");
+  check((await fails(ins("https://x.test/1"))) !== null, "anon cannot write notices");
+  await db.exec("reset role");
+
   if (failures) {
     console.error(`\n${failures} check(s) FAILED`);
     process.exit(1);

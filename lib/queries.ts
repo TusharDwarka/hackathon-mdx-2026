@@ -1231,6 +1231,105 @@ export const loadRivers = (): Promise<Rivers> =>
     return r.json() as Promise<Rivers>;
   });
 
+// ---------- V5 notices feed + AI notice parser ----------
+// Notices come from scripts/scrape-notices.ts (CWA site, news RSS) and from ops pasting text
+// (Facebook posts are pasted, never scraped). The parser reads localities, times, dates and kind;
+// every result goes through validateParsedNotice before it is shown or stored.
+
+export type FeedKind = "interruption" | "rationing" | "advisory" | "other";
+export const FEED_KINDS: FeedKind[] = ["interruption", "rationing", "advisory", "other"];
+/** Parser output after validation. Times "HH:MM" (24 h), dates "YYYY-MM-DD"; unknown = null / []. */
+export type ParsedNotice = {
+  localities: string[];           // matched to the localities list (canonical spelling)
+  unmatched_localities: string[]; // named in the notice, not in our list: shown, never placed on a guessed locality
+  start: string | null; end: string | null;
+  dates: string[];
+  kind: FeedKind;
+  summary: string;
+};
+/** One row of the notices feed (table notices, V5 columns). */
+export type FeedNotice = {
+  id: number | null; url: string | null; published_on: string | null; source: string;
+  localities: string[]; start_time: string | null; end_time: string | null; dates: string[];
+  kind: FeedKind; summary: string; ai_extracted: boolean; demo: boolean;
+};
+export const AI_NOTICE_LABEL = "AI-read from the notice. Check the source.";
+
+const MONTHS: Record<string, number> = {
+  janvier: 1, january: 1, fevrier: 2, february: 2, mars: 3, march: 3, avril: 4, april: 4, mai: 5, may: 5, juin: 6, june: 6,
+  juillet: 7, july: 7, aout: 8, august: 8, septembre: 9, september: 9, octobre: 10, october: 10, novembre: 11, november: 11, decembre: 12, december: 12,
+};
+const realDay = (y: number, m: number, d: number) => {
+  const t = new Date(Date.UTC(y, m - 1, d));
+  return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d ? `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}` : null;
+};
+/** "3:00" / "03h00" / "3h" -> "03:00"; anything else (or 24:00+) -> null. */
+function normTime(v: unknown): string | null {
+  const m = typeof v === "string" ? /^\s*(\d{1,2})\s*[:hH]\s*(\d{2})?\s*$/.exec(v) : null;
+  if (!m || +m[1] > 23 || +(m[2] ?? 0) > 59) return null;
+  return `${m[1].padStart(2, "0")}:${m[2] ?? "00"}`;
+}
+
+/**
+ * Pure: checks a parser result (AI JSON or the rule fallback). Localities are matched to `known`
+ * by folded name; bad times / impossible dates are dropped, never repaired by guessing.
+ */
+export function validateParsedNotice(raw: unknown, known: string[]): Valid<ParsedNotice> {
+  const b = obj(raw);
+  if (!b) return { ok: false, error: "invalid_notice" };
+  if (!FEED_KINDS.includes(b.kind as FeedKind)) return { ok: false, error: "invalid_kind" };
+  if (!Array.isArray(b.localities) || b.localities.length > 200 || !b.localities.every((l) => typeof l === "string")) return { ok: false, error: "invalid_localities" };
+  if (!Array.isArray(b.dates)) return { ok: false, error: "invalid_dates" };
+  const summary = typeof b.summary === "string" ? b.summary.replace(/\s+/g, " ").trim().slice(0, 280) : "";
+  if (!summary) return { ok: false, error: "invalid_summary" };
+  const byFold = new Map(known.map((k) => [foldName(k), k]));
+  const localities: string[] = [], unmatched: string[] = [];
+  for (const l of b.localities as string[]) {
+    const hit = byFold.get(foldName(l));
+    if (hit) { if (!localities.includes(hit)) localities.push(hit); }
+    else if (l.trim() && !unmatched.includes(l.trim())) unmatched.push(l.trim());
+  }
+  const dates = [...new Set((b.dates as unknown[]).flatMap((d) => {
+    const m = typeof d === "string" ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(d) : null;
+    const day = m && realDay(+m[1], +m[2], +m[3]);
+    return day ? [day] : [];
+  }))].sort();
+  return { ok: true, value: { localities, unmatched_localities: unmatched, start: normTime(b.start), end: normTime(b.end), dates, kind: b.kind as FeedKind, summary } };
+}
+
+/**
+ * Pure rule-based reader, used when the AI is not configured or fails (ai_extracted = false).
+ * Localities: known names found as whole words. Times: the first two "3h" / "05:00" style times.
+ * Dates: dd/mm/yyyy or "12 octobre 2026". Kind from keywords. Summary: the first sentence.
+ */
+export function extractNoticeRules(text: string, known: string[]): ParsedNotice {
+  const ft = ` ${foldName(text)} `;
+  const localities = known.filter((k) => { const f = foldName(k); return f.length >= 4 && ft.includes(` ${f} `); });
+  const times = [...text.matchAll(/(?<![\d/])(\d{1,2})\s*(?:h|H|:)\s*(\d{2})?(?!\d)/g)].map((m) => normTime(`${m[1]}:${m[2] ?? "00"}`)).filter((t): t is string => !!t);
+  const dates: string[] = [];
+  for (const m of text.matchAll(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/g)) dates.push(`${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`);
+  for (const m of foldName(text).matchAll(/\b(\d{1,2}) ([a-z]+) (\d{4})\b/g)) {
+    const mo = MONTHS[m[2]];
+    if (mo) dates.push(`${m[3]}-${String(mo).padStart(2, "0")}-${m[1].padStart(2, "0")}`);
+  }
+  const kind: FeedKind = /coupure|interruption|suspension|travaux|repair|panne/.test(ft) ? "interruption"
+    : /bouillir|boil|qualite|quality|turbid|trouble/.test(ft) ? "advisory"
+    : /horaire|distribution|un jour sur deux|every second day|rationn|approvisionnement|supply/.test(ft) ? "rationing" : "other";
+  const summary = (text.replace(/\s+/g, " ").trim().split(/(?<=[.!?])\s/)[0] ?? "").slice(0, 200) || "Water notice";
+  const v = validateParsedNotice({ localities, start: times[0] ?? null, end: times[1] ?? null, dates, kind, summary }, known);
+  return v.ok ? v.value : { localities, unmatched_localities: [], start: null, end: null, dates: [], kind, summary };
+}
+
+/** Notices feed, newest first; `locality` keeps notices naming it plus island-wide ones (no locality). */
+export const getNoticeFeed = (locality?: string) =>
+  api<{ notices: FeedNotice[]; demo: boolean }>(`/api/notices/feed${locality ? `?locality=${encodeURIComponent(locality)}` : ""}`);
+
+/** Ops: read a pasted notice (AI, cached). save = true stores it in the feed. */
+export const parseNotice = (text: string, url?: string, save = false) =>
+  api<{ notice: ParsedNotice; ai_extracted: boolean; cached: boolean; saved_id: number | null; note: string | null }>("/api/notices/parse", {
+    method: "POST", body: { text, url, save },
+  });
+
 // ---------- V5 accounts: Supabase Auth, email + password ----------
 // Guests report and request; a complaint needs sign-in. No profile, no name. The email is shown
 // only to its owner. Errors are ApiError with Supabase's code, e.g. "invalid_credentials",
@@ -1445,6 +1544,20 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
   ok(south !== null && Math.abs(south.distance_m - 111) <= 1 && south.name === "Rivière Test", "111 m south of the river");
   ok(Math.abs((distanceToRiverM(-20.30, 57.53, riv) ?? 0) - 1044) <= 5, "past the end: distance to the end point");
   ok(distanceToRiverM(-20.30, 57.51, riv) === 0 && distanceToRiverM(-20.3, 57.5, { features: [] }) === null, "on the river = 0; no rivers = null");
+  // V5 notice parser: validation + rule fallback
+  const known = ["Vacoas", "Phoenix", "Curepipe", "Forest Side", "Floréal", "L’Escalier", "Mon Trésor"];
+  const pv = validateParsedNotice({ localities: ["vacoas", "FLOREAL", "Atlantis"], start: "3h", end: "08:00", dates: ["2026-10-12", "2026-02-30", "x"], kind: "rationing", summary: "  New  hours. " }, known);
+  ok(pv.ok && pv.value.localities.join() === "Vacoas,Floréal" && pv.value.unmatched_localities.join() === "Atlantis", "localities matched by folded name, unknown kept apart");
+  ok(pv.ok && pv.value.start === "03:00" && pv.value.end === "08:00" && pv.value.dates.join() === "2026-10-12" && pv.value.summary === "New hours.", "times normalised, impossible dates dropped");
+  ok(!validateParsedNotice({ localities: [], start: null, end: null, dates: [], kind: "safe", summary: "x" }, known).ok, "unknown kind rejected");
+  ok(!validateParsedNotice({ localities: [], start: null, end: null, dates: [], kind: "other", summary: " " }, known).ok, "empty summary rejected");
+  const bad = validateParsedNotice({ localities: [], start: "25:00", end: "noon", dates: [], kind: "other", summary: "s" }, known);
+  ok(bad.ok && bad.value.start === null && bad.value.end === null, "bad times become null, never guessed");
+  const ruleNotice = extractNoticeRules("Nouveaux horaires de distribution d'eau pour Vacoas, Phoenix et Forest-Side: de 3h à 8h, un jour sur deux, à partir du 12 octobre 2026.", known);
+  ok(ruleNotice.localities.join() === "Vacoas,Phoenix,Forest Side" && ruleNotice.start === "03:00" && ruleNotice.end === "08:00", "rules: localities + times");
+  ok(ruleNotice.dates.join() === "2026-10-12" && ruleNotice.kind === "rationing", "rules: French date + kind");
+  const cut = extractNoticeRules("Coupure d'eau le 14/11/2026 de 09:00 à 15:30 à L'Escalier et Mon Trésor.", known);
+  ok(cut.kind === "interruption" && cut.dates.join() === "2026-11-14" && cut.end === "15:30" && cut.localities.join() === "L’Escalier,Mon Trésor", "rules: interruption, dd/mm/yyyy, apostrophes");
   // V5 accounts: form checks before Supabase
   const cred = validateCredentials("  Ana@Example.MU ", "secret1");
   ok(cred.ok && cred.value.email === "ana@example.mu", "email trimmed + lower-cased");

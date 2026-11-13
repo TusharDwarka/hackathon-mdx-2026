@@ -1,0 +1,134 @@
+{
+ "scraped_on": "2026-11-13",
+ "notices": [
+  {
+   "hash": "7f2aaf10f27bcc622cc0a5955f7307892316a9930bae4cdeef125264f3d32918",
+   "url": "https://defimedia.info/info-soiree-sitiasyon-pe-res-critik",
+   "published_on": "2026-11-12",
+   "source": "news",
+   "raw_text": "[Info Soirée] : « SITIASYON PE RES CRITIK » Au sommaire de ce Jeudi 12 Novembre 2026 : • L'eau se fait la malle à Mare-aux-Vacoas. Le plus grand réservoir du pays tombe à 33 % de sa capacité. L’approvisionnement en eau dans le centre et l'ouest sous pression. Et pendant que les réserves…",
+   "parsed": {
+    "localities": [
+     "Vacoas"
+    ],
+    "unmatched_localities": [],
+    "start": null,
+    "end": null,
+    "dates": [
+     "2026-11-12"
+    ],
+    "kind": "rationing",
+    "summary": "[Info Soirée] : « SITIASYON PE RES CRITIK » Au sommaire de ce Jeudi 12 Novembre 2026 : • L'eau se fait la malle à Mare-aux-Vacoas."
+   },
+   "ai_extracted": false
+  },
+  {
+   "hash": "4e95b2d7c8c4088776729f3d6daeb0470abc9c489ad4e28383d62917cde8bf9f",
+   "url": "https://cwa.govmu.org/cwa/?p=5001",
+   "published_on": "2026-10-10",
+   "source": "cwa",
+   "raw_text": "Nouveaux horaires de distribution d’eau pour les régions de Vacoas, Phoenix, St. Pierre, Curepipe, Forest-Side et Floréal\n> Communique (Click Here)",
+   "parsed": {
+    "localities": [
+     "Curepipe",
+     "Floréal",
+     "Phoenix",
+     "Vacoas",
+     "Vacoas-Phoenix"
+    ],
+    "unmatched_localities": [],
+    "start": null,
+    "end": null,
+    "dates": [],
+    "kind": "rationing",
+    "summary": "Nouveaux horaires de distribution d’eau pour les régions de Vacoas, Phoenix, St."
+   },
+   "ai_extracted": false
+  },
+  {
+   "hash": "8cc20fd10dc911240ba08deb15b8411568b081b30d43d2a2053d7e78cc5e900f",
+   "url": "https://cwa.govmu.org/cwa/?p=4985",
+   "published_on": "2026-10-06",
+   "source": "cwa",
+   "raw_text": "Registration of Private Water Tankers\n> Registration of Private Water Tankers (Click Here)",
+   "parsed": {
+    "localities": [],
+    "unmatched_localities": [],
+    "start": null,
+    "end": null,
+    "dates": [],
+    "kind": "other",
+    "summary": "Registration of Private Water Tankers > Registration of Private Water Tankers (Click Here)"
+   },
+   "ai_extracted": false
+  },
+  {
+   "hash": "b806ac928b4cf15215b937dae444e216405372fc755666581310e487e7a649e6",
+   "url": "https://cwa.govmu.org/cwa/?p=4802",
+   "published_on": "2026-08-05",
+   "source": "cwa",
+   "raw_text": "Communiqué – Nouveaux horaires de distribution d’eau\n> Communiqué (Click here)",
+   "parsed": {
+    "localities": [],
+    "unmatched_localities": [],
+    "start": null,
+    "end": null,
+    "dates": [],
+    "kind": "rationing",
+    "summary": "Communiqué – Nouveaux horaires de distribution d’eau > Communiqué (Click here)"
+   },
+   "ai_extracted": false
+  },
+  {
+   "hash": "e733ada66a7b02d9a17a7f48e707e3d1e6d53a466a3814ce3f0d219336207b66",
+   "url": "https://cwa.govmu.org/cwa/?p=4764",
+   "published_on": "2026-07-31",
+   "source": "cwa",
+   "raw_text": "Communiqué – Situation préoccupante dans nos réservoirs\n> Communiqué (Click here)",
+   "parsed": {
+    "localities": [],
+    "unmatched_localities": [],
+    "start": null,
+    "end": null,
+    "dates": [],
+    "kind": "other",
+    "summary": "Communiqué – Situation préoccupante dans nos réservoirs > Communiqué (Click here)"
+   },
+   "ai_extracted": false
+  },
+  {
+   "hash": "7cc82431ccdfbd095533827121421efb5f49210c962ff3eb2eb11429e56e0000",
+   "url": "https://cwa.govmu.org/cwa/?p=4747",
+   "published_on": "2026-06-16",
+   "source": "cwa",
+   "raw_text": "Communiqué de la CWA – Révision des horaires de distribution d’eau\n> Communiqué > Hours of Supply – MAV Lower > Hours of Supply – MAV Upper",
+   "parsed": {
+    "localities": [],
+    "unmatched_localities": [],
+    "start": null,
+    "end": null,
+    "dates": [],
+    "kind": "rationing",
+    "summary": "Communiqué de la CWA – Révision des horaires de distribution d’eau > Communiqué > Hours of Supply – MAV Lower > Hours of Supply – MAV Upper"
+   },
+   "ai_extracted": false
+  },
+  {
+   "hash": "aa7aec37d4732254334684c70585b58a1bf0c483373ed1ef58b3c20f45f68795",
+   "url": "https://cwa.govmu.org/cwa/?p=4336",
+   "published_on": "2025-10-11",
+   "source": "cwa",
+   "raw_text": "Communiqué – Interruption de la Fourniture d’Eau\n> Communiqué (Click here)",
+   "parsed": {
+    "localities": [],
+    "unmatched_localities": [],
+    "start": null,
+    "end": null,
+    "dates": [],
+    "kind": "interruption",
+    "summary": "Communiqué – Interruption de la Fourniture d’Eau > Communiqué (Click here)"
+   },
+   "ai_extracted": false
+  }
+ ]
+}
