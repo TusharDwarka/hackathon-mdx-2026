@@ -3,6 +3,7 @@
 ## V2 — Fri 13 Nov evening
 
 ### Changed
+- `README.md` (V2 step 3): status, Screens table, "What is demo, not real" (tier thresholds, seeded reports, route order), reservoir + notice sources, how to run.
 - `data/reservoir.csv` (V2 step 1): 7 real Mare aux Vacoas levels, 25 Sep → 5 Nov 2026 (38.5% → 33%). Each row links to the news article that quotes the Water Resources Commission figure for that date. All 7 links open (HTTP 200, checked Fri 13 Nov).
   - Latest row: **33% on 2026-11-05** → tier **watch** (30–60) with the demo thresholds.
   - Left out on purpose: "33.1% on 11 Nov" (no source page confirms it), "35.5%" (L'Express via allAfrica, 10 Oct, no date given for the reading), "about 36.8%" on 2 Oct (conflicts with the dated 36.6% the same day).
@@ -25,7 +26,7 @@
 
 ### Needs from others
 - **P3:** load `data/reservoir.csv` into `reservoir_levels` (columns match `sql/v2.sql`; `level_pct` is a number like `33.8`, `day` is `YYYY-MM-DD`). Op 12 should return `{level_pct: 33, day: "2026-11-05", tier: "watch"}`.
-- **P1:** merge `feat/data-files` when all V2 steps are done.
+- **P1:** merge `feat/data-files` when all V2 steps are done. README now says the tier thresholds and seeded reports are demo; please check the Screens table matches what P2/P4 ship.
 
 ## V1 — Fri 13 Nov afternoon
 
