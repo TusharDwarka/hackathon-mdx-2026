@@ -18,6 +18,12 @@ Live bug from the Sat 02:00 test: every Vacoas street exists twice (ids 1-21 and
 - Fix: `localitiesInText(text, known)` in `lib/queries.ts` matches the longest names first and never reuses text already covered by a longer match. A short name still counts where it stands alone. `extractNoticeRules` uses it; same signature, same output shape. The AI path is unchanged (its localities are validated by exact folded name, not by searching the text).
 - Test: `npx tsx lib/queries.ts` prints `queries ok` (3 new checks).
 
+### ETA copy (same day, touches P4 files: lib/eta.ts, app/map/page.tsx)
+- Bug from the Sat 02:00 test: the map said "about 0 min" when the truck was within ~170 m of the stop (the 20 km/h rule rounds to 0).
+- Fix: `etaLabel(minutes)` in `lib/eta.ts` returns "arriving now" under 1 min, else "about N min". The map line uses it; `etaMinutes` is unchanged. Self-check `npx tsx lib/eta.ts` prints `eta ok` (3 new asserts).
+- P4: two-line change in your folder, done on feat/data because the tester asked for it before freeze. Shout if you want it moved.
+- P2: the text walker in `components/ui/i18n.tsx` has no entry for "arriving now"; it stays English (English-only rule), add a key if you translate the map.
+
 ## V5 (docs/SPLIT-V5.md, P3) — feat/data, commits fc3aa0d, ca917c8, 811cbc3, 709e8a5
 Shapes are in `lib/queries.ts` (import types from `@/lib/queries`). Every new route answers without a database (`demo: true`).
 

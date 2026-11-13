@@ -17,6 +17,11 @@ export function etaMinutes(truck: Pt & { recordedAt: number }, nextStop: Pt, sto
   return Math.round((km(truck, nextStop) / 20) * 60 + (stopsAway - 1) * 10);
 }
 
+/** Copy for the resident: the rule rounds to 0 when the truck is within ~170 m of my stop, so never "about 0 min". */
+export function etaLabel(minutes: number): string {
+  return minutes < 1 ? "arriving now" : `about ${minutes} min`;
+}
+
 // Self-check: npx tsx lib/eta.ts
 if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("eta.ts")) {
   const t = { lat: 0, lng: 0, recordedAt: 1_000_000 };
@@ -25,5 +30,8 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("eta.ts")) {
   console.assert(etaMinutes(t, next, 3, 1_000_000) === 50, "fresh, 2 stops before mine");
   console.assert(etaMinutes(t, next, 3, 1_000_000 + 3 * 60_000) === 30, "stale GPS fallback");
   console.assert(etaMinutes(t, next, 0) === 0, "served");
+  console.assert(etaMinutes(t, { lat: 0, lng: 0.0009 }, 1, 1_000_000) === 0, "100 m away rounds to 0");
+  console.assert(etaLabel(0) === "arriving now", "0 min reads 'arriving now'");
+  console.assert(etaLabel(1) === "about 1 min" && etaLabel(35) === "about 35 min", "otherwise 'about N min'");
   console.log("eta ok");
 }
