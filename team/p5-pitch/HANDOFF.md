@@ -1,5 +1,39 @@
 # HANDOFF (p5-pitch)
 
+## Round 3 (water-day split) — Fri 13 Nov night
+
+### Changed
+- `data/reservoir.csv`: **all 7 reservoirs**, 4 to 10 dated WRC readings each (14 Aug → 5 Nov 2026), one source URL per row. Every number was checked against the article text. Mare aux Vacoas gained 14 Aug (40.5), 4 Sep (39.7) and 18 Sep (39.9). Names match `MAIN_RESERVOIRS` in `lib/queries.ts` (`La Nicoliere` without an accent; the loader does not rename `reservoir.csv` rows).
+- `data/schedule.csv`: the same CWA notice (10 Oct 2026) also covers **Phoenix, St Pierre** (from Sat 10 Oct) and **Curepipe, Forest-Side, Floreal** (from Sun 11 Oct), all 03:00–08:00, every second day, up to 30 Nov. 26 rows per area, 156 in total. The PDF says word for word "La distribution d'eau se fera tous les deux jours". That is the official source for the every-second-day rule. Still the newest timetable on the CWA site (checked tonight).
+- `data/quality_notices.csv`: **header only, on purpose**. There is no 2026 boil-water or quality notice from the CWA or the Ministry of Health. `waterQuality()` must never return `official_notice` from this file as it stands.
+- `data/water_points.csv`: 5 CWA 30,000 L tanks (Phoenix, Curepipe, Midlands, Alma, Quartier Militaire), `kind = static_tank`, source Le Mauricien, 22 Oct 2026. **Area level only:** the article names localities, not spots, so `lat`/`lng` is the OSM centre of the locality and each name says "area only, exact spot not published". No official tanker-stop or standpipe list exists. Ripaille and Résidence Anoska are also named but are not in OSM, so they were left out.
+- `README.md`: data sources updated for the four files above.
+- `team/p5-pitch/slides/prediction-model.md` and `water-day-planner.md`: the two round-3 slides, with speaker notes, sources and Q&A cautions.
+
+### River question (DECISIONS #7): keep it dropped
+Official source: **Rivers and Canals Act 1863** (Cap. 421), PDF hosted on the CWA site: [link](https://cwa.govmu.org/cwa/wp-content/uploads/2022/07/RIVERS-AND-CANALS-ACT-Cap-421.pdf).
+- s.87: sending "washings or other dirty waters or other liquid that may tend to pollute" into a river is an offence (fine up to Rs 1,000).
+- s.68(c): placing any substance "which tends to pollute the water" in or on the bank of a river is an offence.
+- The CWA Dry Season Regulations 2026 also ban irrigation from a watercourse feeding a reservoir.
+
+Washing a car with soap in a river matches s.87. That is our reading of the Act, not a court ruling. Nothing official says river water is fit to use. Optional save-water tip for P2, if wanted: "Don't wash cars in rivers: soapy water in a river is an offence (Rivers and Canals Act, s.87)."
+
+### Needs from others
+- **P3 (important, op 25):** don't fit the trend line over every reading in the database. `reservoir_levels.csv` has rows from Jan 2025 on, and a fit over all of them gives Mare aux Vacoas 20% in **2028** (slope −0.04). Over the last 60 days before the latest reading it gives −0.135 pts/day and **~84 days to 20%** (about 5 Feb 2027). Over only the 7 original rows it's −0.124 and ~94 days. Pick a window and state it in `note`. Table for every reservoir: `slides/prediction-model.md`.
+- **P3:** load `data/water_points.csv` and `data/quality_notices.csv` (new files). The shape for `quality_notices` is `area,day,title,category,source_url` as in WATER-DAY-SPLIT.
+- **P4 (map layer):** draw water points as an *area* marker (a circle or "somewhere in Phoenix"), not a precise pin, and don't show a walking distance to them as if it were exact.
+- **P2 (quality card):** the CWA's standing advice, from its [Water Quality page](https://cwa.govmu.org/cwa/?page_id=813) (updated 5 Mar 2026): unusual colour, taste or smell → call the hotline **170**. It can be linked as CWA advice.
+- **P1:** schedule.csv now creates 5 extra areas with no streets. Resident's picker hides them. The /ops header lists every area name. Tell me if you want them out.
+
+### Not done (in the brief, not asked for this round)
+- Item 6 (refresh the README claims list against the live site) and the README "Surprise card" section: still TBD.
+
+### How to test
+1. `data/reservoir.csv`: `cut -d, -f1 data/reservoir.csv | sort | uniq -c` → 7 reservoirs, each with ≥ 4 rows. Open a few URLs: the article gives that % for that date.
+2. `data/schedule.csv`: 6 areas × 26 rows. Vacoas/Phoenix/St Pierre on even October dates, Curepipe/Forest-Side/Floreal on odd ones.
+3. `npm run load-data` → no errors. The reservoirs line should say 7 reservoirs + aggregate.
+4. Paste the `water_points.csv` coordinates into openstreetmap.org: each lands on the named locality.
+
 ## V2 — Fri 13 Nov evening
 
 ### Changed

@@ -7,3 +7,5 @@ One line per finished task: what, files, commit hash.
 - Fri 13 Nov: official water-use notices found (CWA Dry Season Regulations 2026, Tank Grant Scheme, tank cleaning); none from the Ministry of Health — in HANDOFF.md — 11c575e
 - Fri 13 Nov: README.md updated for V2 (status, 5 screens, what is demo: tier thresholds + seeded reports, reservoir and notice sources, how to run) — 1244dd5
 - Fri 13 Nov: pitch slide "What after?" (tankers, static tanks, boreholes, evidence = ops priority list) in team/p5-pitch/slides/what-after.md — cafe757
+- Fri 13 Nov: round 3 — reservoir.csv all 7 reservoirs (40 rows), schedule.csv 6 areas from the CWA 10 Oct notice (every-second-day source), water_points.csv (5, area level), quality_notices.csv (empty: no official notice), river = keep #7 dropped (Rivers and Canals Act s.68/s.87) — 012d31b..faed067
+- Fri 13 Nov: pitch slides prediction-model.md + water-day-planner.md — fb79036
