@@ -2,6 +2,10 @@
 
 Prompt source: docs/BUILD-PROMPT.md (wins over the playbook on the product).
 
+## Next requested work — planning only (13 November 2026)
+
+The user requested a task split, with implementation delegated to teammates and merging later. See [NEXT-TASK-SPLIT.md](docs/NEXT-TASK-SPLIT.md) for the source audit, P1–P5 ownership, copy/paste briefs, dependencies and acceptance checks. This does not mark the proposed features implemented or change the frozen API contract. P1's first implementation prerequisite is to reconcile the new scope and contract.
+
 ## Step 0 — planning (no app code)
 - [x] SPEC.md, contracts/api.md, TASKS.md, README.md, docs/DECISIONS.md filled
 - [ ] P1 reviews and approves Step 0
