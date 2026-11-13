@@ -14,3 +14,15 @@ Branch: feat/data. Own: sql/, scripts/, lib/queries.ts, app/api/*. Contract: con
 - [x] lib/queries.ts: ops 12, 14, 15, 16, 17 (pure rule + Supabase call each) + getTodayReports, self-check extended
 - [x] scripts/seed-demo.ts: today's rows, complaints, one lone contradicting report
 - [ ] Step 1 (load-data + seed-demo against Supabase): blocked, no .env.local here
+
+## V3 (docs/NEXT-TASK-SPLIT.md, P3 package) — built on feat/data, contract proposal in CONTRACT-V3-PROPOSAL.md
+- [x] 1. Sessions + write access: guest / driver / ops, limits enforced in SQL functions + API, lockdown file for RLS
+- [x] 2. Tanker planning: request litres, tankers.capacity_litres, allocations, idempotent dispatch + serve
+- [x] 3. Loads vs trucks: plan returns loads, tankers for one departure, refill trips, unmet litres, assumptions
+- [x] 4. Street-order allocation with explicit split policy; serving never touches unallocated requests
+- [x] 5. Report trust: confidence + reason codes, independent sources = sessions, raw reports kept
+- [x] 6. One shared status / priority rule (lib/queries.ts) + /api/status, /api/priority with litres and reasons
+- [x] 7. All reservoirs (current/stale/missing), notices + advisories, supply m3, complaint groups (loaders ready)
+- [ ] P1 confirms the contract proposal; runs sql/v3.sql; sets DRIVER_ACCESS_CODE / OPS_ACCESS_CODE on Vercel
+- [ ] Run against real Supabase (needs .env.local): load-data, seed-demo, then the API checks in HANDOFF
+- [ ] sql/v3-lockdown.sql once P2 + P4 write through /api/*

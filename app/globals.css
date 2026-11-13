@@ -156,12 +156,38 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+  /* Reduced motion: transitions and animations finish at once. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 /* Shared building blocks for every screen (P2 owns them, everyone uses them). */
 @utility surface {
   /* White card: 24px corners, soft shadow, no border. Put all text on one of these. */
   @apply rounded-3xl bg-card text-card-foreground shadow-card;
+}
+@utility glass {
+  /* Translucent bar or small surface (nav, floating panels). Opaque white where blur is missing or
+     the user asks for less transparency. Static blur only: never animate it. */
+  background: var(--card);
+  outline: 1px solid oklch(1 0 0 / 0.6); /* hairline edge; outline so it never fights the shadow-* utilities */
+  outline-offset: -1px;
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    background: color-mix(in oklch, var(--card) 72%, transparent);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background: var(--card);
+  }
 }
 @utility chip {
   /* Pill. Active state: add bg-primary text-primary-foreground. */

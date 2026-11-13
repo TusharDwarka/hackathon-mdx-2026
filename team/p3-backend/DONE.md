@@ -8,3 +8,4 @@ One line per finished task: what, files, commit hash.
 - scripts/load-data.ts: optional data/reservoir.csv -> reservoir_levels upsert — bdc91a0
 - lib/queries.ts: ops 12 (reservoir), 14 (complaints), 15 (status + trust), 16 (likely time), 17 (priority) + getTodayReports, pure rules with self-check — 9953676
 - scripts/seed-demo.ts: today's rows, last-2h statuses, 6 complaints, one lone suspect report; dry-run asserts suspect — fc95797
+- V3 (NEXT-TASK-SPLIT P3): sql/v3.sql + v3-lockdown.sql, app/api/* (10 routes), lib/queries.ts planner/validators/trust/reservoirs/notices, load-data (all reservoirs, notices, supply), seed-demo (demo complaints only), scripts/test-sql.ts (42 SQL checks in PGlite) — b06aef4
