@@ -6,10 +6,10 @@ Supersedes the open parts of `docs/NEXT-TASK-SPLIT.md`. Rules for this round: `c
 **Use the AI-unslop skill on every change** (`antislop`, or `antislop-ui` / `antislop-copywriting` / `antislop-code` if you have them). UI text short, plain English, no filler paragraphs, no "Kot Delo? never judges..." essays. One line per disclaimer, max.
 Each item = one small commit. Run it on a phone width (360 px) before you commit. Update your DONE.md + HANDOFF.md.
 
-## Where we are (checked on main, d92ec17)
+## Where we are (checked on main, b574df3)
 
 - Supabase is loaded: 6 areas, 21 streets, 156 schedule rows, 136 reservoir rows, 7 days of demo reports (`is_demo = true`).
-- P2's onboarding tour, `/guide`, glass and motion pass are merged (#27).
+- Already on main: spotlight tutorial with Skip, `/guide`, glossy glass, flowing waves (#27, #28); "Add to calendar" `.ics` with a 30 min alarm (`components/home/water-day.ts`); 53 localities' supply days + tanker facts (#29).
 - Problems found: data is Vacoas/Phoenix/Curepipe only; residents pick litres on a request (not allowed now); Report and Request share one tab; the reservoir "Watch" chip looks like a button but does nothing; the map draws up to three circles per street with no legend; the CWA notices box is buried in disclaimer text; no water-safety section, no reminder, no accounts, no notices feed, no rivers.
 
 ## How it fits together
@@ -78,7 +78,7 @@ Skills (if installed): `antislop-ui`, `antislop-copywriting`, `antislop-layoutmo
 4. **now** Reservoir tier chip ("Watch"): people tap it. Make it a button that opens a 2-line explanation: what Normal / Watch / Critical mean (use `reservoirTier` thresholds from `lib/queries.ts`) and the reading date.
 5. **now** Reservoir tank: water surface moves (CSS wave), level = real `level_pct`. Loading states for each section: one shared wave shimmer instead of spinners/blank.
 6. **now** Cut text: CWA notices search gets a one-line hint, the two disclaimer paragraphs become one short line each. Same pass over every screen with the unslop skill.
-7. **now** Reminder: "Remind me 30 min before" on the next supply window downloads an `.ics` file (VEVENT + VALARM `-PT30M`). Pure function `components/home/ics.ts` with a self-check (`npx tsx components/home/ics.ts` prints `ics ok`). No notifications permission, no library.
+7. **now** Reminder: the `.ics` with a 30 min alarm already exists. Label the button "Remind me 30 min before", and check the file opens in Google Calendar (Android) and Apple Calendar (iPhone).
 8. **after P3** Accounts: extend `Login.tsx` to three choices: **Sign up**, **Log in** (email + password), **Continue as guest**. Guests can report and request. **Complaint needs sign-in**: guests see the complaint button with "Sign in to make a complaint", which opens the login. Show "Signed in" + Log out in the nav. Never show anyone's email to others.
 9. **after P3** "Where do you live?" search uses P3's island-wide places index: every town, village and named street (L'Escalier, Chamarel, Rose-Belle...). Accent/apostrophe tolerant ("lescalier" finds L'Escalier). Results show "Street, Locality" and the locality's supply basis.
 10. **after P3** New section **"Is my tap water safe to drink?"** on Resident (own tab or top card): status from op 26 (`official_notice` / `cloudy_possible` / `none`), why (official notice, heavy rain, low reservoir), what to do (from P5's sourced text), source link + date. When nothing is known: "No official advisory found for <locality>. If the water looks cloudy or smells, boil it before drinking." Never says "safe".
@@ -121,7 +121,7 @@ Skills (if installed): `antislop-ui`, `antislop-copywriting`, `antislop-layoutmo
 
 ## Messages to send (WhatsApp)
 
-**P2:** Pull main and read docs/SPLIT-V5.md, your section is P2. Start with 1–7 now (tagline, guide hint, split Report/Request and remove litres, Watch explainer, moving tank + wave loading, cut text, .ics reminder). 8–10 (login, island-wide search, safe-to-drink section) after P3. Use the antislop / unslop skills, check every change on your phone. I'll test the rest.
+**P2:** Pull main and read docs/SPLIT-V5.md, your section is P2. Start with 1–7 now (tagline, guide hint, split Report/Request and remove litres, Watch explainer, moving tank + wave loading, cut text, check the calendar reminder on both phones). 8–10 (login, island-wide search, safe-to-drink section) after P3. Use the antislop / unslop skills, check every change on your phone. I'll test the rest.
 
 **P3:** Pull main and read docs/SPLIT-V5.md, your section is P3. Auth first (sql/v5.sql + signUp/signIn + complaints need sign-in), then requests without litres, then the OSM script for all Mauritius + rivers, then the CWA scraper + AI parser, then the safe-to-drink op. Contract is V5 in contracts/api.md. Use the unslop skill. I'll test the rest.
 
