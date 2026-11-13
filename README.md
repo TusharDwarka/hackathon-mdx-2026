@@ -1,6 +1,6 @@
 # Kot Delo? — Hackathon MDX 2026 (theme: Live Better)
 
-> Status: planning done (Step 0), build not started. TBD items are filled as we decide.
+> Status (Fri 13 Nov, evening): **V1 built and live on Vercel** (Home, Map, Driver merged). **V2 in progress**: landing, resident, operations screens and the reservoir level. Real CWA timetable, streets and reservoir levels are in `data/`. Loading them into Supabase is a separate step.
 
 ## Problem
 During CWA water rationing, households in Vacoas (La Caverne neighbourhood), Mauritius, don't know when water will really come or when the tanker truck will arrive. Since 10 October 2026 the CWA supplies Vacoas only every second day, 03:00–08:00.
@@ -9,17 +9,36 @@ During CWA water rationing, households in Vacoas (La Caverne neighbourhood), Mau
 One household in La Caverne, Vacoas.
 
 ## What it does
-Shows today's official CWA water window for your street, lets neighbours report "Water is here" / "No water", lets a household request the tanker ("I need water"), and shows the tanker truck moving live with "N stops away, about X min". It then compares the official schedule with what actually happened: reliability score and a heat map of hours without water. English labels.
+Shows today's official CWA water window for your street, lets neighbours report "Water is here" / "No water", lets a household request the tanker ("I need water"), and shows the tanker truck moving live with "N stops away, about X min". It then compares the official schedule with what actually happened: reliability score and a heat map of hours without water. V2 adds the Mare aux Vacoas reservoir level, a supply tier, a trust check on reports, a likely water time, two-tap complaints, and an operations screen for the CWA. English labels, phone first, also works on desktop, no login.
+
+## Screens (V2)
+| Screen | For | What it shows | State |
+|---|---|---|---|
+| Landing `/` | everyone | What Kot Delo? is, reservoir level + supply tier, today's window, three ways in | V2, in progress |
+| Resident `/resident` | a household | Today's window, reports, "I need water", confirmed / unconfirmed status, likely water time, complaint in two taps, schedule vs reality, heat map | V1 Home is live at `/`; moves here in V2 |
+| Map `/map` | a household | Truck moving live, stops away, ETA | live (V1) |
+| Driver `/driver` | tanker driver | Start round, GPS every 5 s, mark stop served, end round | live (V1) |
+| Operations `/ops` | CWA staff (desktop first) | Reservoir status, heat map, priority list with a suggested action per street, open complaints, suspect reports | V2, in progress |
+
+Everything is rule-based (see `contracts/api.md`), with no AI model inside the app.
+
+## What is demo, not real
+- **Supply tier thresholds** (≥ 60% normal, 30–60% watch, < 30% critical) are **our demo values, not CWA policy**. The reservoir **levels** are real. The tier label is not an official CWA status.
+- **Seeded reports**: 7 days of neighbour reports (`is_demo = true`), and the extra rows and complaints the V2 seed adds, are generated so the reliability score, heat map, trust check, likely water time and priority list have history. They are **not real neighbour reports**.
+- **Truck route order** (`order_index`) is our suggested route, not an official CWA tanker route.
+- The app never says whether water is safe or unsafe to drink. It shows the supply tier and official notices only.
 
 ## Data sources
 All collected Fri 13 Nov 2026.
 
 - **Official CWA water timetable** → `data/schedule.csv` (REAL). Source: CWA communiqué "Nouveaux horaires de distribution d'eau pour les régions de Vacoas, Phoenix, St. Pierre, Curepipe, Forest-Side et Floréal", published 10 Oct 2026 ([post](https://cwa.govmu.org/cwa/?p=5001), [PDF](https://cwa.govmu.org/cwa/wp-content/uploads/2026/10/Press-Notice-09102026.pdf), copy in `data/sources/`). It says Vacoas gets water every second day from Sat 10 Oct 2026, 03:00–08:00. Cleaning: the notice is an image, so the times were typed by hand. "Every second day" is listed as one row per date (10 Oct to 30 Nov 2026), because the loader takes a weekday or a date. Check the [CWA news page](https://cwa.govmu.org/cwa/?cat=2) for a newer notice before the demo.
 - **Streets and coordinates** → `data/streets.csv` (REAL). Source: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL), via the Overpass API. Cleaning: the 21 named small roads within about 400 m of La Caverne, Vacoas (inside OSM boundary relation 3613476400). `lat`/`lng` = average of the street's segment centres. Street names are kept as spelled in OSM. One duplicate with a typo was dropped. `order_index` is a nearest-neighbour route starting at La Caverne Road, not an official tanker route. The map must show "© OpenStreetMap contributors".
+- **Mare aux Vacoas reservoir level** → `data/reservoir.csv` (REAL). 7 readings, 25 Sep → 5 Nov 2026 (38.5% → 33%). They are Water Resources Commission figures quoted by [Defimedia](https://defimedia.info) and [ION News](https://ionnews.mu). Each row has the URL of the article that gives that level for that date. Cleaning: we only kept readings where the article states the date. One undated figure and one conflicting figure for the same day were dropped. No official daily WRC/CWA page with levels was found.
+- **Official water-use rules** (shown as links, not loaded): CWA (Dry Season) Regulations 2026, Government Notice No. 141 of 2026 ([PDF](https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/141_CWA-Dry-Season_Reg-2026.pdf)), and the CWA Water Tank Grant Scheme communiqué of 10 Oct 2026 ([PDF](https://cwa.govmu.org/cwa/wp-content/uploads/2026/10/Tank-poster-2.pdf)). Summary in `team/p5-pitch/HANDOFF.md`.
 - **Full street list** for switching locality → `data/raw/osm-streets-vacoas-phoenix-curepipe.csv` (979 streets in Vacoas-Phoenix and Curepipe, same OSM source).
 - **Context data** → `data/context/` (REAL, from the national open data portal [data.govmu.org](https://data.govmu.org)). `cwa-branches.csv` is from [Location of CWA branches](https://data.govmu.org/dataset/location-cwa-branches-mauritius). `water-balance-2000-2021.csv` is from data.govmu.org dataset `0e4ea8f5-c1c6-4c63-b34d-a3aa695d6c5b`. Neither is used by the app yet.
 - **Earlier CWA timetable** (5 Aug 2026, North/East/South/Port-Louis, 2 slots a day): copy in `data/sources/` ([PDF](https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf)). Not loaded.
-- **Demo data:** 7 days of seeded reports, flagged `is_demo = true` in the database, so the schedule-vs-reality card and heat map have history. They are NOT real neighbour reports.
+- **Demo data:** seeded reports flagged `is_demo = true` in the database (see "What is demo, not real"). They are NOT real neighbour reports.
 
 ## Stack
 Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres + Realtime) · Leaflet + OpenStreetMap · Vercel. Mobile-first (390px). The tanker is tracked by the driver's phone (`/driver`, geolocation + Wake Lock), not hardware.
@@ -31,13 +50,17 @@ Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres + R
 - AI features inside the app: none in the core (rule-based ETA and reliability score)
 
 ## Surprise card
-TBD (revealed during the event). The Home screen has an empty `<SurpriseCard />` slot for it.
+TBD (revealed during the event). The Home/Resident screen has an empty `<SurpriseCard />` slot for it.
 
 ## Privacy
-Reports and requests are stored by street, never by house or person. Only the truck is tracked, and only while a round is active.
+Reports, requests and complaints are stored by street, never by house or person. Complaints are a fixed category only: no free text, no device id. Only the truck is tracked, and only while a round is active.
 
 ## How to run
-TBD after build step 1 (`.env.local` with Supabase keys, `npm install`, `npm run dev`).
+1. `npm install`
+2. Copy `.env.example` to `.env.local` and fill in the Supabase keys (shared over WhatsApp DM, never committed).
+3. In Supabase, open the SQL Editor and run `sql/schema.sql`, then `sql/v2.sql`.
+4. `npm run load-data` loads the CSVs from `data/`. `npm run seed-demo` adds the demo reports.
+5. `npm run dev`, then open http://localhost:3000
 
 ## Team
 See `team/` for per-person notes, `docs/DECISIONS.md` for decisions and times, `docs/PLAYBOOK.md` for how we work.
