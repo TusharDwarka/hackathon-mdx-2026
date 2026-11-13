@@ -1370,13 +1370,37 @@ export function validateParsedNotice(raw: unknown, known: string[]): Valid<Parse
 }
 
 /**
+ * Pure: known locality names found in the text as whole words, longest names first. Text covered by a
+ * longer match is taken, so "Beau Bassin" does not also yield "Bassin", "Mon Choisy" not "Choisy",
+ * "Grand Bel Air" not "Bel Air". A short name still counts where it stands on its own. Order = `known`.
+ */
+export function localitiesInText(text: string, known: string[]): string[] {
+  const ft = ` ${foldName(text)} `;
+  const taken: boolean[] = new Array(ft.length).fill(false);
+  const found = new Set<string>();
+  const byLength = known.map((k) => ({ k, f: foldName(k) })).filter((x) => x.f.length >= 4).sort((a, b) => b.f.length - a.f.length);
+  for (const { k, f } of byLength) {
+    const needle = ` ${f} `;
+    for (let at = ft.indexOf(needle); at !== -1; at = ft.indexOf(needle, at + 1)) {
+      const from = at + 1, to = at + 1 + f.length;
+      let free = true;
+      for (let i = from; i < to; i++) if (taken[i]) { free = false; break; }
+      if (!free) continue;
+      for (let i = from; i < to; i++) taken[i] = true;
+      found.add(k);
+    }
+  }
+  return known.filter((k) => found.has(k));
+}
+
+/**
  * Pure rule-based reader, used when the AI is not configured or fails (ai_extracted = false).
  * Localities: known names found as whole words. Times: the first two "3h" / "05:00" style times.
  * Dates: dd/mm/yyyy or "12 octobre 2026". Kind from keywords. Summary: the first sentence.
  */
 export function extractNoticeRules(text: string, known: string[]): ParsedNotice {
   const ft = ` ${foldName(text)} `;
-  const localities = known.filter((k) => { const f = foldName(k); return f.length >= 4 && ft.includes(` ${f} `); });
+  const localities = localitiesInText(text, known);
   const times = [...text.matchAll(/(?<![\d/])(\d{1,2})\s*(?:h|H|:)\s*(\d{2})?(?!\d)/g)].map((m) => normTime(`${m[1]}:${m[2] ?? "00"}`)).filter((t): t is string => !!t);
   const dates: string[] = [];
   for (const m of text.matchAll(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/g)) dates.push(`${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`);
@@ -1624,7 +1648,7 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
   ok(Math.abs((distanceToRiverM(-20.30, 57.53, riv) ?? 0) - 1044) <= 5, "past the end: distance to the end point");
   ok(distanceToRiverM(-20.30, 57.51, riv) === 0 && distanceToRiverM(-20.3, 57.5, { features: [] }) === null, "on the river = 0; no rivers = null");
   // V5 notice parser: validation + rule fallback
-  const known = ["Vacoas", "Phoenix", "Curepipe", "Forest Side", "Floréal", "L’Escalier", "Mon Trésor"];
+  const known = ["Vacoas", "Phoenix", "Curepipe", "Forest Side", "Floréal", "L’Escalier", "Mon Trésor", "Bassin", "Beau Bassin", "Beau Bassin-Rose Hill", "Bel Air", "Grand Bel Air"];
   const pv = validateParsedNotice({ localities: ["vacoas", "FLOREAL", "Atlantis"], start: "3h", end: "08:00", dates: ["2026-10-12", "2026-02-30", "x"], kind: "rationing", summary: "  New  hours. " }, known);
   ok(pv.ok && pv.value.localities.join() === "Vacoas,Floréal" && pv.value.unmatched_localities.join() === "Atlantis", "localities matched by folded name, unknown kept apart");
   ok(pv.ok && pv.value.start === "03:00" && pv.value.end === "08:00" && pv.value.dates.join() === "2026-10-12" && pv.value.summary === "New hours.", "times normalised, impossible dates dropped");
@@ -1637,6 +1661,9 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
   ok(ruleNotice.dates.join() === "2026-10-12" && ruleNotice.kind === "rationing", "rules: French date + kind");
   const cut = extractNoticeRules("Coupure d'eau le 14/11/2026 de 09:00 à 15:30 à L'Escalier et Mon Trésor.", known);
   ok(cut.kind === "interruption" && cut.dates.join() === "2026-11-14" && cut.end === "15:30" && cut.localities.join() === "L’Escalier,Mon Trésor", "rules: interruption, dd/mm/yyyy, apostrophes");
+  ok(localitiesInText("Coupure à Beau Bassin et Grand Bel Air.", known).join() === "Beau Bassin,Grand Bel Air", "rules: 'Beau Bassin' does not also match 'Bassin', 'Grand Bel Air' not 'Bel Air'");
+  ok(localitiesInText("Beau Bassin-Rose Hill et Bassin: réparations.", known).join() === "Bassin,Beau Bassin-Rose Hill", "rules: longest name wins, a short name alone still counts");
+  ok(localitiesInText("Travaux à Bel Air, puis Grand Bel Air.", known).join() === "Bel Air,Grand Bel Air", "rules: same short name both alone and inside a longer one");
   // V5 accounts: form checks before Supabase
   const cred = validateCredentials("  Ana@Example.MU ", "secret1");
   ok(cred.ok && cred.value.email === "ana@example.mu", "email trimmed + lower-cased");

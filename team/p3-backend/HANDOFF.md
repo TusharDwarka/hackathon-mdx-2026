@@ -13,6 +13,11 @@ Live bug from the Sat 02:00 test: every Vacoas street exists twice (ids 1-21 and
 - `npx tsc --noEmit` and `npx eslint scripts/load-data.ts scripts/test-sql.ts` pass.
 
 
+### Notice reader: nested locality names (same day)
+- Bug from the Sat 02:00 test: the rule reader found "Bassin" inside "Beau Bassin". The data has 19 such pairs (Choisy / Mon Choisy, Bel Air / Grand Bel Air, Beau Bassin / Beau Bassin-Rose Hill...).
+- Fix: `localitiesInText(text, known)` in `lib/queries.ts` matches the longest names first and never reuses text already covered by a longer match. A short name still counts where it stands alone. `extractNoticeRules` uses it; same signature, same output shape. The AI path is unchanged (its localities are validated by exact folded name, not by searching the text).
+- Test: `npx tsx lib/queries.ts` prints `queries ok` (3 new checks).
+
 ## V5 (docs/SPLIT-V5.md, P3) — feat/data, commits fc3aa0d, ca917c8, 811cbc3, 709e8a5
 Shapes are in `lib/queries.ts` (import types from `@/lib/queries`). Every new route answers without a database (`demo: true`).
 
