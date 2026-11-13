@@ -1,5 +1,34 @@
 # HANDOFF (p5-pitch)
 
+## V5 (docs/SPLIT-V5.md) — Fri 13 Nov night
+
+### Changed
+- **`data/supply_rules.csv`** (contract V5 columns): 347 localities, 558 rows (one row per slot, so 2 rows for a twice-a-day locality).
+  - `locality_notice` (66): CWA 10 Oct communiqué + the 2 Defimedia articles quoting it. Every 2 days, 03:00–08:00, counted from `valid_from`.
+  - `regional_timetable` (211): CWA 5 Aug timetable. **District → region mapping is ours** (the CWA doesn't publish one): Port Louis → Port-Louis; Pamplemousses, Rivière du Rempart → North; Flacq → East; Grand Port, Savanne → South.
+  - `unknown` (70): rest of Plaines Wilhems, Moka, Black River (17 Jun restrictions, "5 to 6 h a day", never published with hours). Times blank.
+  - Locality list = P3's `public/places.json` (306 OSM places) + the 53 communiqué names. Rebuild: `python team/p5-pitch/build_supply_rules.py public/places.json`.
+- **`team/p5-pitch/TANKER-TIMETABLE.md`**: no official tanker timetable exists, at any level. No CWA rule at 33 %. The only CWA level is **20 %**: below it, no supply from Mare-aux-Vacoas to Plaines Wilhems / Moka / part of Black River. → label tanker times as demo.
+- **`data/context/water-safety-sources.csv`**: word-for-word "what to do" lines (CWA cloudy → 170; Ministry of Health "Faites bouillir l'eau avant de la boire" after heavy rain; WHO rolling boil; CWA tank cleaning) + Met Services heavy/torrential rain warning URLs. `quality_notices.csv` stays header-only: **no 2026 official notice found** (sources checked listed in README).
+- **`team/p5-pitch/NOTICE-SOURCES.md`**: scraper URLs, each opened tonight. CWA: `?feed=rss2` and `?rest_route=/wp/v2/posts` work, `/wp-json/...` and `/feed/` give 404. GIS moved to gis.govmu.org/gis/ (RSS works). L'Express RSS = 403. CWA Facebook: facebook.com/cwa170 (paste only).
+
+### Not found (written down, not filled)
+- Hours for Quatre Bornes, Rose Hill, Beau Bassin and the rest of Plaines Wilhems / Moka / Black River outside the Oct notice.
+- Any official link between CWA regions (North/East/South) and localities.
+- Tanker timetable, tanker stop list, any CWA action tied to 33 %.
+- Any 2026 boil-water / quality notice from CWA or Ministry of Health.
+
+### Needs from others
+- **P3:** `supply_rules.csv` match on `locality` + `district` (Robinson and Bois Chéri exist twice). Blank district = notice didn't say. `unknown` → "Not known yet". Not-named suburbs of Vacoas/Curepipe (Candos, La Marie, Solferino, Saint Paul) are `unknown` on purpose: the Oct notice doesn't name them.
+- **P3:** commit or send me `data/localities.csv`; it isn't on feat/data yet (only `public/places.json`).
+- **P1:** Supabase has no `water_points` table (404 on /resident and /map). Run `sql/v4.sql`.
+- **P2 (safe-to-drink):** the CWA FAQ says tap water "is safe": quote as CWA's claim only, never ours.
+
+### How to test
+1. `python -c "import csv,collections;print(collections.Counter(r['basis'] for r in csv.DictReader(open('data/supply_rules.csv',encoding='utf-8'))))"` → row counts per basis; spot-check `grep '^Port Louis,' data/supply_rules.csv` = 04:00–08:00 and 16:00–20:00, matching `data/sources/cwa-horaires-2026-08-05.pdf`.
+2. Open each URL in NOTICE-SOURCES.md: same status as listed.
+
+
 ## Round 3 (water-day split) — Fri 13 Nov night
 
 ### Changed
