@@ -316,13 +316,13 @@ export function Resident({ info }: { info: PublicData }) {
             </span>
           </label>
           <p className="mt-2 text-xs text-muted-foreground">
-            The timetable is the same for all of {area.name}. Your street is only needed to report, call the tanker, or see your neighbours&apos; reports. We never ask for your house.
+            Needed only to report or request a tanker. Never your house.
           </p>
         </>
       ) : (
         <>
           <h2 id="place-title" className="text-2xl leading-tight font-bold tracking-[-0.02em]">Where do you live?</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Choose your locality to see its official CWA water timetable. No account needed.</p>
+          <p className="mt-1 text-sm text-muted-foreground">See its official CWA timetable. No account needed.</p>
           <label className="mt-4 flex flex-col gap-1.5 text-sm font-medium">
             Search your locality
             <input
@@ -337,7 +337,7 @@ export function Resident({ info }: { info: PublicData }) {
           {base &&
             (matches.length ? (
               <div className="mt-3">
-                <p className="text-xs text-muted-foreground">Localities with a timetable in Kot Delo?</p>
+                <p className="text-xs text-muted-foreground">With a timetable</p>
                 <ul className="mt-2 flex flex-wrap gap-2">
                   {matches.map((a) => (
                     <li key={a.id}>
@@ -393,7 +393,7 @@ export function Resident({ info }: { info: PublicData }) {
               )}
             </>
           )}
-          <p className="mt-2 text-xs text-muted-foreground">The planned supply time, not a promise that water reaches every house.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Planned time, not a promise.</p>
           <Source url={win.source_url && win.source_url !== "#" ? win.source_url : null}>
             CWA communiqué{win.source_date && `, ${fmtDate(win.source_date, { day: "numeric", month: "short", year: "numeric" })}`}
           </Source>
@@ -437,7 +437,7 @@ export function Resident({ info }: { info: PublicData }) {
                   : `${live.agree} of ${live.reports} reports in the last 3 hours agree.`}
               </p>
             )}
-            {live && live.reports === 0 && <p className="mt-1 text-sm text-muted-foreground">Nobody on this street has reported in the last 3 hours.</p>}
+            {live && live.reports === 0 && <p className="mt-1 text-sm text-muted-foreground">No reports in the last 3 hours.</p>}
           </div>
         </div>
       )}
@@ -452,7 +452,7 @@ export function Resident({ info }: { info: PublicData }) {
         <span className={`${tag} bg-muted`}>Estimate</span>
       </div>
       {!street ? (
-        <p className="mt-2 text-sm text-muted-foreground">Choose your street to see when neighbours usually get water there.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Choose your street to see this.</p>
       ) : !data ? (
         <Skeleton className="mt-3 h-6 w-full" />
       ) : likely ? (
@@ -463,9 +463,9 @@ export function Resident({ info }: { info: PublicData }) {
           </span>
         </p>
       ) : (
-        <p className="mt-2 text-sm text-muted-foreground">Not enough reports yet to say when water usually comes on {street.name}.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Not enough reports yet.</p>
       )}
-      <p className="mt-2 text-xs text-muted-foreground">From neighbours&apos; past reports. Not an official time and not a promise.</p>
+      <p className="mt-2 text-xs text-muted-foreground">From neighbours&apos; reports, not official.</p>
     </section>
   );
 
@@ -501,7 +501,7 @@ export function Resident({ info }: { info: PublicData }) {
         </p>
       )}
       {mav.pct === null ? (
-        <p className="mt-3 text-sm text-muted-foreground">No verified reading yet. Kot Delo? does not guess a number.</p>
+        <p className="mt-3 text-sm text-muted-foreground">No reading in our sources yet.</p>
       ) : (
         <>
           <Gauge value={mav.pct} label={`${mav.name} is ${mav.pct.toFixed(1)}% full`} className="mt-3 max-w-56">
@@ -583,12 +583,12 @@ export function Resident({ info }: { info: PublicData }) {
         <Skeleton className="mt-3 h-20 w-full" />
       ) : data.reliability.days === 0 ? (
         <p className="mt-2 text-sm text-muted-foreground">
-          Not enough history for {street.name} yet. Every &quot;Water is here&quot; tap during the official window counts as a day on time.
+          Not enough history yet. Each &quot;Water is here&quot; during the window counts.
         </p>
       ) : (
         <>
           <p className="mt-2 text-2xl font-bold tracking-[-0.01em]">On time {data.reliability.onTime} of {plural(data.reliability.days, "day", "days")}</p>
-          <p className="text-sm text-muted-foreground">Days when neighbours on {street.name} reported water inside the official window.</p>
+          <p className="text-sm text-muted-foreground">Days water was reported inside the official window.</p>
           <ol className="mt-4 flex gap-1.5">
             {data.reliability.perDay.map((d) => (
               <li key={d.date} className="flex flex-1 flex-col items-center gap-1.5 text-xs text-muted-foreground">
@@ -647,7 +647,7 @@ export function Resident({ info }: { info: PublicData }) {
                 </p>
               )}
               <DayTrack start={win.start_time} end={win.end_time} reports={todayReports} now={now} />
-              <p className="mt-2 text-xs text-muted-foreground">The planned supply time, not a promise that water reaches every house.</p>
+              <p className="mt-2 text-xs text-muted-foreground">Planned time, not a promise.</p>
               <Source url={win.source_url && win.source_url !== "#" ? win.source_url : null}>
                 CWA communiqué{win.source_date && `, ${fmtDate(win.source_date, { day: "numeric", month: "short", year: "numeric" })}`}
               </Source>
@@ -701,7 +701,7 @@ export function Resident({ info }: { info: PublicData }) {
   const heatCard = base && (
     <section className={card} aria-labelledby="heat-title">
       <h2 id="heat-title" className={title}>Hours without water</h2>
-      <p className="mb-3 text-sm text-muted-foreground">Since the last &quot;Water is here&quot; report, street by street.</p>
+      <p className="mb-3 text-sm text-muted-foreground">Since the last &quot;Water is here&quot;, per street.</p>
       <HeatMap streets={areaStreets} hoursDry={base.hoursDry} myStreetId={streetId} />
       <ul aria-hidden className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
         {HEAT_LEGEND.map((b) => (
@@ -984,7 +984,7 @@ export function Resident({ info }: { info: PublicData }) {
       <div key={tab} className={enter}>
         {sections[tab]}
       </div>
-      <p className="surface mt-4 px-5 py-4 text-center text-xs text-muted-foreground lg:mt-6">Reports and requests are stored by street, never by house or person.</p>
+      <p className="mt-4 text-center text-xs text-muted-foreground lg:mt-6">Stored by street, never by house or person.</p>
     </main>
   );
 }

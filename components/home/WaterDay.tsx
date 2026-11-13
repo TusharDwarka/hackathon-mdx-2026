@@ -74,7 +74,7 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    setStatus(`Calendar event saved for ${dayLabel(d, today).toLowerCase()} ${w.start_time}. Open it and add it: your phone rings 30 minutes before, even with Kot Delo? closed.`);
+    setStatus(`Calendar event saved for ${dayLabel(d, today).toLowerCase()} ${w.start_time}. Open it to add it. Your phone rings 30 min before.`);
   };
   // Extra: only while this tab stays open (no push server, no service worker).
   const remindInTab = async () => {
@@ -104,7 +104,7 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
       </div>
       <p className="text-sm text-muted-foreground">
         {sample
-          ? "Choose your locality to plan around your real window. This is an example."
+          ? "An example. Choose your locality for your real window."
           : `${dayLabel(d!, today)} in ${place} · ${w.start_time} – ${w.end_time}${kind === "estimate" ? " (forecast, not an official time)" : ""}`}
       </p>
 
@@ -150,7 +150,7 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
           </Button>
           <button type="button" onClick={test} className="min-h-11 text-sm font-semibold text-primary underline underline-offset-2">Test reminder now (5 s)</button>
           {status && <p role="status" className={`text-xs text-muted-foreground ${enter}`}>{status}</p>}
-          <p className="text-xs text-muted-foreground">The calendar alarm works with the browser closed. A planned time, not a promise that water reaches every house.</p>
+          <p className="text-xs text-muted-foreground">Rings even with the browser closed.</p>
         </div>
       </div>
     </section>
@@ -173,7 +173,7 @@ export function ForecastCard({ forecast, loading, today }: { forecast: Forecast 
       {loading ? (
         <div aria-hidden className="wave-load mt-3 h-10 w-48 rounded-lg" />
       ) : !forecast ? (
-        <p className="mt-2 text-sm text-muted-foreground">Not enough information for a forecast yet: no official window and too few neighbours&apos; reports. Choose your locality and street.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Not known yet. Choose your locality and street.</p>
       ) : (
         <>
           <p className="mt-2 text-sm text-muted-foreground">{dayLabel(forecast.next.day, today)}</p>
@@ -191,7 +191,7 @@ export function ForecastCard({ forecast, loading, today }: { forecast: Forecast 
           {official ? (
             <Source url={forecast.source_url}>CWA communiqué</Source>
           ) : (
-            <p className="mt-1 text-xs text-muted-foreground">An estimate, not an official time and not a promise. An official CWA window always wins.</p>
+            <p className="mt-1 text-xs text-muted-foreground">An estimate. An official CWA window always wins.</p>
           )}
         </>
       )}
@@ -252,7 +252,7 @@ export function SaveWaterCard({ points, from }: { points: WaterPoint[]; from: { 
       <div>
         <h3 className="font-semibold">Nearby help</h3>
         {!from ? (
-          <p className="mt-2 text-sm text-muted-foreground">Choose your street to see the nearest tanker stop or water point.</p>
+          <p className="mt-2 text-sm text-muted-foreground">Choose your street to see the nearest water point.</p>
         ) : near.length ? (
           <ul className="mt-2 flex flex-col gap-2">
             {near.map((p) => (
@@ -267,7 +267,7 @@ export function SaveWaterCard({ points, from }: { points: WaterPoint[]; from: { 
             ))}
           </ul>
         ) : (
-          <p className="mt-2 text-sm text-muted-foreground">No verified public water points in our sources yet. The tanker map shows where the tanker stops on its round.</p>
+          <p className="mt-2 text-sm text-muted-foreground">No verified water point near you yet. The tanker map shows its stops.</p>
         )}
         <Link href="/map" className="mt-3 flex min-h-12 items-center gap-3 rounded-2xl bg-primary px-4 text-sm font-semibold text-primary-foreground transition-[scale] duration-150 ease-snap active:scale-[0.98]">
           <Truck aria-hidden className="size-5" />

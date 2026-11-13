@@ -261,7 +261,7 @@ export function GuidePage() {
         );
       })}
       <p className="surface mt-10 px-5 py-4 text-center text-xs text-muted-foreground">
-        Kot Delo? stores reports and requests by street, never by house or person. Official CWA times win over any estimate. It never says whether water is safe to drink: follow official CWA and Ministry of Health advice.
+        Stored by street, never by house or person. Official CWA times win over any estimate.
       </p>
     </main>
   );
