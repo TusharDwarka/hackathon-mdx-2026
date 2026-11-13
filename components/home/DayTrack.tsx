@@ -1,16 +1,14 @@
 // Schedule vs reality, drawn: today as one 24 h track. Blue band = official CWA
 // window, marks above it = what neighbours on this street reported, line = now.
 // Decorative for screen readers: Home says the same in text next to it.
-import type { ReportType } from "@/lib/queries";
+import type { Report } from "@/components/home/rules";
 import { minOfDay, toMin } from "@/components/home/time";
-
-export type TodayReport = { type: ReportType; created_at: string };
 
 const pct = (min: number) => `${(min / 1440) * 100}%`;
 const HOURS = [0, 6, 12, 18, 24];
 const dot = { water_on: "bg-emerald-600", water_off: "border-2 border-red-600 bg-card" }; // shape + colour, not colour alone
 
-export function DayTrack({ start, end, reports, now }: { start: string; end: string; reports: TodayReport[]; now: Date | null }) {
+export function DayTrack({ start, end, reports, now }: { start: string; end: string; reports: Report[]; now: Date | null }) {
   const s = toMin(start);
   const e = Math.max(toMin(end), s);
   return (

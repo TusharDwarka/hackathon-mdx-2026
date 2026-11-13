@@ -60,5 +60,5 @@ export function HeatMap({ streets, hoursDry, myStreetId }: Props) {
     }
   }, [mapVersion, streets, hoursDry, myStreetId]);
 
-  return <div ref={el} aria-hidden className="isolate h-44 overflow-hidden rounded-lg bg-muted [&_.leaflet-tile-pane]:opacity-70 [&_.leaflet-tile-pane]:grayscale" />;
+  return <div ref={el} aria-hidden className="isolate h-44 overflow-hidden rounded-2xl bg-muted lg:h-64 [&_.leaflet-tile-pane]:opacity-70 [&_.leaflet-tile-pane]:grayscale" />;
 }

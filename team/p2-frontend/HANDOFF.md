@@ -13,8 +13,14 @@
 - Layout rule for pages: one column on phones (`mx-auto w-full max-w-md px-4`), wider from 1024px (`lg:max-w-6xl lg:px-6`, grids with `lg:grid-cols-…`). Nothing may scroll sideways at any width.
 - Keep emerald for water / on time, red for no water / late, amber for demo.
 
+## V2 step 2 (done): landing at `/`, the old Home is now `/resident`
+- `/` (app/page.tsx): what Kot Delo? is, three ways in (Resident, Tanker driver, CWA operations), Mare aux Vacoas level as a ring with the supply tier (op 12), today's official window (op 1). Two columns from 1024px.
+- The reservoir level is a SAMPLE figure (35.9%, hard-coded in `components/home/shared.tsx`, `getReservoirStatus()`), and the card says so. Tier thresholds are labelled "demo".
+- `/resident` (app/resident/page.tsx): the old Home in the new look. Same behaviour as before. Two columns from 1024px.
+- Shared loading code for both screens: `components/home/shared.tsx`. Rules as pure functions with a self-check: `components/home/rules.ts`.
+- Screenshots for P1: `team/p2-frontend/design/` (landing and resident at 390px and 1280px, taken against the real CSVs through a local stand-in database).
+
 ## Not done yet (next steps)
-- Step 2: the current Home is still at `/`. It moves to `/resident`; `/` becomes the landing.
 - Step 3: resident V2 features (status with trust, likely water time, complaint, 30-minute report limit).
 - Step 4: database wait 8 s + "Try again".
 
@@ -23,5 +29,7 @@
 - P3: ops 12, 14, 15, 16 in `lib/queries.ts`. I use local stand-ins in the same shapes until they are on main.
 
 ## How to test
+- `/` at 390px and 1280px: hero card, three entries, reservoir ring, today's window. With no data loaded the amber "Demo mode" banner shows.
+- `/resident`: choose a street, everything from before still works (window, reports, "I need water", schedule vs reality, heat map).
 - `npm run dev`, open `/`, `/driver`, `/map` at 390px: tab bar floats at the bottom, the current tab is blue, nothing scrolls sideways.
 - Same at 1280px: top bar with "Kot Delo?" on the left and the four links on the right.
