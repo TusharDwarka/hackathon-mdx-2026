@@ -11,7 +11,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, BadgeCheck, Check, ChevronDown, ChevronRight, CircleHelp, Clock, Droplet, DropletOff, MapPin, MessageSquareWarning, Newspaper, Truck, UserRound, X } from "lucide-react";
+import { ArrowRight, BadgeCheck, Check, ChevronDown, ChevronRight, CircleHelp, Clock, Droplet, DropletOff, MapPin, MessageSquareWarning, Newspaper, Route, Truck, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomWaves, PageHeader } from "@/components/ui/brand";
 import { Gauge } from "@/components/ui/gauge";
@@ -38,7 +38,8 @@ import { supabase } from "@/lib/supabase";
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "schedule", label: "Water schedule" },
-  { id: "report", label: "Report & request" },
+  { id: "report", label: "Report water" },
+  { id: "request", label: "Request a tanker" },
   { id: "reservoirs", label: "Reservoirs" },
   { id: "news", label: "CWA notices" },
 ] as const;
@@ -46,6 +47,13 @@ const TIER: Record<ReservoirTier, { label: string; style: string }> = {
   normal: { label: "Normal", style: "bg-emerald-50 text-emerald-900" },
   watch: { label: "Watch", style: "bg-amber-100 text-amber-950" },
   critical: { label: "Critical", style: "bg-red-50 text-red-900" },
+};
+// Tier limits read from P3's reservoirTier, so the explanation can never drift from the rule.
+const from = (t: ReservoirTier) => [...Array(101).keys()].find((p) => reservoirTier(p) === t)!;
+const TIER_MEANS: Record<ReservoirTier, string> = {
+  normal: `${from("normal")}% full or more. Usual supply.`,
+  watch: `${from("watch")} to ${from("normal") - 1}% full. Cuts more likely, plan ahead.`,
+  critical: `Under ${from("watch")}% full. Longer cuts likely.`,
 };
 type Tab = (typeof TABS)[number]["id"];
 const tabHref = (t: Tab) => `/resident?tab=${t}`;
@@ -69,8 +77,6 @@ const COMPLAINTS: { category: ComplaintCategory; label: string }[] = [
   { category: "tanker_no_show", label: "Tanker did not come" },
   { category: "other", label: "Other problem" },
 ];
-const LITRES = [20, 50, 100, 200];
-const TANKER_L = 1000; // demo tanker capacity (sql/v3.sql "Demo tanker 1/2"), for the litres-vs-tank bar
 const hhmm = (t: number) => new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 
@@ -96,10 +102,10 @@ export function Resident({ info }: { info: PublicData }) {
   // My report in this session, per street. It wins over what localStorage says (null = the save failed, forget it).
   const [sent, setSent] = useState<{ streetId: number; report: MyReport | null } | null>(null);
   const [request, setRequest] = useState<RequestStatus | null>(null);
-  const [litres, setLitres] = useState<number | null>(null);
   // Complaint: closed -> open (pick a category) -> the category that was sent.
   const [complaint, setComplaint] = useState<"closed" | "open" | ComplaintCategory>("closed");
   const [sendError, setSendError] = useState<"report" | "request" | "complaint" | null>(null);
+  const [tierOpen, setTierOpen] = useState(false);
 
   // localStorage is only read once the base data is here (base is null on the server), so the first render matches.
   const areas = base ? Object.entries(base.areaNames).map(([id, name]) => ({ id: Number(id), name })).filter((a) => base.streets.some((s) => s.area_id === a.id)) : [];
@@ -195,7 +201,6 @@ export function Resident({ info }: { info: PublicData }) {
     saveStreet(id);
     setComplaint("closed");
     setRequest(null);
-    setLitres(null);
     setSendError(null);
   };
 
@@ -222,12 +227,12 @@ export function Resident({ info }: { info: PublicData }) {
 
   // Op 3, same pattern. Free. The button is replaced by "Tanker requested" at once, so a second tap cannot send twice.
   const requestWater = async () => {
-    if (!street || !litres || request === "waiting") return;
+    if (!street || request === "waiting") return;
     const before = request;
     setRequest("waiting");
     setSendError(null);
     try {
-      if (!demo) await postRequest(street.id, litres);
+      if (!demo) await postRequest(street.id); // V5: no litres, one request = one household
     } catch (e) {
       console.warn("request not saved:", e);
       setRequest(before);
@@ -311,13 +316,13 @@ export function Resident({ info }: { info: PublicData }) {
             </span>
           </label>
           <p className="mt-2 text-xs text-muted-foreground">
-            The timetable is the same for all of {area.name}. Your street is only needed to report, call the tanker, or see your neighbours&apos; reports. We never ask for your house.
+            Needed only to report or request a tanker. Never your house.
           </p>
         </>
       ) : (
         <>
           <h2 id="place-title" className="text-2xl leading-tight font-bold tracking-[-0.02em]">Where do you live?</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Choose your locality to see its official CWA water timetable. No account needed.</p>
+          <p className="mt-1 text-sm text-muted-foreground">See its official CWA timetable. No account needed.</p>
           <label className="mt-4 flex flex-col gap-1.5 text-sm font-medium">
             Search your locality
             <input
@@ -332,7 +337,7 @@ export function Resident({ info }: { info: PublicData }) {
           {base &&
             (matches.length ? (
               <div className="mt-3">
-                <p className="text-xs text-muted-foreground">Localities with a timetable in Kot Delo?</p>
+                <p className="text-xs text-muted-foreground">With a timetable</p>
                 <ul className="mt-2 flex flex-wrap gap-2">
                   {matches.map((a) => (
                     <li key={a.id}>
@@ -388,7 +393,7 @@ export function Resident({ info }: { info: PublicData }) {
               )}
             </>
           )}
-          <p className="mt-2 text-xs text-muted-foreground">The planned supply time, not a promise that water reaches every house.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Planned time, not a promise.</p>
           <Source url={win.source_url && win.source_url !== "#" ? win.source_url : null}>
             CWA communiqué{win.source_date && `, ${fmtDate(win.source_date, { day: "numeric", month: "short", year: "numeric" })}`}
           </Source>
@@ -432,7 +437,7 @@ export function Resident({ info }: { info: PublicData }) {
                   : `${live.agree} of ${live.reports} reports in the last 3 hours agree.`}
               </p>
             )}
-            {live && live.reports === 0 && <p className="mt-1 text-sm text-muted-foreground">Nobody on this street has reported in the last 3 hours.</p>}
+            {live && live.reports === 0 && <p className="mt-1 text-sm text-muted-foreground">No reports in the last 3 hours.</p>}
           </div>
         </div>
       )}
@@ -447,7 +452,7 @@ export function Resident({ info }: { info: PublicData }) {
         <span className={`${tag} bg-muted`}>Estimate</span>
       </div>
       {!street ? (
-        <p className="mt-2 text-sm text-muted-foreground">Choose your street to see when neighbours usually get water there.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Choose your street to see this.</p>
       ) : !data ? (
         <Skeleton className="mt-3 h-6 w-full" />
       ) : likely ? (
@@ -458,9 +463,9 @@ export function Resident({ info }: { info: PublicData }) {
           </span>
         </p>
       ) : (
-        <p className="mt-2 text-sm text-muted-foreground">Not enough reports yet to say when water usually comes on {street.name}.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Not enough reports yet.</p>
       )}
-      <p className="mt-2 text-xs text-muted-foreground">From neighbours&apos; past reports. Not an official time and not a promise.</p>
+      <p className="mt-2 text-xs text-muted-foreground">From neighbours&apos; reports, not official.</p>
     </section>
   );
 
@@ -472,10 +477,31 @@ export function Resident({ info }: { info: PublicData }) {
           <h2 id="mav-title" className={title}>Reservoir level</h2>
           <p className="text-sm text-muted-foreground">{mav.name}</p>
         </div>
-        {mav.pct !== null && <span className={`${tag} ${TIER[reservoirTier(mav.pct)].style}`}>{TIER[reservoirTier(mav.pct)].label}</span>}
+        {mav.pct !== null && (
+          <button
+            type="button"
+            aria-expanded={tierOpen}
+            aria-controls="tier-help"
+            onClick={() => setTierOpen((o) => !o)}
+            className={`${tag} min-h-9 shrink-0 gap-1 font-semibold transition-[scale] duration-150 ease-snap active:scale-[0.96] ${TIER[reservoirTier(mav.pct)].style}`}
+          >
+            {TIER[reservoirTier(mav.pct)].label}
+            <CircleHelp aria-hidden className="size-3.5" />
+          </button>
+        )}
       </div>
+      {mav.pct !== null && tierOpen && (
+        <p id="tier-help" className={`mt-3 rounded-2xl bg-muted px-4 py-3 text-sm ${enter}`}>
+          <span className="block">
+            <b className="font-semibold">{TIER[reservoirTier(mav.pct)].label}</b> = {TIER_MEANS[reservoirTier(mav.pct)]}
+          </span>
+          <span className="block text-muted-foreground">
+            {mav.date ? `Reading of ${fmtDate(mav.date, { day: "numeric", month: "short", year: "numeric" })}. ` : ""}Demo limits, not official CWA ones.
+          </span>
+        </p>
+      )}
       {mav.pct === null ? (
-        <p className="mt-3 text-sm text-muted-foreground">No verified reading yet. Kot Delo? does not guess a number.</p>
+        <p className="mt-3 text-sm text-muted-foreground">No reading in our sources yet.</p>
       ) : (
         <>
           <Gauge value={mav.pct} label={`${mav.name} is ${mav.pct.toFixed(1)}% full`} className="mt-3 max-w-56">
@@ -485,7 +511,6 @@ export function Resident({ info }: { info: PublicData }) {
             </span>
           </Gauge>
           <ReadingDate r={mav} now={now} />
-          <p className="mt-1 text-xs text-muted-foreground">Supply tiers use demo thresholds: normal from 60%, watch from 30%.</p>
         </>
       )}
       <div className="mt-auto">
@@ -530,20 +555,20 @@ export function Resident({ info }: { info: PublicData }) {
         <Truck aria-hidden className="size-6" />
       </span>
       <h2 id="tanker-cta-title" className="mt-4 text-lg leading-snug font-bold tracking-[-0.01em]">
-        {request === "waiting" ? `Tanker requested${litres ? ` · ${litres} L` : ""}` : request === "served" ? "Tanker delivered" : "Need the tanker?"}
+        {request === "waiting" ? "Tanker requested" : request === "served" ? "Tanker delivered" : "Need the tanker?"}
       </h2>
       <p className="mt-1 text-sm text-white/85">
         {request === "waiting"
-          ? "Pending: waiting for the driver. Follow the truck live on the map."
+          ? "Waiting for the driver. Follow the truck live."
           : request === "served"
             ? `The tanker has served ${street?.name ?? "your street"}.`
-            : `Free. Ask for water for ${street?.name ?? "your street"} and follow the truck live.`}
+            : `Free, for ${street?.name ?? "your street"}.`}
       </p>
       <Link
-        href={request === "waiting" && street ? `/map?street=${street.id}` : tabHref("report")}
+        href={request === "waiting" && street ? `/map?street=${street.id}` : tabHref("request")}
         className="relative z-10 mt-4 inline-flex min-h-12 items-center justify-center gap-2 self-start rounded-full bg-white px-5 text-sm font-semibold text-primary transition-[scale] duration-150 ease-snap active:scale-[0.97]"
       >
-        {request === "waiting" ? "See it on the map" : "Request water"}
+        {request === "waiting" ? "See it on the map" : "Request a tanker"}
         <ArrowRight aria-hidden className="size-4" />
       </Link>
       <BottomWaves className="h-16 text-white/30" />
@@ -558,12 +583,12 @@ export function Resident({ info }: { info: PublicData }) {
         <Skeleton className="mt-3 h-20 w-full" />
       ) : data.reliability.days === 0 ? (
         <p className="mt-2 text-sm text-muted-foreground">
-          Not enough history for {street.name} yet. Every &quot;Water is here&quot; tap during the official window counts as a day on time.
+          Not enough history yet. Each &quot;Water is here&quot; during the window counts.
         </p>
       ) : (
         <>
           <p className="mt-2 text-2xl font-bold tracking-[-0.01em]">On time {data.reliability.onTime} of {plural(data.reliability.days, "day", "days")}</p>
-          <p className="text-sm text-muted-foreground">Days when neighbours on {street.name} reported water inside the official window.</p>
+          <p className="text-sm text-muted-foreground">Days water was reported inside the official window.</p>
           <ol className="mt-4 flex gap-1.5">
             {data.reliability.perDay.map((d) => (
               <li key={d.date} className="flex flex-1 flex-col items-center gap-1.5 text-xs text-muted-foreground">
@@ -622,7 +647,7 @@ export function Resident({ info }: { info: PublicData }) {
                 </p>
               )}
               <DayTrack start={win.start_time} end={win.end_time} reports={todayReports} now={now} />
-              <p className="mt-2 text-xs text-muted-foreground">The planned supply time, not a promise that water reaches every house.</p>
+              <p className="mt-2 text-xs text-muted-foreground">Planned time, not a promise.</p>
               <Source url={win.source_url && win.source_url !== "#" ? win.source_url : null}>
                 CWA communiqué{win.source_date && `, ${fmtDate(win.source_date, { day: "numeric", month: "short", year: "numeric" })}`}
               </Source>
@@ -651,7 +676,7 @@ export function Resident({ info }: { info: PublicData }) {
           <div className="py-3.5 text-sm">
             <p className="font-medium">Reports today</p>
             <p className="text-muted-foreground">
-              {!street ? "Choose your street to see them." : !data ? "Loading…" : todayReports.length ? `${plural(saidOn, "report", "reports")} of water, ${plural(saidOff, "report", "reports")} of no water` : "None yet today."}
+              {!street ? "Choose your street to see them." : !data ? <Skeleton className="inline-block h-4 w-32 align-middle" /> : todayReports.length ? `${plural(saidOn, "report", "reports")} of water, ${plural(saidOff, "report", "reports")} of no water` : "None yet today."}
             </p>
             {street && data && todayReports.length > 0 && (
               <span aria-hidden className="mt-2 flex h-2 gap-0.5 overflow-hidden rounded-full">
@@ -665,7 +690,7 @@ export function Resident({ info }: { info: PublicData }) {
               Water usually comes <span className={`${tag} min-h-5 bg-card`}>Estimate</span>
             </p>
             <p className="text-muted-foreground">
-              {!street ? "Choose your street to see it." : !data ? "Loading…" : likely ? <><strong className="font-semibold text-foreground tabular-nums">{likely.from} – {likely.to}</strong> on {likely.days_hit} of {likely.days_total} days</> : "Not enough reports yet."}
+              {!street ? "Choose your street to see it." : !data ? <Skeleton className="inline-block h-4 w-32 align-middle" /> : likely ? <><strong className="font-semibold text-foreground tabular-nums">{likely.from} – {likely.to}</strong> on {likely.days_hit} of {likely.days_total} days</> : "Not enough reports yet."}
             </p>
           </div>
         </div>
@@ -676,7 +701,7 @@ export function Resident({ info }: { info: PublicData }) {
   const heatCard = base && (
     <section className={card} aria-labelledby="heat-title">
       <h2 id="heat-title" className={title}>Hours without water</h2>
-      <p className="mb-3 text-sm text-muted-foreground">Since the last &quot;Water is here&quot; report, street by street.</p>
+      <p className="mb-3 text-sm text-muted-foreground">Since the last &quot;Water is here&quot;, per street.</p>
       <HeatMap streets={areaStreets} hoursDry={base.hoursDry} myStreetId={streetId} />
       <ul aria-hidden className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
         {HEAT_LEGEND.map((b) => (
@@ -786,30 +811,32 @@ export function Resident({ info }: { info: PublicData }) {
     </div>
   );
 
+  // Report and Request share the same first steps: locality, guest, street.
+  const gate = (what: string) => (
+    <>
+      {base ? placeCard : loading}
+      {area && !guest && (
+        <section className={`flex flex-col gap-3 ${card}`} aria-labelledby="guest-title">
+          <h2 id="guest-title" className={title}>Continue as a guest</h2>
+          <p className="-mt-2 text-sm text-muted-foreground">No account, no name. Saved by street only.</p>
+          <Button size="tap" onClick={() => { saveGuest(); setGuestNow(true); }}>Continue as guest</Button>
+          <p className="text-xs text-muted-foreground">
+            Driver or CWA staff? <Link href="/login" className="text-primary underline underline-offset-2">Sign in here</Link>.
+          </p>
+        </section>
+      )}
+      {area && guest && !street && needStreet(what)}
+    </>
+  );
+
   const reportSection = (
     <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
       <div className={col}>
-        {base ? placeCard : loading}
-        {area && !guest && (
-          <section className={`flex flex-col gap-3 ${card}`} aria-labelledby="guest-title">
-            <span className="grid size-12 place-items-center rounded-full bg-primary/10 text-primary">
-              <UserRound aria-hidden className="size-6" />
-            </span>
-            <h2 id="guest-title" className={title}>Report as a guest</h2>
-            <p className="text-sm text-muted-foreground">
-              No account and no name. What you send is stored by street only, so neighbours and the tanker driver can see it. Reading the schedule, reservoirs and news never needs this.
-            </p>
-            <Button size="tap" onClick={() => { saveGuest(); setGuestNow(true); }}>Continue as guest</Button>
-            <p className="text-xs text-muted-foreground">
-              Tanker driver or CWA staff? Use the <Link href="/#staff" className="text-primary underline underline-offset-2">staff entry</Link>.
-            </p>
-          </section>
-        )}
-        {area && guest && !street && needStreet("report, call the tanker or make a complaint")}
+        {gate("report")}
         {area && guest && street && (
           <section aria-labelledby="report-title" className={`flex flex-col gap-3 ${card}`}>
-            <h2 id="report-title" className={title}>Is water running at your place now?</h2>
-            <p className="-mt-2 text-sm text-muted-foreground">One tap, for {street.name}. Your report alone does not confirm anything: it counts with your neighbours&apos;.</p>
+            <h2 id="report-title" className={title}>Water at your place now?</h2>
+            <p className="-mt-2 text-sm text-muted-foreground">For {street.name}. It counts with your neighbours&apos; reports.</p>
             <div className="grid grid-cols-2 gap-3">
               {REPORTS.map(({ type, label, Icon, style }) => (
                 <button
@@ -827,76 +854,19 @@ export function Resident({ info }: { info: PublicData }) {
             </div>
             {mine && (
               <p role="status" className={`text-sm text-muted-foreground ${enter}`}>
-                Thanks. You reported &quot;{REPORT_LABEL[mine.type]}&quot; at {hhmm(mine.at)}. You can report for this street again at {hhmm(mine.at + REPORT_LIMIT_MS)}.
+                Sent: &quot;{REPORT_LABEL[mine.type]}&quot; at {hhmm(mine.at)}. Next report from {hhmm(mine.at + REPORT_LIMIT_MS)}.
               </p>
             )}
-            {sendError === "report" && <p role="alert" className="text-sm text-red-800">Your report was not sent. Check your connection and tap again.</p>}
+            {sendError === "report" && <p role="alert" className="text-sm text-red-800">Not sent. Check your connection and tap again.</p>}
           </section>
         )}
       </div>
       {area && guest && street && (
         <div className={col}>
-          <section aria-labelledby="tanker-title" className={`flex flex-col gap-3 ${card}`}>
-            <div>
-              <h2 id="tanker-title" className={title}>Need the tanker?</h2>
-              <p className="text-sm text-muted-foreground">Free. Puts {street.name} on the driver&apos;s stop list.</p>
-            </div>
-            {request === "served" && (
-              <p role="status" className={`flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 font-semibold text-emerald-900 ${enter}`}>
-                <Check aria-hidden className="size-5 shrink-0" />
-                Served. The tanker has delivered to {street.name}.
-              </p>
-            )}
-            {request === "waiting" ? (
-              <Link href={street ? `/map?street=${street.id}` : "/map"} role="status" className={`flex min-h-16 items-center gap-3 rounded-2xl bg-primary/10 px-4 py-3 text-primary ${enter}`}>
-                <Truck aria-hidden className="size-6 shrink-0" />
-                <span className="flex-1">
-                  <span className="block font-semibold">Tanker requested{litres && ` · ${litres} L`}</span>
-                  <span className="block text-sm">Pending: waiting for the driver. See it live on the map</span>
-                </span>
-                <ChevronRight aria-hidden className="size-5 shrink-0" />
-              </Link>
-            ) : (
-              <>
-                <div role="group" aria-labelledby="litres-label">
-                  <p id="litres-label" className="text-sm font-medium">How much water do you need?</p>
-                  <div className="mt-2 grid grid-cols-4 gap-2">
-                    {LITRES.map((l) => (
-                      <button
-                        key={l}
-                        type="button"
-                        aria-pressed={litres === l}
-                        onClick={() => setLitres(l)}
-                        className="h-12 rounded-full bg-muted text-sm font-semibold tabular-nums transition-[scale,background-color,color] duration-150 ease-snap hover:bg-primary/10 active:scale-[0.97] aria-pressed:bg-primary aria-pressed:text-primary-foreground"
-                      >
-                        {l} L
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {litres && (
-                  <div className={enter}>
-                    <span aria-hidden className="block h-2.5 overflow-hidden rounded-full bg-muted">
-                      <span className="block h-full rounded-full bg-primary" style={{ width: `${(litres / TANKER_L) * 100}%` }} />
-                    </span>
-                    <p className="mt-1.5 text-xs text-muted-foreground">
-                      {litres} L is {Math.round((litres / TANKER_L) * 100)}% of one {TANKER_L.toLocaleString("en-GB")} L tanker (demo capacity). Ask only for what you need, so more streets get water.
-                    </p>
-                  </div>
-                )}
-                <Button size="tap" disabled={!litres} onClick={requestWater}>
-                  <Truck aria-hidden />
-                  {litres ? `Request ${litres} L` : "Choose an amount"}
-                </Button>
-              </>
-            )}
-            {sendError === "request" && <p role="alert" className="text-sm text-red-800">Your request was not sent. Check your connection and tap again.</p>}
-          </section>
-
           <section aria-labelledby="complaint-title" className={`flex flex-col gap-3 ${card}`}>
             <div>
               <h2 id="complaint-title" className={title}>Something wrong?</h2>
-              <p className="text-sm text-muted-foreground">Two taps send a complaint for {street.name} to CWA operations. No name, no message.</p>
+              <p className="text-sm text-muted-foreground">Two taps send a complaint for {street.name} to CWA.</p>
             </div>
             {complaint === "closed" ? (
               <Button size="tap" variant="secondary" onClick={() => setComplaint("open")}>
@@ -922,10 +892,59 @@ export function Resident({ info }: { info: PublicData }) {
                 Complaint sent: {COMPLAINTS.find((c) => c.category === complaint)?.label}.
               </p>
             )}
-            {sendError === "complaint" && <p role="alert" className="text-sm text-red-800">Your complaint was not sent. Check your connection and choose the category again.</p>}
+            {sendError === "complaint" && <p role="alert" className="text-sm text-red-800">Not sent. Check your connection and choose again.</p>}
           </section>
         </div>
       )}
+    </div>
+  );
+
+  // Request: one tap, no litres (a household never chooses tank capacity; ops plans the load).
+  const requestSection = (
+    <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
+      <div className={col}>
+        {gate("request a tanker")}
+        {area && guest && street && (
+          <section aria-labelledby="tanker-title" className={`flex flex-col gap-3 ${card}`}>
+            <div>
+              <h2 id="tanker-title" className={title}>Request a tanker</h2>
+              <p className="text-sm text-muted-foreground">Free. Adds {street.name} to the driver&apos;s stops.</p>
+            </div>
+            {request === "served" && (
+              <p role="status" className={`flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 font-semibold text-emerald-900 ${enter}`}>
+                <Check aria-hidden className="size-5 shrink-0" />
+                Served on {street.name}.
+              </p>
+            )}
+            {request === "waiting" ? (
+              <Link href={`/map?street=${street.id}`} role="status" className={`flex min-h-16 items-center gap-3 rounded-2xl bg-primary/10 px-4 py-3 text-primary ${enter}`}>
+                <Truck aria-hidden className="size-6 shrink-0" />
+                <span className="flex-1">
+                  <span className="block font-semibold">Tanker requested</span>
+                  <span className="block text-sm">Waiting for the driver. See it live</span>
+                </span>
+                <ChevronRight aria-hidden className="size-5 shrink-0" />
+              </Link>
+            ) : (
+              <Button size="tap" onClick={requestWater}>
+                <Truck aria-hidden />
+                I need a tanker
+              </Button>
+            )}
+            {sendError === "request" && <p role="alert" className="text-sm text-red-800">Not sent. Check your connection and tap again.</p>}
+          </section>
+        )}
+      </div>
+      <div className={col}>
+        <Link href={street ? `/map?street=${street.id}` : "/map"} className={`flex items-center gap-3 ${card}`}>
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary"><Route aria-hidden className="size-6" /></span>
+          <span className="flex-1">
+            <span className={`block ${title}`}>Follow the tanker live</span>
+            <span className="block text-sm text-muted-foreground">The truck on the map, stop by stop.</span>
+          </span>
+          <ChevronRight aria-hidden className="size-5 shrink-0 text-muted-foreground" />
+        </Link>
+      </div>
     </div>
   );
 
@@ -933,6 +952,7 @@ export function Resident({ info }: { info: PublicData }) {
     overview,
     schedule,
     report: reportSection,
+    request: requestSection,
     reservoirs: <Reservoirs reservoirs={info.reservoirs} combined={info.combined} now={now} />,
     news: <News items={info.news} locality={area?.name ?? null} />,
   };
@@ -943,9 +963,8 @@ export function Resident({ info }: { info: PublicData }) {
 
   return (
     <main className="mx-auto w-full max-w-md px-4 pt-5 pb-6 md:max-w-3xl lg:max-w-7xl lg:px-8 lg:pt-8">
-      <PageHeader eyebrow={`${hello}${today ? ` · ${today}` : ""}`} title={heading}>
+      <PageHeader eyebrow={`${hello}${today ? ` · ${today}` : ""}`} title={heading} logo={<OnboardingTour drop />}>
         <div className="flex flex-wrap gap-2">
-        <OnboardingTour auto />
         <Link
           href={tabHref("report")}
           className={`chip shrink-0 shadow-card ${guest ? "bg-card" : "bg-primary text-primary-foreground"}`}
@@ -965,7 +984,7 @@ export function Resident({ info }: { info: PublicData }) {
       <div key={tab} className={enter}>
         {sections[tab]}
       </div>
-      <p className="surface mt-4 px-5 py-4 text-center text-xs text-muted-foreground lg:mt-6">Reports and requests are stored by street, never by house or person.</p>
+      <p className="mt-4 text-center text-xs text-muted-foreground lg:mt-6">Stored by street, never by house or person.</p>
     </main>
   );
 }

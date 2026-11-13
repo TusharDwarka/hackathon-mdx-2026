@@ -38,3 +38,16 @@ Until P3's queries exist, use a small local fake-data object so screens render; 
 - [x] Swapped to P3: planDay (lib/queries), forecast + quality from /api/forecast and /api/quality, P3 pure rules as fallback
 - [x] Onboarding tour (first visit) + /guide tutorial for resident, driver, CWA staff
 - [x] Motion + transparency pass (scroll progress, frosted bar, reveal, aurora, tilt, marquee, count-up, ripples)
+
+## V5 (docs/SPLIT-V5.md, P2)
+- [x] 1. Tagline
+- [x] 2. Guide hint on the drop
+- [x] 3. Report and Request split, no litres
+- [x] 4. Tier chip explainer
+- [x] 5. Moving tank + wave loading
+- [x] 6. Cut text
+- [x] 7. Reminder label + Android/iPhone path (real-phone tap still to do by P1/P5)
+- [ ] 8. Accounts (after P3)
+- [ ] 9. Island-wide search (after P3)
+- [ ] 10. Safe-to-drink section (after P3)
+- [ ] 11. Glass check on a real low-end phone
