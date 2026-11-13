@@ -175,7 +175,7 @@ export const daysOld = (iso: string, now: Date) => Math.floor((now.getTime() - n
 export const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
 export function Skeleton({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded-lg bg-muted motion-reduce:animate-none ${className}`} />;
+  return <span className={`block animate-pulse rounded-lg bg-muted motion-reduce:animate-none ${className}`} />; // span: it sits inside <p> too
 }
 
 /** Shown in demo mode. Not a dead end: "Try again" asks the database once more. */

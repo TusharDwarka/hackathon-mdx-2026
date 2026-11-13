@@ -12,6 +12,8 @@ import { ArrowLeftRight, BookOpen, CalendarClock, Info, LayoutDashboard, LayoutG
 import { Logo, ROLE_LABEL, SideWaves, readRole, type Role } from "@/components/ui/brand";
 
 type Item = { href: string; label: string; short: string; Icon: LucideIcon; wideOnly?: boolean };
+// Spotlight tour anchor for a nav link (the tour picks whichever copy, sidebar or tab bar, is visible).
+const tourId = (href: string) => `nav-${href.split("?tab=")[1] ?? href.slice(1)}`;
 
 const NAV: Record<Role, Item[]> = {
   resident: [
@@ -81,6 +83,7 @@ function Nav({ role, path, tab }: { role: Role; path: string; tab: string | null
             <li key={href}>
               <Link
                 href={href}
+                data-tour={tourId(href)}
                 aria-current={isCurrent(href) ? "page" : undefined}
                 className="group flex h-12 items-center gap-3 rounded-2xl px-3 text-[0.9375rem] font-medium text-white/90 transition-[background-color,color] duration-150 ease-snap hover:bg-white/12 aria-[current=page]:bg-white aria-[current=page]:font-semibold aria-[current=page]:text-primary aria-[current=page]:shadow-card"
               >
@@ -113,6 +116,7 @@ function Nav({ role, path, tab }: { role: Role; path: string; tab: string | null
             <li key={href} className="min-w-0 flex-1">
               <Link
                 href={href}
+                data-tour={tourId(href)}
                 aria-current={isCurrent(href) ? "page" : undefined}
                 className="flex h-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem] leading-none font-medium text-muted-foreground transition-[background-color,color] duration-150 ease-snap aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground"
               >

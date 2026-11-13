@@ -17,6 +17,7 @@ import { DayTrack } from "@/components/home/DayTrack";
 import { minOfDay, windowStatus } from "@/components/home/time";
 import { Skeleton, fmtDate, loadArea, useBase, useNow, type AreaData } from "@/components/home/shared";
 import { Source } from "@/components/home/PublicInfo";
+import { OnboardingTour } from "@/components/home/Guide";
 import type { PublicData } from "@/components/home/public-data";
 
 const TRUST = [
@@ -78,7 +79,7 @@ export function Landing({ info }: { info: PublicData }) {
             <a href="#notices" className="hover:text-foreground">CWA notices</a>
             <Link href="/guide" className="hover:text-foreground">Guide</Link>
           </nav>
-          <Link href="/login" className={cn(buttonVariants(), "h-12 px-5 text-sm font-semibold")}>Open the app</Link>
+          <Link href="/login" data-tour="open" className={cn(buttonVariants(), "h-12 px-5 text-sm font-semibold")}>Open the app</Link>
         </div>
       </header>
 
@@ -124,7 +125,7 @@ export function Landing({ info }: { info: PublicData }) {
               <Link href="/login" className={cta}>
                 Open the app <ArrowRight aria-hidden />
               </Link>
-              <Link href="/resident" className={cn(buttonVariants({ size: "tap", variant: "outline" }), "h-14 border-transparent bg-white/80 px-7 shadow-card")}>
+              <Link href="/resident" data-tour="browse" className={cn(buttonVariants({ size: "tap", variant: "outline" }), "h-14 border-transparent bg-white/80 px-7 shadow-card")}>
                 Just browse
               </Link>
             </div>
@@ -142,7 +143,7 @@ export function Landing({ info }: { info: PublicData }) {
           <div className="relative mx-auto w-full max-w-[22rem] pt-4 pb-8">
             <div aria-hidden className="wave-panel absolute inset-x-2 top-10 bottom-0 rotate-[4deg] rounded-[3rem] opacity-90" />
             <div aria-hidden className="absolute -top-2 -right-4 size-28 rounded-full bg-white/50 blur-2xl" />
-            <Phone>
+            <Phone tour="preview">
               <p className="text-xs text-muted-foreground">{hello}</p>
               <p className="text-lg leading-tight font-bold tracking-[-0.02em]">{areaName || "Your locality"}</p>
               <div className="surface mt-3 rounded-2xl p-3.5">
@@ -183,6 +184,8 @@ export function Landing({ info }: { info: PublicData }) {
               <Mascot className="relative w-full animate-[bob_4s_ease-in-out_infinite]" />
             </div>
           </div>
+          {/* Water flowing in under the hero, into the marquee band. */}
+          <BottomWaves className="-bottom-1 -z-10 h-20 text-sky-500/30 lg:h-28" />
         </section>
 
         {/* Marquee band */}
@@ -236,11 +239,13 @@ export function Landing({ info }: { info: PublicData }) {
           </ol>
         </section>
 
-        <p className="mx-auto -mt-8 max-w-6xl px-4 pb-16 lg:-mt-16 lg:px-6 lg:pb-24">
+        <div className="mx-auto -mt-8 flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 pb-16 lg:-mt-16 lg:px-6 lg:pb-24">
+          {/* Opens by itself on the first visit; this button replays it. */}
+          <OnboardingTour tour="landing" auto label="Take the 30-second tour" className="chip min-h-11 shadow-card" />
           <Link href="/guide" className="inline-flex min-h-11 items-center gap-1.5 font-semibold text-primary">
             Read the full guide for residents, drivers and CWA staff <ArrowRight aria-hidden className="size-4" />
           </Link>
-        </p>
+        </div>
 
         {/* Features */}
         <section id="features" aria-label="Features" className="mx-auto flex max-w-6xl scroll-mt-24 flex-col gap-16 px-4 pb-16 lg:gap-24 lg:px-6 lg:pb-24">
@@ -389,9 +394,9 @@ function Feature({ kicker, title, text, flip, children }: { kicker: string; titl
   );
 }
 
-function Phone({ children }: { children: React.ReactNode }) {
+function Phone({ children, tour }: { children: React.ReactNode; tour?: string }) {
   return (
-    <div className="relative mx-auto w-[16.5rem] rounded-[2.75rem] bg-[oklch(0.22_0.04_260)] p-2.5 shadow-[0_30px_60px_-20px_oklch(0.3_0.1_260/0.55)]">
+    <div data-tour={tour} className="relative mx-auto w-[16.5rem] rounded-[2.75rem] bg-[oklch(0.22_0.04_260)] p-2.5 shadow-[0_30px_60px_-20px_oklch(0.3_0.1_260/0.55)]">
       <span aria-hidden className="absolute top-4 left-1/2 h-5 w-20 -translate-x-1/2 rounded-full bg-black" />
       <div className="min-h-[30rem] overflow-hidden rounded-[2.25rem] bg-background px-3.5 pt-11 pb-5">{children}</div>
     </div>

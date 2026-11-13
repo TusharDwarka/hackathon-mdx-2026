@@ -3,10 +3,10 @@
 // How to use Kot Delo?: the same steps feed the first-visit tour on /resident (a modal you can skip and
 // reopen with "How it works") and the full /guide page (resident, tanker driver, CWA staff).
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft, ArrowRight, Bell, CalendarClock, CircleHelp, ClipboardList, Droplets, KeyRound, LayoutDashboard, LineChart, MapPin, Megaphone,
-  MessageSquareWarning, Newspaper, Play, Route, Square, Truck, X, type LucideIcon,
+  MessageSquareWarning, Newspaper, Play, Route, Square, Truck, type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader, type Role } from "@/components/ui/brand";
@@ -55,74 +55,136 @@ export const GUIDE: Record<Role, { label: string; Icon: LucideIcon; intro: strin
   },
 };
 
-const SEEN_KEY = "kotdelo.onboarded";
-const seen = () => { try { return localStorage.getItem(SEEN_KEY) === "1"; } catch { return true; } };
-const markSeen = () => { try { localStorage.setItem(SEEN_KEY, "1"); } catch { /* private mode */ } };
-const enter = "transition-[opacity,translate] duration-300 ease-snap starting:translate-x-3 starting:opacity-0 motion-reduce:starting:translate-x-0";
+// ---------- Spotlight tour: dims the screen, lights up the real button and says what to tap ----------
+// Each step points at an element with data-tour="<target>" (no target = a centred welcome card).
+// The card sits on the half of the screen away from the lit element, so it works the same at 390px and 1440px.
+type TourStep = { target?: string; title: string; text: string; Icon: LucideIcon };
+const TOURS: Record<"resident" | "landing", TourStep[]> = {
+  landing: [
+    { title: "Welcome to Kot Delo?", text: "Know when the water comes, tell your street, and follow the tanker. This short tour shows you what to tap. Skip it any time.", Icon: Droplets },
+    { target: "preview", title: "Today's real window", text: "This is today's official CWA water time for the demo area, straight from the communiqué.", Icon: CalendarClock },
+    { target: "browse", title: "Tap here to try it", text: "Just browse opens the resident app at once. No account, no name.", Icon: MapPin },
+    { target: "open", title: "Drivers and CWA staff", text: "Open the app to choose your role. Tanker drivers and CWA staff sign in with an access code.", Icon: KeyRound },
+  ],
+  resident: [
+    { title: "Welcome to Kot Delo?", text: "A 30-second tour of what to tap. Skip it any time, and replay it with How it works.", Icon: Droplets },
+    { target: "place", title: "Start here: your locality", text: "Search and tap where you live. Today's official CWA window shows at once. No account, no name.", Icon: MapPin },
+    { target: "day", title: "Your water day", text: "This card turns the window into a plan: start the pump, fill the tank first, then the washing machine.", Icon: CalendarClock },
+    { target: "calendar", title: "Never miss the water", text: "Tap Add to calendar. Your phone rings 30 minutes before the water comes, even with Kot Delo? closed.", Icon: Bell },
+    { target: "nav-report", title: "Tell your street", text: "Tap Report, then Water is here or No water. No water for too long? Request the tanker there, it is free.", Icon: Megaphone },
+    { target: "nav-map", title: "Follow the tanker live", text: "Tap here to watch the truck move on the map and count the stops before yours.", Icon: Route },
+    { target: "nav-news", title: "Stay informed", text: "CWA notices and reservoir levels, always with a date and a source.", Icon: Newspaper },
+    { target: "help", title: "That's it", text: "Tap How it works whenever you want this tour again.", Icon: CircleHelp },
+  ],
+};
+const TOUR_KEY = { resident: "kotdelo.onboarded", landing: "kotdelo.tour.landing" };
+const seen = (k: string) => { try { return localStorage.getItem(k) === "1"; } catch { return true; } };
+const markSeen = (k: string) => { try { localStorage.setItem(k, "1"); } catch { /* private mode */ } };
+const findTarget = (t?: string) =>
+  t ? [...document.querySelectorAll<HTMLElement>(`[data-tour="${t}"]`)].find((el) => el.getClientRects().length > 0) : undefined;
+const enter = "transition-[opacity,translate] duration-300 ease-snap starting:translate-y-2 starting:opacity-0 motion-reduce:starting:translate-y-0";
+type Box = { x: number; y: number; w: number; h: number };
+const PAD = 8;
 
-/** "How it works" button + the step-by-step tour. `auto` opens it on the first visit to this phone. */
-export function OnboardingTour({ role = "resident", auto = false }: { role?: Role; auto?: boolean }) {
+/** "How it works" button + the spotlight tour. `auto` opens it on the first visit to this phone. */
+export function OnboardingTour({ tour = "resident", auto = false, label = "How it works", className = "chip shrink-0 bg-card shadow-card" }: {
+  tour?: keyof typeof TOURS; auto?: boolean; label?: string; className?: string;
+}) {
   const ref = useRef<HTMLDialogElement>(null);
+  const at = useRef(0); // current step, read by the frame loop
+  const scrolledTo = useRef(-1); // the step whose element was last scrolled into view
   const [i, setI] = useState(0);
-  const { steps } = GUIDE[role];
+  const [box, setBox] = useState<Box | null>(null);
+  const [view, setView] = useState({ w: 390, h: 800 });
+  const steps = TOURS[tour];
   const step = steps[i];
   const last = i === steps.length - 1;
 
+  const go = (n: number) => { at.current = n; setI(n); };
+  const open = useCallback(() => {
+    const dlg = ref.current;
+    if (!dlg || dlg.open) return;
+    at.current = 0;
+    scrolledTo.current = -1;
+    dlg.showModal();
+    // While open: follow the lit element every frame (smooth scroll, data loading in, rotation).
+    // Only re-renders when its box actually moves; stops by itself when the dialog closes.
+    const follow = () => {
+      if (!dlg.open) return;
+      const el = findTarget(steps[at.current].target);
+      if (el && scrolledTo.current !== at.current) {
+        scrolledTo.current = at.current;
+        const tall = el.offsetHeight > window.innerHeight * 0.7; // too tall to centre: show its top
+        el.scrollIntoView({ block: tall ? "start" : "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      }
+      const r = el?.getBoundingClientRect();
+      setBox((b) => (!r ? null : b && b.x === r.x && b.y === r.y && b.w === r.width && b.h === r.height ? b : { x: r.x, y: r.y, w: r.width, h: r.height }));
+      setView((v) => (v.w === window.innerWidth && v.h === window.innerHeight ? v : { w: window.innerWidth, h: window.innerHeight }));
+      requestAnimationFrame(follow);
+    };
+    follow();
+  }, [steps]);
+  const close = () => { markSeen(TOUR_KEY[tour]); ref.current?.close(); };
+
   useEffect(() => {
-    if (auto && !seen()) ref.current?.showModal();
-  }, [auto]);
-  const open = () => { setI(0); ref.current?.showModal(); };
-  const close = () => { markSeen(); ref.current?.close(); };
+    if (auto && !seen(TOUR_KEY[tour])) open();
+  }, [auto, tour, open]);
+
+  // Card goes on the half of the screen away from the lit element; centred when nothing is lit.
+  const place = !box ? "top-1/2 -translate-y-1/2" : box.y + box.h / 2 > view.h / 2 ? "top-[max(1rem,env(safe-area-inset-top))]" : "bottom-[max(1rem,env(safe-area-inset-bottom))]";
+  const spot = box
+    ? { transform: `translate(${box.x - PAD}px, ${box.y - PAD}px)`, width: box.w + PAD * 2, height: box.h + PAD * 2, borderRadius: box.h < 80 ? 999 : 28 }
+    : { transform: `translate(${view.w / 2}px, ${view.h / 2}px)`, width: 0, height: 0, borderRadius: 999 };
 
   return (
     <>
-      <button type="button" onClick={open} className="chip shrink-0 bg-card shadow-card">
-        <CircleHelp aria-hidden className="size-4 text-primary" /> How it works
+      <button type="button" data-tour="help" onClick={() => { go(0); open(); }} className={className}>
+        <CircleHelp aria-hidden className="size-4 text-primary" /> {label}
       </button>
       <dialog
         ref={ref}
         aria-labelledby="tour-title"
-        onClose={markSeen}
-        onClick={(e) => { if (e.target === e.currentTarget) close(); }}
-        className="m-auto w-[min(28rem,calc(100vw-2rem))] overflow-visible bg-transparent p-0 text-foreground backdrop:bg-[oklch(0.25_0.06_255/0.35)] backdrop:backdrop-blur-sm open:transition-[opacity,scale] open:duration-300 open:ease-snap open:starting:scale-95 open:starting:opacity-0"
+        aria-describedby="tour-text"
+        onClose={() => markSeen(TOUR_KEY[tour])}
+        className="fixed inset-0 m-0 size-full max-h-none max-w-none overflow-hidden bg-transparent p-0 text-foreground backdrop:bg-transparent open:transition-opacity open:duration-300 open:ease-snap open:starting:opacity-0"
       >
-        <div className="glass overflow-hidden rounded-[2rem] shadow-nav">
-          <div className="wave-panel relative flex h-40 items-center justify-center overflow-hidden">
-            <span aria-hidden className="absolute size-40 rounded-full border-2 border-white/30 animate-[ripple_2.8s_ease-out_infinite]" />
-            <span aria-hidden className="absolute size-40 rounded-full border-2 border-white/30 animate-[ripple_2.8s_ease-out_1.4s_infinite]" />
-            <span key={i} className={`relative grid size-20 place-items-center rounded-3xl bg-white/20 shadow-card ${enter}`}>
-              <step.Icon aria-hidden className="size-10" />
+        {/* The spotlight: a hole in a dim layer (its huge shadow), with a pulsing white ring. */}
+        <div
+          aria-hidden
+          style={spot}
+          className="pointer-events-none fixed top-0 left-0 shadow-[0_0_0_200vmax_oklch(0.2_0.06_255/0.62)] outline-2 outline-offset-2 outline-white transition-[transform,width,height,border-radius] duration-300 ease-snap animate-[spot-pulse_1.8s_ease-in-out_infinite]"
+        />
+        <div key={i} className={`glass fixed inset-x-3 mx-auto flex max-w-sm flex-col gap-3 rounded-[1.75rem] p-5 shadow-nav ${place} ${enter}`}>
+          <div className="flex items-center gap-3">
+            <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary bg-[image:linear-gradient(180deg,oklch(1_0_0/0.3),transparent_60%)] text-primary-foreground shadow-card">
+              <step.Icon aria-hidden className="size-5" />
             </span>
-            <button type="button" onClick={close} aria-label="Close the guide" className="absolute top-3 right-3 grid size-11 place-items-center rounded-full bg-white/15 hover:bg-white/25">
-              <X aria-hidden className="size-5" />
-            </button>
-            <p className="absolute top-4 left-5 text-xs font-semibold tracking-[0.08em] text-white/80 uppercase">Step {i + 1} of {steps.length}</p>
+            <p className="flex-1 text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">Step {i + 1} of {steps.length}</p>
+            {!last && (
+              <button type="button" onClick={close} className="min-h-11 rounded-full px-3 text-sm font-semibold text-muted-foreground hover:bg-white/50 hover:text-foreground">
+                Skip
+              </button>
+            )}
           </div>
-          <div key={`t${i}`} className={`px-6 pt-5 ${enter}`}>
-            <h2 id="tour-title" className="text-xl font-bold tracking-[-0.01em]">{step.title}</h2>
-            <p className="mt-2 min-h-[4.5rem] text-muted-foreground">{step.text}</p>
+          <div>
+            <h2 id="tour-title" className="text-lg leading-snug font-bold tracking-[-0.01em]">{step.title}</h2>
+            <p id="tour-text" className="mt-1 text-[0.9375rem] text-muted-foreground">{step.text}</p>
           </div>
-          <div className="flex items-center justify-center gap-1.5 pt-3" aria-hidden>
-            {steps.map((_, n) => (
-              <span key={n} className={`h-2 rounded-full transition-[width,background-color] duration-300 ease-snap ${n === i ? "w-6 bg-primary" : "w-2 bg-primary/25"}`} />
-            ))}
-          </div>
-          <div className="flex items-center gap-2 p-5">
-            {i > 0 ? (
-              <Button size="tap" variant="outline" onClick={() => setI(i - 1)} className="h-12 border-transparent bg-card px-4" aria-label="Back">
+          <div className="flex items-center gap-2">
+            <div className="flex flex-1 gap-1.5" aria-hidden>
+              {steps.map((_, n) => (
+                <span key={n} className={`h-1.5 rounded-full transition-[width,background-color] duration-300 ease-snap ${n === i ? "w-5 bg-primary" : "w-1.5 bg-primary/25"}`} />
+              ))}
+            </div>
+            {i > 0 && (
+              <Button size="tap" variant="outline" onClick={() => go(i - 1)} className="size-12 border-transparent bg-white/60 p-0" aria-label="Back">
                 <ArrowLeft aria-hidden />
               </Button>
-            ) : (
-              <Button size="tap" variant="ghost" onClick={close} className="h-12 px-4 text-sm">Skip</Button>
             )}
-            <Button size="tap" onClick={() => (last ? close() : setI(i + 1))} className="h-12 flex-1 text-sm">
-              {last ? "Start using Kot Delo?" : "Next"} {!last && <ArrowRight aria-hidden />}
+            <Button size="tap" autoFocus onClick={() => (last ? close() : go(i + 1))} className="h-12 px-5 text-sm">
+              {last ? "Got it" : i === 0 ? "Show me" : "Next"} {!last && <ArrowRight aria-hidden />}
             </Button>
           </div>
-          <p className="px-6 pb-5 text-center text-xs text-muted-foreground">
-            Full guide for residents, drivers and CWA staff:{" "}
-            <Link href="/guide" onClick={close} className="font-semibold text-primary underline underline-offset-2">How to use Kot Delo?</Link>
-          </p>
         </div>
       </dialog>
     </>
