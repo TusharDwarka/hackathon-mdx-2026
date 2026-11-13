@@ -5,7 +5,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { SurpriseCard } from "@/components/home/SurpriseCard";
 import { supabase } from "@/lib/supabase";
-import { MOCK_AREA, MOCK_HOURS_DRY, MOCK_RELIABILITY, MOCK_STREETS, MOCK_WINDOW } from "@/lib/mock";
+import { MOCK_AREA, MOCK_HOURS_DRY, MOCK_STREETS, MOCK_WINDOW } from "@/lib/mock";
 
 // Heat colour: hours since last water_on report
 const heat = (h: number) => (h < 6 ? "bg-emerald-500" : h < 24 ? "bg-amber-400" : h < 48 ? "bg-orange-500" : "bg-red-600");
@@ -18,6 +18,20 @@ const REPORT_TYPES = ["water_on", "water_off"] as const; // reports.type in cont
 type ReportType = (typeof REPORT_TYPES)[number];
 const REPORT_LABEL: Record<ReportType, string> = { water_on: "Water is here", water_off: "No water" };
 type RequestStatus = "waiting" | "served"; // requests.status in contracts/api.md
+
+// Same shape as getReliability() in P3's lib/queries.ts (op 10): one entry per past day with a window.
+type Reliability = { onTime: number; days: number; perDay: { date: string; onTime: boolean }[] };
+
+// ponytail: FAKE op 10 until lib/queries.ts is on main, then `await getReliability(streetId)`.
+// Last 7 days, later streets worse; street 3 gives "4 of 7".
+function fakeReliability(streetId: number): Reliability {
+  const perDay = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (7 - i));
+    return { date: d.toLocaleDateString("en-CA"), onTime: (i * 3) % 7 >= streetId }; // en-CA = YYYY-MM-DD
+  });
+  return { onTime: perDay.filter((p) => p.onTime).length, days: perDay.length, perDay };
+}
 
 function Label({ text }: { text: string }) {
   return <span className="font-semibold">{text}</span>;
@@ -33,6 +47,7 @@ export default function Home() {
   const today = mounted ? new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Indian/Mauritius" }) : "";
   const [reported, setReported] = useState<ReportType | null>(null);
   const [request, setRequest] = useState<RequestStatus | null>(null);
+  const reliability = mounted ? fakeReliability(street.id) : null; // needs today's date: browser only
   const pickStreet = (id: number) => {
     setPicked(id);
     setReported(null);
@@ -138,12 +153,23 @@ export default function Home() {
 
       <section className="rounded-xl border p-4">
         <Label text="Schedule vs reality" />
-        <p className="mt-2 text-2xl font-bold">On time {MOCK_RELIABILITY.onTime} of {MOCK_RELIABILITY.days} days</p>
-        <div className="mt-2 flex gap-1">
-          {Array.from({ length: MOCK_RELIABILITY.days }, (_, i) => (
-            <span key={i} className={`h-3 flex-1 rounded ${i < MOCK_RELIABILITY.onTime ? "bg-emerald-500" : "bg-red-400"}`} />
-          ))}
-        </div>
+        {reliability && (
+          <>
+            <p className="mt-2 text-2xl font-bold">On time {reliability.onTime} of {reliability.days} days</p>
+            <p className="text-sm text-zinc-600">Days when neighbours on {street.name} reported water inside the official window.</p>
+            <ol className="mt-3 flex gap-1">
+              {reliability.perDay.map((d) => (
+                <li key={d.date} className="flex flex-1 flex-col items-center gap-1 text-xs text-zinc-600">
+                  <span aria-hidden className={`flex h-8 w-full items-center justify-center rounded font-bold text-white ${d.onTime ? "bg-emerald-600" : "bg-red-500"}`}>
+                    {d.onTime ? "✓" : "✕"}
+                  </span>
+                  {new Date(`${d.date}T00:00`).toLocaleDateString("en-GB", { weekday: "short" })}
+                  <span className="sr-only">{d.onTime ? "on time" : "late or no water"}</span>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
       </section>
 
       <section className="rounded-xl border p-4">
