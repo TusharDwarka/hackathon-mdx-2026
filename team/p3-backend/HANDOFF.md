@@ -9,8 +9,13 @@
   - `getReliability(streetId, days = 7)` -> `{ onTime, days, perDay[] }` (op 10)
   - `getHoursDry(areaId?)` -> `Record<street_id, hours | null>` (op 11; null = never reported water_on)
   - All functions throw on Supabase error: wrap in try/catch and fall back to `lib/mock.ts`.
-- `scripts/seed-demo.ts`: 7 days of demo `reports` with `is_demo = true`, deterministic, mix of on time / late / no water.
-  Deletes old `is_demo` rows first, keeps real reports. `npm run seed-demo`.
+- `scripts/seed-demo.ts`: deterministic demo data, `npm run seed-demo` (V2 step 5 included):
+  - `reports` (is_demo = true): 7 past days + today, mix of on time / late / no water, later streets worse;
+    plus the last 2 h: some streets confirmed "no water", some unconfirmed, some confirmed "water on",
+    and ONE lone water_on on the middle street while both neighbours say water_off -> `suspect` under op 15.
+  - `complaints`: 6 rows (5 open, 1 resolved) across categories. The complaints table is RESET on every seed
+    (no is_demo flag in the contract): run seed-demo before the demo, not during it.
+  - Deletes old `is_demo` reports first, keeps real reports. Warns (does not crash) if sql/v2.sql was not run yet.
 - `sql/v2.sql` (V2 step 2): tables `complaints` and `reservoir_levels`, RLS (anon reads all, inserts complaints,
   updates complaints.status), Realtime on `complaints`. No payment or fee columns. Re-runnable.
 - `scripts/load-data.ts` (V2 step 3): also upserts `data/reservoir.csv` into `reservoir_levels` when the file exists
@@ -34,5 +39,9 @@
 
 ## How to test
 - `npx tsx lib/queries.ts` -> prints `queries ok` (pure rules, no database).
-- `npx tsx scripts/seed-demo.ts --dry-run` -> prints the demo reports it would insert (no database).
-- With keys: `npm run load-data` (expect "Loaded 1 areas, 21 streets, 26 schedule rows."), then `npm run seed-demo`.
+- `npx tsx scripts/seed-demo.ts --dry-run` -> prints the demo reports + complaints it would insert, one street marked SUSPECT (no database).
+- `npm run build` and `npm run lint` pass.
+- With keys (P1): run `sql/v2.sql` in Supabase, then `npm run load-data` (expect "Loaded 1 areas, 21 streets, 26 schedule rows."
+  and, once P5 adds data/reservoir.csv, "Loaded N reservoir_levels rows."), then `npm run seed-demo`.
+- Then in the browser console of any page: `getStreetStatuses()` shows one street with `suspect: true`;
+  `getPriorityList()` is sorted by score; `getOpenComplaints()` returns 5; `getReservoirStatus()` is null until reservoir.csv is loaded.
