@@ -59,5 +59,13 @@ That file is the V3 contract: schema (`sql/v3.sql`), ops 18 to 23, error codes, 
 - Dispatch: the shape in the proposal wins (`POST /api/dispatch {tanker_id, dispatch_key, split}` with an ops session, one load per call). P4 calls `startStaffSession("ops", code)` + `confirmDispatch()` from `lib/queries.ts` instead of its own body.
 - Litres: P2 calls `postRequest(streetId, litres)` only after V3 is live (no anon fallback with litres).
 
+## V4 water day (Fri night, P1). Adopted as written in `team/p3-backend/HANDOFF.md` "Round 3"
+Schema: `sql/v4.sql` (table `quality_notices`, read-only for anon). Import types from `@/lib/queries`. Every route answers without a DB using real-data fallbacks with `demo: true`; the UI labels that.
+- op 24 `getForecast(areaId?)` → `GET /api/forecast?area_id=` → `Forecast | null` (`next`, `basis` official > every_second_day > history, `confidence`, `tier`, `note`, `source_url`, `demo`).
+- op 25 `getReservoirTrend(reservoir)` → `GET /api/reservoirs/trend?reservoir=` → `Trend`; `?reservoir=all` → `{ trends: Trend[]; demo }`. Includes `reaches_30_on` / `reaches_20_on`. Show next to the press figure, never hide the gap.
+- op 26 `getWaterQuality(areaId?)` → `GET /api/quality?area_id=` → `Quality` (`none` | `cloudy_possible` | `official_notice`). Fixed messages, never says safe/unsafe.
+- op 27 `planDay(window, tasks?)` → steps `{ time, label, kind }[]`. Pure, no API.
+- P2 swaps its local `components/home/water-day.ts` for these imports.
+
 ## Mock / seed data
 No separate mock files: real timetable and streets come from `/data/schedule.csv` and `/data/streets.csv`; 7 days of demo reports are seeded with `is_demo = true`.
