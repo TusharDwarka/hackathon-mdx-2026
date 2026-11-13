@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kot Delo? pitch</title>
+<style>
+:root{--ink:#0b1b33;--mute:#4b5d78;--blue:#0a66d6;--deep:#073b8c;--sky:#e6f2ff;--card:#ffffffd9;--ok:#059669;--bad:#e11d48;--amber:#f59e0b}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--sky)}
+.deck{height:100dvh;position:relative}
+.slide{position:absolute;inset:0;overflow-y:auto;display:flex;flex-direction:column;justify-content:center;gap:clamp(14px,3vh,28px);padding:clamp(24px,6vw,96px);opacity:0;visibility:hidden;transform:translateX(24px);transition:opacity .35s,transform .35s,visibility .35s;background:linear-gradient(180deg,#d6ebff,#f2f8ff)}
+.slide.on{opacity:1;visibility:visible;transform:none}
+.slide.hero{background:linear-gradient(160deg,var(--blue),var(--deep));color:#fff}
+.slide.hero .mute{color:#d6e6ff}
+h1{font-size:clamp(40px,8vw,104px);line-height:1;letter-spacing:-.03em}
+h2{font-size:clamp(28px,4.6vw,56px);line-height:1.1;letter-spacing:-.02em;max-width:22ch}
+.lead{font-size:clamp(18px,2.4vw,30px);max-width:34ch;line-height:1.3}
+.mute{color:var(--mute);font-size:clamp(14px,1.5vw,20px)}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:clamp(10px,1.6vw,20px)}
+.card{background:var(--card);border-radius:24px;padding:clamp(16px,2vw,28px);box-shadow:0 8px 28px -12px #0a3a8c55;display:flex;flex-direction:column;gap:8px}
+.big{font-size:clamp(34px,5vw,68px);font-weight:800;letter-spacing:-.03em;color:var(--blue);line-height:1}
+.card b{font-size:clamp(16px,1.7vw,22px)}
+.card span{font-size:clamp(13px,1.3vw,18px);color:var(--mute);line-height:1.35}
+.card span.tag,.tag{color:#fff;font-size:clamp(12px,1.2vw,16px)}.card span.tag.demo{color:#3a2600}.tag{display:inline-block;align-self:flex-start;padding:4px 12px;border-radius:99px;font-size:clamp(12px,1.2vw,16px);font-weight:700;background:var(--blue);color:#fff}
+.tag.demo{background:var(--amber);color:#3a2600}
+.steps{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px}
+.step{flex:1 1 150px;background:var(--card);border-radius:20px;padding:16px;font-weight:700;font-size:clamp(14px,1.5vw,20px);position:relative}
+.step i{display:block;font-style:normal;color:var(--blue);font-size:clamp(22px,2.4vw,32px);margin-bottom:6px}
+.foot{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;padding:14px clamp(24px,6vw,96px);font-size:13px;color:var(--mute);z-index:5}
+.hero~.foot{color:#d6e6ff}
+.dots{display:flex;gap:6px}.dots b{width:8px;height:8px;border-radius:9px;background:#0a66d640;transition:.3s}.dots b.on{width:26px;background:var(--blue)}
+.nav{position:fixed;inset:0;display:flex;z-index:4}.nav button{flex:1;background:none;border:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nav .prev{flex:.35}
+@media (prefers-reduced-motion:reduce){.slide{transition:none}}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<section class="slide hero on">
+  <p class="mute">MDX Hackathon 2026 · Life Powered by Tech · Live Better</p>
+  <h1>Kot Delo?</h1>
+  <p class="lead">Know when water comes, tell your street, follow the tanker.</p>
+  <p class="mute">Mauritius · CWA water rationing · phone first</p>
+</section>
+
+<section class="slide">
+  <h2>Water comes every second day. Nobody knows when the tanker does.</h2>
+  <div class="row">
+    <div class="card"><div class="big">3–8 am</div><b>Every second day</b><span>Vacoas, Phoenix, St Pierre, Curepipe and more, since 10 Oct 2026 (CWA communiqué).</span></div>
+    <div class="card"><div class="big">33%</div><b>Mare aux Vacoas</b><span>5 Nov 2026. About 20% forecast by end of November (Water Resources Commission).</span></div>
+    <div class="card"><div class="big">0</div><b>Public tanker timetables</b><span>The CWA sends tankers on request (call 170). Households wait and guess.</span></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>One app, three phones, one live loop.</h2>
+  <div class="steps">
+    <div class="step"><i>1</i>Resident picks a street and sees the official window</div>
+    <div class="step"><i>2</i>Neighbours tap “Water is here” or “No water”</div>
+    <div class="step"><i>3</i>“I need a tanker” adds the street to a round</div>
+    <div class="step"><i>4</i>Driver starts the round. Phone GPS, no hardware</div>
+    <div class="step"><i>5</i>Map: “3 stops away, about 35 min”. Served flips live</div>
+  </div>
+  <p class="mute">Wow moment: the truck moves on the resident’s map while the driver taps Served.</p>
+</section>
+
+<section class="slide">
+  <h2>Real data runs every screen.</h2>
+  <div class="row">
+    <div class="card"><span class="tag">Real</span><b>CWA timetable</b><span>10 Oct 2026 communiqué, one row per supply date.</span></div>
+    <div class="card"><span class="tag">Real</span><b>Streets</b><span>OpenStreetMap, La Caverne, Vacoas. 979 streets across Vacoas–Phoenix–Curepipe.</span></div>
+    <div class="card"><span class="tag">Real</span><b>Reservoirs</b><span>7 main reservoirs, dated readings, 14 Aug to 5 Nov 2026.</span></div>
+    <div class="card"><span class="tag">Real</span><b>Supply rules</b><span>347 localities, each labelled by where the rule comes from. Unknown stays unknown.</span></div>
+    <div class="card"><span class="tag demo">Demo</span><b>Neighbour reports, tankers</b><span>Seeded and flagged <code>is_demo</code>. Never passed off as real.</span></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>AI reads the notices. Rules do the rest.</h2>
+  <div class="row">
+    <div class="card"><span class="tag">AI</span><b>CWA notice parser</b><span>Claude turns a CWA notice into localities, dates and times. Shown as “AI-read, check the source”. Cached, so the demo never waits on a live call.</span></div>
+    <div class="card"><b>Rule-based, explainable</b><span>ETA from distance and stops left. Neighbour reports confirm only when they agree. Priority = hours dry + 12 × waiting requests.</span></div>
+    <div class="card"><b>Never judges</b><span>Street level only, no names, no house pins. Water safety shows official advisories and never says “safe”.</span></div>
+  </div>
+</section>
+
+<section class="slide">
+  <h2>What after? Tell the CWA where each fix goes first.</h2>
+  <div class="row">
+    <div class="card"><b>Street with requests waiting</b><span>Send a tanker. CWA is already registering private tankers.</span></div>
+    <div class="card"><b>Dry for 48 h or more</b><span>Place a static tank. Tank grant scheme since 12 Oct 2026.</span></div>
+    <div class="card"><b>Red week after week</b><span>Evidence for the next borehole connection. Minister seeks 15–20 more.</span></div>
+  </div>
+  <p class="lead">Kot Delo? turns neighbour reports into a priority list the CWA can check.</p>
+  <p class="mute">Team of 5 · Next.js · Supabase Realtime · Leaflet + OpenStreetMap · Vercel</p>
+</section>
+
+</div>
+<div class="nav"><button class="prev" aria-label="Previous slide"></button><button class="next" aria-label="Next slide"></button></div>
+<div class="foot"><span>Kot Delo?</span><div class="dots" id="dots"></div><span id="count"></span></div>
+<script>
+const s=[...document.querySelectorAll(".slide")],dots=document.getElementById("dots"),count=document.getElementById("count");
+s.forEach(()=>dots.append(document.createElement("b")));
+let i=0;
+function show(n){i=Math.max(0,Math.min(s.length-1,n));s.forEach((e,k)=>e.classList.toggle("on",k===i));[...dots.children].forEach((d,k)=>d.classList.toggle("on",k===i));count.textContent=(i+1)+" / "+s.length;document.querySelector(".foot").style.color=s[i].classList.contains("hero")?"#d6e6ff":"";location.hash=i+1}
+document.querySelector(".prev").onclick=()=>show(i-1);document.querySelector(".next").onclick=()=>show(i+1);
+addEventListener("keydown",e=>{if(["ArrowRight","PageDown"," ","Enter"].includes(e.key)){e.preventDefault();show(i+1)}else if(["ArrowLeft","PageUp"].includes(e.key))show(i-1)});
+show((parseInt(location.hash.slice(1))||1)-1);
+</script>
+</body>
+</html>
