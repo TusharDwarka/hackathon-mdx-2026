@@ -5,11 +5,12 @@
 - `package.json`: `npm run seed-demo` (asked by P3).
 - TASKS.md: 1b, 3, 4, 5, 6 ticked; 2, 7, 8 say what is left.
 - Merge 2 (Fri 16:53): PR #5 feat/data-files is on main (772f4e6): real schedule + 21 streets for La Caverne, Vacoas. Decision #8 logged. Notes: root `HANDOFF.md`, "Merge 2".
+- Merge 3 (Fri 16:56): PR #7 feat/home is on main (a75ec2f): Home on real queries, heat map, day track, design pass. Build steps 2 to 8 are all merged. Notes: root `HANDOFF.md`, "Merge 3".
 
 ## Needs from others
 - P1 or P3 (whoever has `.env.local`): `npm run load-data`, then `npm run seed-demo`. Every Supabase table is empty until then.
-- P2: swap Home to `lib/queries.ts` (it is on main now). Handle "no window today": Sat 14 Nov is not a water day.
-- P4: `STREET_KEY = "kotdelo.street"` in `app/map/page.tsx`; demo mode when `streets` is empty.
+- P2 (small): Home stays in demo mode if the database takes more than 4 s; add a longer wait or a retry.
+- P4: demo mode on /map and /driver when `streets` is empty.
 - P3: a few seeded `water_on` rows for today (the heat map has no green otherwise).
 - Everyone: `git pull origin main`, then `git merge main` into your branch before the next task.
 
