@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AppNav } from "@/components/ui/app-nav";
+import { AppShell } from "@/components/ui/app-nav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -26,10 +26,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
-        {/* Shared nav: floating tab bar on phones, top bar from 1024px. Pages only fill the space that is left. */}
-        <AppNav />
-        <div className="flex flex-1 flex-col pb-(--nav-h) lg:pb-0">{children}</div>
+      <body className="min-h-full">
+        {/* App screens get the role sidebar (1024px+) or the phone tab bar; / and /login are full width. */}
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

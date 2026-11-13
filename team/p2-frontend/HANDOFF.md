@@ -1,4 +1,24 @@
-# HANDOFF (p2-frontend) — next split (docs/NEXT-TASK-SPLIT.md) steps 1 to 7 done
+# HANDOFF (p2-frontend) — redesign: landing, sign-in, role shell, resident dashboard
+
+## Redesign (latest)
+- **Changed.** `/` is an app intro page: hero ("A small app that tells you when water comes") with a phone preview using REAL data (today's window, Mare aux Vacoas level), how it works, four features (window, tanker, one-tap reports, reservoirs), the latest 3 CWA notices, call to action, footer. Map and report pictures are illustrations (labelled for screen readers).
+- **New `/login`.** Three roles: Resident = "Continue as guest" (`startGuestSession`), Tanker driver = tanker (`getTankers`) + access code, CWA staff = access code (`startStaffSession`). A wrong code/tanker stops with a message; if the server sign-in is not set up (no service key, v3.sql missing, offline) the demo still opens the screen. Demo codes shown: `demo-driver`, `demo-ops`. `?role=driver|ops` preselects. The chosen role is kept in `kotdelo.role` (screen choice only; P3's API guards writes).
+- **Shell.** `components/ui/app-nav.tsx` = `AppShell` in the layout. `/` and `/login` are full width. Other screens: blue wave sidebar from 1024px, glass tab bar on phones, one nav per role (resident: Overview, Schedule, Report, Tanker, Notices, Reservoirs; driver: My round, Live map, Switch role; ops: Operations, Live map, Driver view). `--nav-h` is now 0 from 1024px (sidebar is beside the page); new `--side-w`. The old resident tab bar is gone: the shell is the nav.
+- **Resident Overview** is a dashboard: "Your water today" (locality tabs, today's official window on the 24 h track, street, today's reports, usual time), reservoir dial (`components/ui/gauge.tsx`), water on my street now, blue tanker card, schedule vs reality, hours without water, CWA notices (4 latest, visible on Overview, no longer only under News).
+- **Litres sent.** `postRequest(street.id, litres)` (P3's V3 signature).
+- Shared bits in `components/ui/brand.tsx`: `Logo`, `LogoMark`, `PageHeader`, `SideWaves`, `BottomWaves`, role read/save. New utility `wave-panel` (deep-blue panel, white text).
+
+## For P4 (please read)
+- I restyled the markup of `app/driver/page.tsx` because the team asked for a distinct driver look: blue "Start a new round" card with stops/litres, round stats, location card, stop list with the next stop highlighted. NO logic changed (same state, effects, calls, texts). Please merge it with any driver work in progress, or tell me and I revert.
+- `/ops` and `/map` are untouched; they sit in the new shell. `/map` keeps working: `h-[calc(100dvh-var(--nav-h))]` is full height from 1024px now. `/ops` could use `PageHeader` for the same top look.
+
+## How to test (redesign)
+1. `npm run build`, `npm run lint`, `npx tsx components/home/public-data.ts|rules.ts|time.ts`.
+2. `/` at 390 and 1440: hero, phone preview with today's window and 33% dial, features, 3 notices, "Open the app" -> `/login`.
+3. `/login`: Resident -> Continue as guest -> `/resident`. Tanker driver -> Use it (demo code) -> Sign in -> `/driver` with the driver sidebar. Wrong code -> "That access code is not right".
+4. `/resident`: pick the locality chip -> dashboard. Sidebar/tab bar items open Schedule, Report, Notices, Reservoirs; Tanker opens `/map`. Report tab: 100 L -> Request -> "Tanker requested · 100 L".
+5. Checked with a scripted Chrome at 360, 390 and 1440 px: no sideways scroll on /, /login, /resident (overview + report), /driver.
+
 
 ## Next split steps 2 to 7
 - **Changed.** `/resident` is now five tabs: Overview, Schedule, Report, Reservoirs, News (real links `?tab=...`, so Back, reload and sharing work; the bar is sticky glass and scrolls sideways inside itself on small phones). Screen code moved to `components/home/Resident.tsx`; `app/resident/page.tsx` is a small server wrapper. Same for the landing: `components/home/Landing.tsx` + `app/page.tsx`.

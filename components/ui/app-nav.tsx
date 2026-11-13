@@ -1,43 +1,125 @@
 "use client";
 
-// Shared nav for every screen (rendered once in app/layout.tsx).
-// Phones: a floating rounded tab bar at the bottom. From 1024px: a top bar with the name on the left.
+// App shell for every screen except the landing (/) and sign-in (/login), rendered once in app/layout.tsx.
+// One nav per role: resident, tanker driver, CWA operations. The role comes from the screen
+// (/resident, /driver) or what this browser chose on /login (an ops user keeps the ops nav everywhere).
+// From 1024px: a blue wave sidebar on the left. Phones: a floating glass tab bar at the bottom.
 // It sits above Leaflet maps (their panes go up to z-index 1000).
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Droplets, House, LayoutDashboard, Map } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense, useSyncExternalStore } from "react";
+import { ArrowLeftRight, CalendarClock, Info, LayoutDashboard, LayoutGrid, Map, Megaphone, Newspaper, Route, Truck, Waves, type LucideIcon } from "lucide-react";
+import { Logo, ROLE_LABEL, SideWaves, readRole, type Role } from "@/components/ui/brand";
 
-const TABS = [
-  { href: "/", label: "Home", Icon: House },
-  { href: "/resident", label: "Resident", Icon: Droplets },
-  { href: "/map", label: "Map", Icon: Map },
-  { href: "/ops", label: "Operations", Icon: LayoutDashboard },
-];
+type Item = { href: string; label: string; short: string; Icon: LucideIcon; wideOnly?: boolean };
 
-export function AppNav() {
+const NAV: Record<Role, Item[]> = {
+  resident: [
+    { href: "/resident", label: "Overview", short: "Home", Icon: LayoutGrid },
+    { href: "/resident?tab=schedule", label: "Water schedule", short: "Schedule", Icon: CalendarClock },
+    { href: "/resident?tab=report", label: "Report & request", short: "Report", Icon: Megaphone },
+    { href: "/map", label: "Live tanker", short: "Tanker", Icon: Truck },
+    { href: "/resident?tab=news", label: "CWA notices", short: "Notices", Icon: Newspaper },
+    { href: "/resident?tab=reservoirs", label: "Reservoirs", short: "Reservoirs", Icon: Waves, wideOnly: true }, // phones: from the Overview card
+  ],
+  driver: [
+    { href: "/driver", label: "My round", short: "Round", Icon: Route },
+    { href: "/map", label: "Live map", short: "Map", Icon: Map },
+    { href: "/login", label: "Switch role", short: "Switch", Icon: ArrowLeftRight, wideOnly: true },
+  ],
+  ops: [
+    { href: "/ops", label: "Operations", short: "Ops", Icon: LayoutDashboard },
+    { href: "/map", label: "Live map", short: "Map", Icon: Map },
+    { href: "/driver", label: "Driver view", short: "Driver", Icon: Truck },
+  ],
+};
+// The driver's phone bar gets "Switch" too (it has room for 3).
+const PHONE_EXTRA: Partial<Record<Role, Item>> = { driver: { ...NAV.driver[2], wideOnly: false } };
+
+const noSubscribe = () => () => {};
+const BARE = ["/", "/login"]; // full-width pages with their own header
+
+export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const stored = useSyncExternalStore(noSubscribe, readRole, () => null);
+  if (BARE.includes(path)) return <>{children}</>;
+  const role: Role = stored === "ops" ? "ops" : path.startsWith("/driver") ? "driver" : path.startsWith("/resident") ? "resident" : (stored ?? "resident");
   return (
-    <nav
-      aria-label="Main"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-[1100] px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:pointer-events-auto lg:sticky lg:top-0 lg:bottom-auto lg:h-(--nav-h) lg:px-6 lg:pb-0 lg:shadow-card lg:glass"
-    >
-      <div className="lg:mx-auto lg:flex lg:h-full lg:max-w-6xl lg:items-center lg:justify-between">
-        <Link href="/" className="hidden text-xl font-bold tracking-[-0.02em] lg:block">Kot Delo?</Link>
-        <ul className="pointer-events-auto mx-auto flex h-16 max-w-sm items-center gap-1 rounded-full p-2 shadow-nav max-lg:glass lg:mx-0 lg:h-auto lg:max-w-none lg:p-0 lg:shadow-none">
-          {TABS.map(({ href, label, Icon }) => (
-            <li key={href} className="min-w-0 flex-1 lg:flex-none">
+    <>
+      <Suspense fallback={<Nav role={role} path={path} tab={null} />}>
+        <NavWithTab role={role} path={path} />
+      </Suspense>
+      <div className="flex min-h-dvh flex-col pb-(--nav-h) lg:pl-(--side-w)">{children}</div>
+    </>
+  );
+}
+
+function NavWithTab({ role, path }: { role: Role; path: string }) {
+  return <Nav role={role} path={path} tab={useSearchParams().get("tab")} />;
+}
+
+function Nav({ role, path, tab }: { role: Role; path: string; tab: string | null }) {
+  const isCurrent = (href: string) => {
+    const [p, q] = href.split("?tab=");
+    return path === p && (q ?? "overview") === (p === "/resident" ? (tab ?? "overview") : "overview");
+  };
+  const phoneItems = [...NAV[role].filter((i) => !i.wideOnly), ...(PHONE_EXTRA[role] ? [PHONE_EXTRA[role]] : [])];
+  return (
+    <>
+      {/* From 1024px: the blue sidebar. */}
+      <aside aria-label="Main" className="wave-panel fixed inset-y-0 left-0 z-[1100] hidden w-(--side-w) flex-col overflow-hidden lg:flex">
+        <SideWaves />
+        <Link href="/" className="relative px-6 pt-7">
+          <Logo />
+        </Link>
+        <p className="relative mt-9 px-7 text-xs font-semibold tracking-[0.08em] text-white/70 uppercase">{ROLE_LABEL[role]}</p>
+        <ul className="relative mt-3 flex flex-col gap-1 px-3">
+          {NAV[role].map(({ href, label, Icon }) => (
+            <li key={href}>
               <Link
                 href={href}
-                aria-current={(href === "/" ? path === "/" : path.startsWith(href)) ? "page" : undefined}
-                className="flex h-12 flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem] leading-none font-medium text-muted-foreground transition-[background-color,color] duration-150 ease-snap aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground lg:flex-row lg:gap-2 lg:px-4 lg:text-sm"
+                aria-current={isCurrent(href) ? "page" : undefined}
+                className="group flex h-12 items-center gap-3 rounded-2xl px-3 text-[0.9375rem] font-medium text-white/90 transition-[background-color,color] duration-150 ease-snap hover:bg-white/12 aria-[current=page]:bg-white aria-[current=page]:font-semibold aria-[current=page]:text-primary aria-[current=page]:shadow-card"
               >
-                <Icon aria-hidden className="size-5" />
+                <span className="grid size-8 place-items-center rounded-xl bg-white/15 group-aria-[current=page]:bg-primary group-aria-[current=page]:text-white">
+                  <Icon aria-hidden className="size-4" />
+                </span>
                 {label}
               </Link>
             </li>
           ))}
         </ul>
-      </div>
-    </nav>
+        <div className="relative mx-4 mt-auto mb-5 rounded-2xl bg-white/12 p-4 text-sm">
+          <p className="text-white/75">Viewing as</p>
+          <p className="font-semibold">{ROLE_LABEL[role]}</p>
+          <div className="mt-3 flex flex-col gap-1">
+            <Link href="/login" className="flex min-h-9 items-center gap-2 font-medium text-white underline-offset-2 hover:underline">
+              <ArrowLeftRight aria-hidden className="size-4" /> Switch role
+            </Link>
+            <Link href="/" className="flex min-h-9 items-center gap-2 font-medium text-white underline-offset-2 hover:underline">
+              <Info aria-hidden className="size-4" /> About Kot Delo?
+            </Link>
+          </div>
+        </div>
+      </aside>
+
+      {/* Phones: floating glass tab bar. */}
+      <nav aria-label="Main" className="pointer-events-none fixed inset-x-0 bottom-0 z-[1100] px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
+        <ul className="glass pointer-events-auto mx-auto flex h-16 max-w-md items-center gap-0.5 rounded-full p-1.5 shadow-nav">
+          {phoneItems.map(({ href, short, Icon }) => (
+            <li key={href} className="min-w-0 flex-1">
+              <Link
+                href={href}
+                aria-current={isCurrent(href) ? "page" : undefined}
+                className="flex h-[3.25rem] flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem] leading-none font-medium text-muted-foreground transition-[background-color,color] duration-150 ease-snap aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground"
+              >
+                <Icon aria-hidden className="size-5" />
+                <span className="max-w-full truncate px-0.5">{short}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </>
   );
 }

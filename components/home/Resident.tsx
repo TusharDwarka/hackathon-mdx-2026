@@ -1,15 +1,20 @@
 "use client";
 
-// Resident screen, in five sections (tabs): Overview, Schedule, Report, Reservoirs, News.
+// Resident screen, in five sections (?tab=): Overview, Schedule, Report, Reservoirs, News.
+// The sections are picked in the app shell (sidebar from 1024px, tab bar on phones), not on this page.
+// Overview is a dashboard: today's window + street (wide card), reservoir dial, street status,
+// tanker, schedule vs reality, hours without water and the latest CWA notices.
 // Locality first: the official CWA timetable is per area, so it shows without a street.
 // A street is only asked for to report, call the tanker, or see neighbours' reports.
 // Reading never needs anything; reporting goes through an explicit "Continue as guest" step.
 // Ops (contracts/api.md): 1 window, 2 report, 3 request, 10 reliability, 11 heat map, 14 complaint, 15 status, 16 likely time.
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { BadgeCheck, Check, ChevronDown, ChevronRight, CircleHelp, Clock, Droplet, DropletOff, MapPin, MessageSquareWarning, Truck, UserRound, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, BadgeCheck, Check, ChevronDown, ChevronRight, CircleHelp, Clock, Droplet, DropletOff, MapPin, MessageSquareWarning, Newspaper, Truck, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BottomWaves, PageHeader } from "@/components/ui/brand";
+import { Gauge } from "@/components/ui/gauge";
 import { DayTrack } from "@/components/home/DayTrack";
 import { HEAT_LEGEND, HeatMap, heatHex } from "@/components/home/HeatMap";
 import { SurpriseCard } from "@/components/home/SurpriseCard";
@@ -21,16 +26,21 @@ import {
   DemoBanner, REPORT_LIMIT_MS, Skeleton, fmtDate, fmtHours, isoDay, loadArea, loadStreetData, plural, readArea, readGuest, readMyReport, readStreet,
   saveArea, saveGuest, saveMyReport, saveStreet, useBase, useNow, type AreaData, type ComplaintCategory, type MyReport, type RequestStatus, type StreetData,
 } from "@/components/home/shared";
-import { postComplaint, postReport, postRequest, type ReportType } from "@/lib/queries";
+import { postComplaint, postReport, postRequest, reservoirTier, type ReportType, type ReservoirTier } from "@/lib/queries";
 import { supabase } from "@/lib/supabase";
 
 const TABS = [
   { id: "overview", label: "Overview" },
-  { id: "schedule", label: "Schedule" },
-  { id: "report", label: "Report" },
+  { id: "schedule", label: "Water schedule" },
+  { id: "report", label: "Report & request" },
   { id: "reservoirs", label: "Reservoirs" },
-  { id: "news", label: "News" },
+  { id: "news", label: "CWA notices" },
 ] as const;
+const TIER: Record<ReservoirTier, { label: string; style: string }> = {
+  normal: { label: "Normal", style: "bg-emerald-50 text-emerald-900" },
+  watch: { label: "Watch", style: "bg-amber-100 text-amber-950" },
+  critical: { label: "Critical", style: "bg-red-50 text-red-900" },
+};
 type Tab = (typeof TABS)[number]["id"];
 const tabHref = (t: Tab) => `/resident?tab=${t}`;
 
@@ -96,12 +106,6 @@ export function Resident({ info }: { info: PublicData }) {
   const firstStreetId = areaStreets[0]?.id ?? null;
   const place = areaData !== null && areaData.id === areaId ? areaData : null; // null = loading this locality
   const data = loaded !== null && loaded.id === streetId ? loaded : null; // null = loading this street
-
-  // On a small phone the tab bar scrolls sideways: keep the open section's tab in view.
-  const tabsRef = useRef<HTMLUListElement>(null);
-  useEffect(() => {
-    tabsRef.current?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [tab]);
 
   // Per locality: today's official window (op 1) and the coming week.
   useEffect(() => {
@@ -188,14 +192,13 @@ export function Resident({ info }: { info: PublicData }) {
   };
 
   // Op 3, same pattern. Free. The button is replaced by "Tanker requested" at once, so a second tap cannot send twice.
-  // ponytail: the litres stay on this screen until P3 adds requests.litres and postRequest(streetId, litres).
   const requestWater = async () => {
     if (!street || !litres || request === "waiting") return;
     const before = request;
     setRequest("waiting");
     setSendError(null);
     try {
-      if (!demo) await postRequest(street.id);
+      if (!demo) await postRequest(street.id, litres);
     } catch (e) {
       console.warn("request not saved:", e);
       setRequest(before);
@@ -239,7 +242,7 @@ export function Resident({ info }: { info: PublicData }) {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm text-muted-foreground">Your locality</p>
-              <h1 id="place-title" className="text-2xl leading-tight font-bold tracking-[-0.02em]">{area.name}</h1>
+              <h2 id="place-title" className="text-2xl leading-tight font-bold tracking-[-0.02em]">{area.name}</h2>
             </div>
             <button type="button" onClick={() => pickArea(null)} className="chip min-h-11 shrink-0 bg-muted hover:bg-primary/10">Change</button>
           </div>
@@ -265,7 +268,7 @@ export function Resident({ info }: { info: PublicData }) {
         </>
       ) : (
         <>
-          <h1 id="place-title" className="text-2xl leading-tight font-bold tracking-[-0.02em]">Where do you live?</h1>
+          <h2 id="place-title" className="text-2xl leading-tight font-bold tracking-[-0.02em]">Where do you live?</h2>
           <p className="mt-1 text-sm text-muted-foreground">Choose your locality to see its official CWA water timetable. No account needed.</p>
           <label className="mt-4 flex flex-col gap-1.5 text-sm font-medium">
             Search your locality
@@ -413,29 +416,206 @@ export function Resident({ info }: { info: PublicData }) {
     </section>
   );
 
-  const reservoirMini = (
-    <section className={card} aria-labelledby="mav-title">
-      <h2 id="mav-title" className={title}>{mav.name} reservoir</h2>
+  // Reservoir dial (op 12: real, dated, sourced reading; the tier thresholds are demo ones and say so).
+  const reservoirDial = (
+    <section className={`flex flex-col ${card}`} aria-labelledby="mav-title">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h2 id="mav-title" className={title}>Reservoir level</h2>
+          <p className="text-sm text-muted-foreground">{mav.name}</p>
+        </div>
+        {mav.pct !== null && <span className={`${tag} ${TIER[reservoirTier(mav.pct)].style}`}>{TIER[reservoirTier(mav.pct)].label}</span>}
+      </div>
       {mav.pct === null ? (
-        <p className="mt-2 text-sm text-muted-foreground">No verified reading yet.</p>
+        <p className="mt-3 text-sm text-muted-foreground">No verified reading yet. Kot Delo? does not guess a number.</p>
       ) : (
         <>
-          <p className="mt-2 text-3xl leading-none font-bold tracking-[-0.02em] tabular-nums">
-            {mav.pct.toFixed(1)}%<span className="ml-1.5 text-sm font-medium text-muted-foreground">full</span>
-          </p>
+          <Gauge value={mav.pct} label={`${mav.name} is ${mav.pct.toFixed(1)}% full`} className="mt-3 max-w-56">
+            <span className="text-center">
+              <span className="block text-4xl leading-none font-bold tracking-[-0.03em] tabular-nums">{Math.round(mav.pct)}%</span>
+              <span className="text-xs text-white/85">full</span>
+            </span>
+          </Gauge>
           <ReadingDate r={mav} now={now} />
+          <p className="mt-1 text-xs text-muted-foreground">Supply tiers use demo thresholds: normal from 60%, watch from 30%.</p>
         </>
       )}
-      <MoreLink href={tabHref("reservoirs")}>All seven reservoirs</MoreLink>
+      <div className="mt-auto">
+        <MoreLink href={tabHref("reservoirs")}>All reservoirs</MoreLink>
+      </div>
     </section>
   );
 
-  const latestNews = info.news[0] && (
-    <section className={card} aria-labelledby="latest-title">
-      <h2 id="latest-title" className={title}>Latest news</h2>
-      <p className="mt-1 text-xs text-muted-foreground">{fmtDate(info.news[0].date, { day: "numeric", month: "short", year: "numeric" })} · {info.news[0].kind}</p>
-      <p className="mt-1 text-sm font-medium first-letter:uppercase">{info.news[0].title}</p>
-      <MoreLink href={tabHref("news")}>All news and notices</MoreLink>
+  // Latest CWA notices, on the Overview itself (newest first, each dated, full list under CWA notices).
+  const noticesCard = (
+    <section className={`flex flex-col ${card}`} aria-labelledby="notices-title">
+      <div className="flex items-center justify-between gap-2">
+        <h2 id="notices-title" className={`flex items-center gap-2 ${title}`}>
+          <Newspaper aria-hidden className="size-5 text-primary" />
+          CWA notices
+        </h2>
+        <span className={`${tag} bg-muted tabular-nums`}>{info.news.length}</span>
+      </div>
+      {info.news.length ? (
+        <ol className="mt-2 divide-y">
+          {info.news.slice(0, 4).map((n) => (
+            <li key={`${n.date}-${n.title}`} className="py-3">
+              <p className="text-xs text-muted-foreground first-letter:uppercase">{n.kind} · {fmtDate(n.date, { day: "numeric", month: "short", year: "numeric" })}</p>
+              <p className="mt-0.5 line-clamp-2 text-sm font-medium first-letter:uppercase">{n.title}</p>
+              {n.areas && <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">Areas: {n.areas}</p>}
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="mt-2 text-sm text-muted-foreground">No notices in our sources yet.</p>
+      )}
+      <div className="mt-auto">
+        <MoreLink href={tabHref("news")}>All notices and advisories</MoreLink>
+      </div>
+    </section>
+  );
+
+  // Blue call-to-action card: request state for my street, or the way to request.
+  const tankerCard = (
+    <section aria-labelledby="tanker-cta-title" className="wave-panel relative flex flex-col overflow-hidden rounded-3xl p-5 pb-20 shadow-card">
+      <span className="grid size-12 place-items-center rounded-2xl bg-white/20">
+        <Truck aria-hidden className="size-6" />
+      </span>
+      <h2 id="tanker-cta-title" className="mt-4 text-lg leading-snug font-bold tracking-[-0.01em]">
+        {request === "waiting" ? `Tanker requested${litres ? ` · ${litres} L` : ""}` : request === "served" ? "Tanker delivered" : "Need the tanker?"}
+      </h2>
+      <p className="mt-1 text-sm text-white/85">
+        {request === "waiting"
+          ? "Pending: waiting for the driver. Follow the truck live on the map."
+          : request === "served"
+            ? `The tanker has served ${street?.name ?? "your street"}.`
+            : `Free. Ask for water for ${street?.name ?? "your street"} and follow the truck live.`}
+      </p>
+      <Link
+        href={request === "waiting" && street ? `/map?street=${street.id}` : tabHref("report")}
+        className="relative z-10 mt-4 inline-flex min-h-12 items-center justify-center gap-2 self-start rounded-full bg-white px-5 text-sm font-semibold text-primary transition-[scale] duration-150 ease-snap active:scale-[0.97]"
+      >
+        {request === "waiting" ? "See it on the map" : "Request water"}
+        <ArrowRight aria-hidden className="size-4" />
+      </Link>
+      <BottomWaves className="h-16 text-white/30" />
+    </section>
+  );
+
+  // Op 10: days when neighbours reported water inside the official window.
+  const reliabilityCard = street ? (
+    <section className={card} aria-labelledby="reliability-title">
+      <h2 id="reliability-title" className={title}>Schedule vs reality</h2>
+      {!data ? (
+        <Skeleton className="mt-3 h-20 w-full" />
+      ) : data.reliability.days === 0 ? (
+        <p className="mt-2 text-sm text-muted-foreground">
+          Not enough history for {street.name} yet. Every &quot;Water is here&quot; tap during the official window counts as a day on time.
+        </p>
+      ) : (
+        <>
+          <p className="mt-2 text-2xl font-bold tracking-[-0.01em]">On time {data.reliability.onTime} of {plural(data.reliability.days, "day", "days")}</p>
+          <p className="text-sm text-muted-foreground">Days when neighbours on {street.name} reported water inside the official window.</p>
+          <ol className="mt-4 flex gap-1.5">
+            {data.reliability.perDay.map((d) => (
+              <li key={d.date} className="flex flex-1 flex-col items-center gap-1.5 text-xs text-muted-foreground">
+                <span aria-hidden className={`flex h-10 w-full items-center justify-center rounded-xl text-white ${d.onTime ? "bg-emerald-700" : "bg-red-600"}`}>
+                  {d.onTime ? <Check className="size-4" strokeWidth={3} /> : <X className="size-4" strokeWidth={3} />}
+                </span>
+                {fmtDate(d.date, { weekday: "short" })}
+                <span className="sr-only">{d.onTime ? "on time" : "late or no water"}</span>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+    </section>
+  ) : (
+    needStreet("compare the schedule with what neighbours saw")
+  );
+
+  // Overview's wide card: locality tabs, today's official window on a 24 h track, and the street panel.
+  const todayHero = area && (
+    <section className={`${card} lg:p-6`} aria-labelledby="hero-title">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="hero-title" className={title}>Your water today</h2>
+        <span className={`${tag} bg-primary/10 text-primary`}>Official CWA</span>
+      </div>
+      <div className="-mx-1 mt-3 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none]" role="group" aria-label="Locality">
+        {areas.map((a) => (
+          <button
+            key={a.id}
+            type="button"
+            aria-pressed={a.id === area.id}
+            onClick={() => pickArea(a.id)}
+            className="chip min-h-10 shrink-0 bg-muted text-muted-foreground transition-[background-color,color] duration-150 ease-snap hover:text-foreground aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+          >
+            {a.name}
+          </button>
+        ))}
+        <button type="button" onClick={() => pickArea(null)} className="chip min-h-10 shrink-0 bg-transparent text-primary">
+          <MapPin aria-hidden className="size-4" /> Change locality
+        </button>
+      </div>
+      <div className="mt-5 grid gap-5 md:grid-cols-[1.25fr_1fr] md:gap-6">
+        <div className="min-w-0">
+          <p className="text-sm text-muted-foreground">{today}</p>
+          {!place ? (
+            <Skeleton className="mt-3 h-12 w-56" />
+          ) : place.failed ? (
+            <p role="alert" className="mt-3 text-sm text-red-800">The timetable did not load. Check your connection, then choose your locality again.</p>
+          ) : win ? (
+            <>
+              <p className="mt-2 text-[2.75rem] leading-none font-bold tracking-[-0.03em] tabular-nums lg:text-[3.25rem]">{win.start_time} – {win.end_time}</p>
+              {status && (
+                <p className={`mt-2 flex items-center gap-2 text-sm font-medium ${status.tone === "now" ? "text-primary" : "text-muted-foreground"}`}>
+                  <span aria-hidden className={`size-2 rounded-full ${status.tone === "now" ? "bg-primary" : "bg-muted-foreground/60"}`} />
+                  {status.label}
+                </p>
+              )}
+              <DayTrack start={win.start_time} end={win.end_time} reports={todayReports} now={now} />
+              <p className="mt-2 text-xs text-muted-foreground">The planned supply time, not a promise that water reaches every house.</p>
+              <Source url={win.source_url && win.source_url !== "#" ? win.source_url : null}>
+                CWA communiqué{win.source_date && `, ${fmtDate(win.source_date, { day: "numeric", month: "short", year: "numeric" })}`}
+              </Source>
+            </>
+          ) : (
+            <p className="mt-3 text-sm">No water supply is scheduled for {area.name} today. If your tank is empty, you can call the tanker.</p>
+          )}
+        </div>
+        <div className="flex flex-col divide-y rounded-2xl bg-muted/70 px-4">
+          <label className="flex flex-col gap-1.5 py-3.5 text-sm font-medium">
+            <span>Your street <span className="font-normal text-muted-foreground">(optional)</span></span>
+            <span className="relative">
+              <select
+                className="h-11 w-full appearance-none rounded-full bg-card pr-11 pl-4 text-base font-normal text-foreground"
+                value={street?.id ?? ""}
+                onChange={(e) => pickStreet(e.target.value ? Number(e.target.value) : null)}
+              >
+                <option value="">Not set</option>
+                {areaStreets.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+              <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-4 size-5 -translate-y-1/2 text-muted-foreground" />
+            </span>
+          </label>
+          <div className="py-3.5 text-sm">
+            <p className="font-medium">Reports today</p>
+            <p className="text-muted-foreground">
+              {!street ? "Choose your street to see them." : !data ? "Loading…" : todayReports.length ? `${plural(saidOn, "report", "reports")} of water, ${plural(saidOff, "report", "reports")} of no water` : "None yet today."}
+            </p>
+          </div>
+          <div className="py-3.5 text-sm">
+            <p className="flex items-center gap-2 font-medium">
+              Water usually comes <span className={`${tag} min-h-5 bg-card`}>Estimate</span>
+            </p>
+            <p className="text-muted-foreground">
+              {!street ? "Choose your street to see it." : !data ? "Loading…" : likely ? <><strong className="font-semibold text-foreground tabular-nums">{likely.from} – {likely.to}</strong> on {likely.days_hit} of {likely.days_total} days</> : "Not enough reports yet."}
+            </p>
+          </div>
+        </div>
+      </div>
     </section>
   );
 
@@ -476,19 +656,18 @@ export function Resident({ info }: { info: PublicData }) {
 
   // ---------- the five sections ----------
 
+  // Dashboard: 1 column on phones, 2 on tablets, 3 from 1280px.
   const overview = (
-    <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
-      <div className={col}>
-        {base ? placeCard : loading}
-        {area && todayCard(false)}
-        {area && (statusCard || needStreet("see what your neighbours report"))}
-      </div>
-      <div className={col}>
-        <SurpriseCard />
-        {reservoirMini}
-        {latestNews}
-        {area && heatCard}
-      </div>
+    <div className="grid gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+      <SurpriseCard />
+      <div className="md:col-span-2">{!base ? loading : area ? todayHero : placeCard}</div>
+      {reservoirDial}
+      {area && street && statusCard}
+      {area && !street && <div className="xl:col-span-1">{needStreet("see what your neighbours report and track the tanker")}</div>}
+      {tankerCard}
+      {area && street && reliabilityCard}
+      {area && <div className="md:col-span-2">{heatCard}</div>}
+      {noticesCard}
     </div>
   );
 
@@ -522,36 +701,7 @@ export function Resident({ info }: { info: PublicData }) {
               </ul>
             )}
           </section>
-          {street ? (
-            <section className={card} aria-labelledby="reliability-title">
-              <h2 id="reliability-title" className={title}>Schedule vs reality</h2>
-              {!data ? (
-                <Skeleton className="mt-3 h-20 w-full" />
-              ) : data.reliability.days === 0 ? (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Not enough history for {street.name} yet. Every &quot;Water is here&quot; tap during the official window counts as a day on time.
-                </p>
-              ) : (
-                <>
-                  <p className="mt-2 text-2xl font-bold tracking-[-0.01em]">On time {data.reliability.onTime} of {plural(data.reliability.days, "day", "days")}</p>
-                  <p className="text-sm text-muted-foreground">Days when neighbours on {street.name} reported water inside the official window.</p>
-                  <ol className="mt-4 flex gap-1.5">
-                    {data.reliability.perDay.map((d) => (
-                      <li key={d.date} className="flex flex-1 flex-col items-center gap-1.5 text-xs text-muted-foreground">
-                        <span aria-hidden className={`flex h-10 w-full items-center justify-center rounded-xl text-white ${d.onTime ? "bg-emerald-700" : "bg-red-600"}`}>
-                          {d.onTime ? <Check className="size-4" strokeWidth={3} /> : <X className="size-4" strokeWidth={3} />}
-                        </span>
-                        {fmtDate(d.date, { weekday: "short" })}
-                        <span className="sr-only">{d.onTime ? "on time" : "late or no water"}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </>
-              )}
-            </section>
-          ) : (
-            needStreet("compare the schedule with what neighbours saw")
-          )}
+          {reliabilityCard}
         </div>
       )}
     </div>
@@ -698,31 +848,28 @@ export function Resident({ info }: { info: PublicData }) {
     news: <News items={info.news} locality={area?.name ?? null} />,
   };
 
+  const hour = now?.getHours() ?? 9;
+  const hello = now ? (hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening") : "Hello";
+  const heading = tab === "overview" ? (area ? `Water in ${area.name}` : "Your water") : TABS.find((t) => t.id === tab)!.label;
+
   return (
-    <main className="mx-auto w-full max-w-md px-4 pb-6 lg:max-w-6xl lg:px-6">
-      {/* Section tabs: real links (?tab=), so Back, reload and sharing a section all work. Scrolls sideways inside itself on small phones. */}
-      <nav aria-label="Resident sections" className="sticky top-0 z-[1050] -mx-4 px-4 pt-3 pb-3 lg:top-(--nav-h) lg:mx-0 lg:px-0 lg:pt-5">
-        <ul ref={tabsRef} className="glass flex gap-1 overflow-x-auto rounded-full p-1.5 shadow-card [scrollbar-width:none] lg:mx-auto lg:max-w-xl">
-          {TABS.map((t) => (
-            <li key={t.id} className="flex-1 shrink-0">
-              <Link
-                href={tabHref(t.id)}
-                replace
-                scroll={false}
-                aria-current={tab === t.id ? "page" : undefined}
-                className="flex h-10 items-center justify-center rounded-full px-3 text-sm font-medium whitespace-nowrap text-muted-foreground transition-[background-color,color] duration-150 ease-snap hover:text-foreground aria-[current=page]:bg-primary aria-[current=page]:text-primary-foreground"
-              >
-                {t.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      {demo && (
-        <div className="mb-4 lg:mb-6">
-          <DemoBanner onRetry={retry} />
-        </div>
-      )}
+    <main className="mx-auto w-full max-w-md px-4 pt-5 pb-6 md:max-w-3xl lg:max-w-7xl lg:px-8 lg:pt-8">
+      <PageHeader eyebrow={`${hello}${today ? ` · ${today}` : ""}`} title={heading}>
+        <Link
+          href={tabHref("report")}
+          className={`chip shrink-0 shadow-card ${guest ? "bg-card" : "bg-primary text-primary-foreground"}`}
+        >
+          <UserRound aria-hidden className="size-4" />
+          {guest ? (street ? street.name : "Guest") : "Continue as guest"}
+        </Link>
+      </PageHeader>
+      <div className="mt-5 lg:mt-7">
+        {demo && (
+          <div className="mb-4 lg:mb-6">
+            <DemoBanner onRetry={retry} />
+          </div>
+        )}
+      </div>
       <div key={tab} className={enter}>
         {sections[tab]}
       </div>

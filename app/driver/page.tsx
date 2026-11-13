@@ -10,7 +10,9 @@
 // Supabase unreachable or no streets -> demo mode (Tanker A/B from a demo dispatch on /ops, nothing saved).
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { Check, Map as MapIcon, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BottomWaves, PageHeader } from "@/components/ui/brand";
 import { supabase } from "@/lib/supabase";
 import { ASSUMED_REQUEST_L, fmtL } from "@/components/ops/dispatch";
 import { createRound, demandByStreet, errText, finishRound, loadActiveRounds, loadStreets, loadWaitingRequests, serveStop, type LiveRound, type Stop, type Street, type WaitingRequest } from "@/components/map/data";
@@ -176,20 +178,45 @@ export default function DriverPage() {
   const leftL = remaining.reduce((sum, s) => sum + (stopLitres(s) ?? 0), 0);
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4 lg:py-8">
-      {offline && <p className="rounded-xl bg-amber-100 px-3 py-2 text-center text-xs text-amber-900">Demo mode: nothing is saved. ({offline})</p>}
-      {error && <p role="alert" className="rounded-xl bg-red-100 px-3 py-2 text-sm text-red-900">{error}</p>}
+    <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 pt-5 pb-6 md:max-w-3xl lg:max-w-5xl lg:gap-6 lg:px-8 lg:pt-8">
+      <PageHeader eyebrow="Tanker driver" title={mine ? mine.label : "Today's round"}>
+        {mine && (
+          <span className={`chip shrink-0 shadow-card ${gps === "blocked" ? "bg-red-50 text-red-900" : "bg-emerald-50 text-emerald-900"}`}>
+            <span aria-hidden className={`size-2 rounded-full ${gps === "blocked" ? "bg-red-600" : "animate-pulse bg-emerald-600 motion-reduce:animate-none"}`} />
+            {gps === "blocked" ? "No GPS" : gps === "waiting" ? "Waiting for GPS" : "Live"}
+          </span>
+        )}
+      </PageHeader>
+      {offline && <p className="rounded-2xl bg-amber-100 px-4 py-2.5 text-sm text-amber-950">Demo mode: nothing is saved. ({offline})</p>}
+      {error && <p role="alert" className="rounded-2xl bg-red-100 px-4 py-2.5 text-sm text-red-900">{error}</p>}
 
       {!mine ? (
-        <>
-          <h1 className="text-2xl font-bold">Tanker driver</h1>
-          <section className="surface flex flex-col gap-3 p-4">
-            <h2 className="font-semibold">Start a new round</h2>
-            <Button className="h-16 text-lg" disabled={loading || (!offline && startStreets.length === 0)} onClick={startRound}>
+        <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr] lg:items-start lg:gap-6">
+          <section className="wave-panel relative flex flex-col gap-4 overflow-hidden rounded-3xl p-6 pb-24 shadow-card">
+            <span className="grid size-12 place-items-center rounded-2xl bg-white/20">
+              <Truck aria-hidden className="size-6" />
+            </span>
+            <div>
+              <h2 className="text-xl font-bold tracking-[-0.01em]">Start a new round</h2>
+              <p className="mt-1 text-sm text-white/85">Your position is shared only while the round is on, so residents can see the truck coming.</p>
+            </div>
+            {!loading && !offline && (
+              <dl className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-white/15 p-3">
+                  <dt className="text-xs text-white/80">Stops</dt>
+                  <dd className="text-2xl font-bold tabular-nums">{startStreets.length}</dd>
+                </div>
+                <div className="rounded-2xl bg-white/15 p-3">
+                  <dt className="text-xs text-white/80">Water to deliver</dt>
+                  <dd className="text-2xl font-bold tabular-nums">{startLitres ? fmtL(startLitres) : "–"}</dd>
+                </div>
+              </dl>
+            )}
+            <Button size="tap" className="relative z-10 bg-white text-primary hover:bg-white/90" disabled={loading || (!offline && startStreets.length === 0)} onClick={startRound}>
               {loading ? "Loading…" : offline ? "Start a demo round · every street" : `Start round · ${startStreets.length} stop${startStreets.length === 1 ? "" : "s"}${startLitres ? ` · ${fmtL(startLitres)}` : ""}`}
             </Button>
             {!loading && !offline && (
-              <p className="text-sm text-muted-foreground">
+              <p className="relative z-10 text-sm text-white/85">
                 {startStreets.length === 0
                   ? "Every street is already on another driver's round."
                   : waitingFree.length
@@ -197,75 +224,107 @@ export default function DriverPage() {
                     : "No waiting requests yet. Starting now visits every street no other driver has (demo)."}
               </p>
             )}
+            <BottomWaves className="h-16 text-white/30" />
           </section>
 
-          {others.length > 0 && (
-            <section className="surface flex flex-col gap-3 p-4">
-              <h2 className="font-semibold">{offline ? "Dispatched from Operations (demo)" : "Already on the road"}</h2>
-              <p className="text-sm text-muted-foreground">{offline ? "Pick the tanker you are driving." : "Only pick a round if you are its driver, for example after your phone restarted."}</p>
-              <ul className="flex flex-col gap-2">
-                {others.map((r) => {
-                  const left = r.stops.filter((s) => !s.served_at);
-                  const litres = left.reduce((sum, s) => sum + (s.litres ?? 0), 0);
-                  return (
-                    <li key={r.round.id}>
-                      <Button variant="outline" className="h-14 w-full justify-between text-base" onClick={() => choose(r)}>
-                        <span className="font-semibold">{r.label}</span>
-                        <span className="text-sm text-muted-foreground">{left.length} stop{left.length === 1 ? "" : "s"} left{litres ? ` · ${fmtL(litres)}` : ""}</span>
-                      </Button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          )}
-        </>
+          <section className="surface flex flex-col gap-3 p-5">
+            <h2 className="text-lg font-bold tracking-[-0.01em]">{offline ? "Dispatched from Operations (demo)" : "Already on the road"}</h2>
+            <p className="text-sm text-muted-foreground">
+              {others.length === 0 ? "No other round is active right now." : offline ? "Pick the tanker you are driving." : "Only pick a round if you are its driver, for example after your phone restarted."}
+            </p>
+            <ul className="flex flex-col gap-2">
+              {others.map((r) => {
+                const left = r.stops.filter((s) => !s.served_at);
+                const litres = left.reduce((sum, s) => sum + (s.litres ?? 0), 0);
+                return (
+                  <li key={r.round.id}>
+                    <button
+                      type="button"
+                      onClick={() => choose(r)}
+                      className="flex min-h-16 w-full items-center gap-3 rounded-2xl bg-muted px-4 text-left transition-[scale,background-color] duration-150 ease-snap hover:bg-primary/10 active:scale-[0.98]"
+                    >
+                      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-card text-primary"><Truck aria-hidden className="size-5" /></span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold">{r.label}</span>
+                        <span className="block text-sm text-muted-foreground">{left.length} stop{left.length === 1 ? "" : "s"} left{litres ? ` · ${fmtL(litres)}` : ""}</span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        </div>
       ) : (
-        <>
-          <header className="flex flex-wrap items-baseline justify-between gap-2">
-            <h1 className="text-2xl font-bold">{mine.label}</h1>
-            <p className="text-sm text-muted-foreground">{remaining.length} stop{remaining.length === 1 ? "" : "s"} left{leftL ? ` · ${fmtL(leftL)} to deliver` : ""}</p>
-          </header>
-          <p className={`text-sm ${gps === "blocked" ? "text-red-700" : "text-emerald-700"}`} aria-live="polite">
-            {gps === "live" && `● Sharing location (only during the round)${ago !== null ? ` · sent ${ago}s ago` : ""}`}
-            {gps === "sim" && `● Simulated drive (demo)${ago !== null ? ` · sent ${ago}s ago` : ""}`}
-            {gps === "waiting" && "● Waiting for GPS… allow location when asked"}
-            {gps === "blocked" && "● GPS blocked or unavailable. Needs https on a phone."}
-          </p>
-          {gps !== "sim" && (
-            <button type="button" className="self-start text-xs text-muted-foreground underline" onClick={() => { fixRef.current = null; setGps("sim"); }}>
-              No GPS here? Simulate the drive
-            </button>
-          )}
-          <ol className="flex flex-col gap-2">
-            {mine.stops.map((s, i) => {
-              const done = !!s.served_at;
-              const litres = stopLitres(s);
-              const newTrip = s.trip && s.trip > 1 && mine.stops[i - 1]?.trip !== s.trip;
-              return (
-                <li key={s.id} className="flex flex-col gap-2">
-                  {newTrip && <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Trip {s.trip}: refill the tank first</p>}
-                  <div className="surface flex items-center gap-3 p-3">
-                    <span className="w-6 text-center font-bold">{s.stop_order}</span>
-                    <span className={`flex-1 ${done ? "text-muted-foreground line-through" : ""}`}>
-                      {s.street.name}
-                      {litres ? <span className="block text-sm text-muted-foreground">{fmtL(litres)}{!offline && roundDemand[s.street_id] ? ` · ${roundDemand[s.street_id].requests} request${roundDemand[s.street_id].requests === 1 ? "" : "s"}` : ""}</span> : null}
-                    </span>
-                    <Button className="h-12" variant={done ? "outline" : "default"} disabled={done} onClick={() => serve(s)}>
-                      {done ? "Served ✓" : "Served"}
-                    </Button>
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-          {assumed && <p className="text-xs text-muted-foreground">{ASSUMED_REQUEST_L} L assumed per request until requests store litres.</p>}
-          <Button className="h-14" variant="destructive" onClick={endRound}>
+        <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr] lg:items-start lg:gap-6">
+          <div className="flex flex-col gap-4 lg:sticky lg:top-8">
+            <dl className="grid grid-cols-2 gap-3">
+              <div className="surface p-4">
+                <dt className="text-xs text-muted-foreground">Stops left</dt>
+                <dd className="text-3xl font-bold tracking-[-0.02em] tabular-nums">{remaining.length}<span className="text-base font-medium text-muted-foreground">/{mine.stops.length}</span></dd>
+              </div>
+              <div className="surface p-4">
+                <dt className="text-xs text-muted-foreground">To deliver</dt>
+                <dd className="text-3xl font-bold tracking-[-0.02em] tabular-nums">{leftL ? fmtL(leftL) : "–"}</dd>
+              </div>
+            </dl>
+            <section className="surface flex flex-col gap-2 p-5">
+              <h2 className="font-semibold">Location sharing</h2>
+              <p className={`text-sm ${gps === "blocked" ? "text-red-800" : "text-emerald-800"}`} aria-live="polite">
+                {gps === "live" && `Sharing location (only during the round)${ago !== null ? ` · sent ${ago}s ago` : ""}`}
+                {gps === "sim" && `Simulated drive (demo)${ago !== null ? ` · sent ${ago}s ago` : ""}`}
+                {gps === "waiting" && "Waiting for GPS… allow location when asked"}
+                {gps === "blocked" && "GPS blocked or unavailable. Needs https on a phone."}
+              </p>
+              {gps !== "sim" && (
+                <button type="button" className="min-h-11 self-start text-sm font-medium text-primary underline underline-offset-2" onClick={() => { fixRef.current = null; setGps("sim"); }}>
+                  No GPS here? Simulate the drive
+                </button>
+              )}
+              <Link href="/map" className="flex min-h-11 items-center gap-1.5 text-sm font-semibold text-primary">
+                <MapIcon aria-hidden className="size-4" /> Open the live map
+              </Link>
+            </section>
+            <Button size="tap" variant="destructive" className="hidden lg:inline-flex" onClick={endRound}>
+              End round{remaining.length > 0 ? ` (${remaining.length} left)` : ""}
+            </Button>
+          </div>
+
+          <section className="surface p-3 sm:p-4">
+            <h2 className="px-2 pt-1 pb-2 text-lg font-bold tracking-[-0.01em]">Stops</h2>
+            <ol className="flex flex-col gap-2">
+              {mine.stops.map((s, i) => {
+                const done = !!s.served_at;
+                const isNext = s.id === remaining[0]?.id;
+                const litres = stopLitres(s);
+                const newTrip = s.trip && s.trip > 1 && mine.stops[i - 1]?.trip !== s.trip;
+                return (
+                  <li key={s.id} className="flex flex-col gap-2">
+                    {newTrip && <p className="px-2 pt-2 text-xs font-semibold tracking-wide text-amber-800 uppercase">Trip {s.trip}: refill the tank first</p>}
+                    <div className={`flex items-center gap-3 rounded-2xl p-3 ${isNext ? "bg-primary/10 ring-2 ring-primary/40" : "bg-muted/60"}`}>
+                      <span className={`grid size-9 shrink-0 place-items-center rounded-full text-sm font-bold ${done ? "bg-emerald-700 text-white" : isNext ? "bg-primary text-primary-foreground" : "bg-card"}`}>
+                        {done ? <Check aria-hidden className="size-4" strokeWidth={3} /> : s.stop_order}
+                      </span>
+                      <span className={`min-w-0 flex-1 ${done ? "text-muted-foreground line-through" : "font-medium"}`}>
+                        {s.street.name}
+                        {isNext && <span className="ml-2 text-xs font-semibold text-primary no-underline">Next</span>}
+                        {litres ? <span className="block text-sm font-normal text-muted-foreground">{fmtL(litres)}{!offline && roundDemand[s.street_id] ? ` · ${roundDemand[s.street_id].requests} request${roundDemand[s.street_id].requests === 1 ? "" : "s"}` : ""}</span> : null}
+                      </span>
+                      <Button className="h-12 px-5 font-semibold" variant={done ? "outline" : "default"} disabled={done} onClick={() => serve(s)}>
+                        {done ? "Served ✓" : "Served"}
+                      </Button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+            {assumed && <p className="px-2 pt-3 text-xs text-muted-foreground">{ASSUMED_REQUEST_L} L assumed per request until requests store litres.</p>}
+          </section>
+          <Button size="tap" variant="destructive" className="lg:hidden" onClick={endRound}>
             End round{remaining.length > 0 ? ` (${remaining.length} left)` : ""}
           </Button>
-        </>
+        </div>
       )}
-      <Link href="/resident" className="text-center text-sm text-muted-foreground underline">Home</Link>
     </main>
   );
 }
