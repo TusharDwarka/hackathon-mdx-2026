@@ -15,6 +15,14 @@
   updates complaints.status), Realtime on `complaints`. No payment or fee columns. Re-runnable.
 - `scripts/load-data.ts` (V2 step 3): also upserts `data/reservoir.csv` into `reservoir_levels` when the file exists
   (key reservoir+day); prints a notice and skips when it is missing.
+- `lib/queries.ts` V2 (step 4), each rule is a pure function + a Supabase call:
+  - `getTodayReports(streetId)` -> `{type, created_at}[]` since local midnight (Home had this inline; same shape as `TodayReport` in DayTrack).
+  - op 12 `getReservoirStatus(reservoir = "Mare aux Vacoas")` -> `{reservoir, level_pct, day, tier, source_url} | null`; `reservoirTier(pct)`: >= 60 normal, 30-60 watch, < 30 critical (DEMO thresholds, say so in the UI).
+  - op 14 `postComplaint(streetId, category)` -> id; `getOpenComplaints()` -> `Complaint[]` newest first; `resolveComplaint(id)`. Categories: no_water, dirty_water, tanker_no_show, other.
+  - op 15 `getStreetStatus(streetId)` / `getStreetStatuses()` -> `{status, trust, suspect, reports}` per street from the last 3 h. `computeStreetStatus(...)`:
+    confirmed = >= 2 reports and >= 2/3 agree; suspect = exactly 1 report and BOTH neighbours (prev/next order_index) have a status that contradicts it (edge streets are never suspect).
+  - op 16 `getLikelyWaterTime(streetId)` -> `{from, to, days_hit, days_total} | null`; `computeLikelyWaterTime(dates)`: fixed 2 h slots (00-02 ... 22-00), the slot hit on the most distinct days in the last 14; days_total = distinct days with a water_on report; null under 3 days.
+  - op 17 `getPriorityList()` -> `PriorityRow[]` sorted by score desc; `computePriority(hoursDry, waiting)`: score = hours dry + 12 x waiting; action "send tanker" (waiting > 0) / "place a static tank" (dry > 48 h) / "watch". A street that never reported water scores 0 h but keeps `hours_dry: null`.
 
 ## Needs from others
 - P1: run `sql/v2.sql` in the Supabase SQL editor (after `sql/schema.sql`).
