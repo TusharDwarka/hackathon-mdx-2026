@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 import { SurpriseCard } from "@/components/home/SurpriseCard";
+import { supabase } from "@/lib/supabase";
 import { MOCK_AREA, MOCK_HOURS_DRY, MOCK_RELIABILITY, MOCK_STREETS, MOCK_WINDOW } from "@/lib/mock";
 
 // Heat colour: hours since last water_on report
@@ -12,6 +13,10 @@ const heat = (h: number) => (h < 6 ? "bg-emerald-500" : h < 24 ? "bg-amber-400" 
 const STREET_KEY = "kotdelo.street"; // localStorage: the resident's street id (read by /map too)
 const hhmm = (t: string) => t.slice(0, 5); // Postgres time comes back as "05:00:00"
 const noSubscribe = () => () => {};
+
+const REPORT_TYPES = ["water_on", "water_off"] as const; // reports.type in contracts/api.md
+type ReportType = (typeof REPORT_TYPES)[number];
+const REPORT_LABEL: Record<ReportType, string> = { water_on: "Water is here", water_off: "No water" };
 
 function Label({ text }: { text: string }) {
   return <span className="font-semibold">{text}</span>;
@@ -25,12 +30,21 @@ export default function Home() {
   const saved = mounted ? Number(localStorage.getItem(STREET_KEY)) : 0;
   const street = MOCK_STREETS.find((s) => s.id === (picked ?? saved)) ?? MOCK_STREETS[2];
   const today = mounted ? new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "Indian/Mauritius" }) : "";
+  const [reported, setReported] = useState<ReportType | null>(null);
+  const [requested, setRequested] = useState(false);
   const pickStreet = (id: number) => {
     setPicked(id);
+    setReported(null);
     localStorage.setItem(STREET_KEY, String(id));
   };
-  const [reported, setReported] = useState(false);
-  const [requested, setRequested] = useState(false);
+  const report = async (type: ReportType) => {
+    if (type === reported) return; // same answer tapped twice: no duplicate row
+    setReported(type); // optimistic: the tap always answers
+    // op 2. ponytail: inline insert until P3 ships lib/queries.ts. A failed insert (no Supabase
+    // yet, mock street ids) is only logged so the demo never breaks; show an error if it must be real.
+    const { error } = await supabase.from("reports").insert({ street_id: street.id, type });
+    if (error) console.warn("report not saved:", error.message);
+  };
 
   return (
     <main className="mx-auto flex w-full max-w-[390px] flex-col gap-4 p-4">
@@ -60,14 +74,22 @@ export default function Home() {
       </section>
 
       <div className="grid grid-cols-2 gap-3">
-        <Button className="h-16 bg-emerald-600 hover:bg-emerald-700" onClick={() => setReported(true)}>
-          <Label text="Water is here" />
-        </Button>
-        <Button className="h-16 bg-red-600 hover:bg-red-700" onClick={() => setReported(true)}>
-          <Label text="No water" />
-        </Button>
+        {REPORT_TYPES.map((type) => (
+          <Button
+            key={type}
+            aria-pressed={reported === type}
+            className={`h-16 aria-pressed:ring-4 aria-pressed:ring-zinc-900/30 ${type === "water_on" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"}`}
+            onClick={() => report(type)}
+          >
+            <Label text={(reported === type ? "✓ " : "") + REPORT_LABEL[type]} />
+          </Button>
+        ))}
       </div>
-      {reported && <p className="text-center text-sm text-zinc-600">Thanks! Reported for {street.name}.</p>}
+      {reported && (
+        <p role="status" className="text-center text-sm text-zinc-600">
+          Thanks! Reported &quot;{REPORT_LABEL[reported]}&quot; for {street.name}.
+        </p>
+      )}
 
       <Button className="h-16 text-lg" disabled={requested} onClick={() => setRequested(true)}>
         <Label text="I need water (request the tanker)" />

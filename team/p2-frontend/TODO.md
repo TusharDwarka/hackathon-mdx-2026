@@ -3,7 +3,7 @@ Branch: feat/home. Own: app/page.tsx, app/layout.tsx, app/globals.css, component
 Until P3's queries exist, use a small local fake-data object so screens render; swap to the real calls later.
 
 - [x] Step 2: street picker + today's official window (area, day, start-end, source link)
-- [ ] Step 3: two one-tap buttons "Delo inn vini" / "Pena delo" (insert into reports)
+- [x] Step 3: two one-tap buttons "Delo inn vini" / "Pena delo" (insert into reports)
 - [ ] Step 4: "I need water" button (insert into requests) and its status line (waiting / served)
 - [ ] Empty `<SurpriseCard />` slot component on Home (renders nothing yet)
 - [ ] Step 7: schedule vs reality card + reliability score ("on time 4 of 7 days")
