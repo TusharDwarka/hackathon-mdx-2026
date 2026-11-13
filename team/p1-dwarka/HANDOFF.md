@@ -10,6 +10,7 @@
 - Merge 3 (Fri 16:56): PR #7 feat/home is on main (a75ec2f): Home on real queries, heat map, day track, design pass. Build steps 2 to 8 are all merged. Notes: root `HANDOFF.md`, "Merge 3".
 
 ## Needs from others
+- Round 3: P2 to P5 pull main, then take their section of `docs/WATER-DAY-SPLIT.md`. P1 first adds ops 24 to 27 to contracts/api.md. River stays dropped (DECISIONS #7). P1 fills DECISIONS #9 with the surprise card constraint so P2 can build SurpriseCard.
 - Next work: each owner takes their package from `docs/NEXT-TASK-SPLIT.md`. P1 first updates scope/contracts for guest access, capacity/allocations, multi-driver rounds and advisory data; P2 shell, P4 map sizing and P5 source research can start independently. Existing historical handoff entries below are not freshly verified deployment state.
 - P1 or P3 (whoever has `.env.local`): `npm run load-data`, then `npm run seed-demo`. Every Supabase table is empty until then.
 - P2 (small): Home stays in demo mode if the database takes more than 4 s; add a longer wait or a retry.
