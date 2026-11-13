@@ -1,0 +1,24 @@
+﻿"Water balance and utilisation, 2017"
+"Source: Statistics Mauritius, Digest of Environment Statistics 2017 (Nov 2018). Blue = data from the report; black = formula."
+
+Water balance 2017,Mm³,Share of rainfall
+Rainfall (precipitation),3991,1
+Ground water recharge,399,0.1
+Evapotranspiration,1197,0.2999
+Surface runoff,2395,0.6001
+Check: components minus rainfall (should be ~0),0
+
+"Utilisation by source, 2017",Mm³,Share of total
+Surface water,780,0.8405
+Ground water,142,0.153
+Reuse of treated wastewater (derived),6,0.0065
+Total water utilisation,928,1
+
+"Utilisation by sector, 2017",Mm³,Share of total
+Agriculture,344,0.3707
+Hydropower,312,0.3362
+"Domestic, industrial and tourism",272,0.2931
+Total,928,1
+Check: sector total minus reported total (should be 0),0
+
+Note: reuse of treated wastewater is reported as about 1% in the digest; the volume here is the residual of total minus surface and ground water.
