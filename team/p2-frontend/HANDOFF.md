@@ -1,4 +1,32 @@
-# HANDOFF (p2-frontend) — redesign: landing, sign-in, role shell, resident dashboard
+# HANDOFF (p2-frontend) — water-day split (docs/WATER-DAY-SPLIT.md)
+
+## Water-day split (latest)
+- **Changed.** Resident Overview now opens with **Your water day**: a vertical timeline for the next window (reminder at start - 30 min, water arrives, fill the tank, washing machine at +3 h if it fits, finish laundry at end - 30 min, water ends) with "Now" highlighted. It plans around today's window while it is still ahead, else the next official window, else the forecast (tagged Estimate). No locality = "Sample day" tag.
+- **Reminders.** "Add to calendar" downloads `kot-delo-water-<day>.ics` with a `VALARM` 30 min before (floating local time, crosses midnight correctly). "Also alert me in this tab" = Notification permission + setTimeout (no service worker). "Test reminder now (5 s)". Every reminder ALSO shows an in-page alert + vibration, because Android Chrome cannot show `new Notification()` without a service worker and iOS Safari has no web notifications outside an installed app.
+- **Next water** card (op 24 shape), **Water quality** card (op 26 shape: neutral "may look cloudy" at watch/critical, alert style + source only for an official notice, link to report dirty water), **Save water** card (3 tips + nearest water point by straight-line distance from the chosen street; until P5's file exists it says "no verified public water points" and links the tanker map). No river suggestion (DECISIONS #7). No text says water is safe or unsafe to drink (a self-check asserts it).
+- **Diagrams.** `components/ui/level-tank.tsx` on the landing (6 tanks) and the Reservoirs tab (all 7; "No verified reading" = empty tank). Reports today = green/red split bar. Litres = bar against a 1,000 L demo tanker.
+- **SurpriseCard** now takes `{ title, body, href, cta? }` and renders nothing without them. It is mounted first in Overview: P1, pass the text there (`components/home/Resident.tsx`, `<SurpriseCard />`).
+
+## Stand-ins (marked `ponytail:`)
+- `components/home/water-day.ts`: `planDay`, `forecastNext`, `waterQuality` follow P1's V4 shapes from the split doc. When P3's versions are on main, swap the import in `Resident.tsx` / `WaterDay.tsx` and delete mine. Forecast reads the official 7 days the page already loads; `basis` official > every_second_day > history.
+- `public-data.ts` reads `data/water_points.csv` (`name,kind,lat,lng,source_url`) and `data/quality_notices.csv` (`area,day,title,category,source_url`) at build time IF they exist; rows without a source are dropped.
+
+## For P4
+- `import { LevelTank } from "@/components/ui/level-tank"` · props `{ name: string; pct: number | null; day?: string | null; className?: string }`. Published: I will only add optional props. Colours: blue normal, amber watch, red critical (same demo thresholds as `reservoirTier`), dashed marks at 30% and 20%.
+
+## Needs from others
+- P1: the surprise text (title, body, which feature it links to); V4 ops 24-27 in contracts/api.md.
+- P3: `planDay`, `forecastNext`, `waterQuality` (+ routes) on main, then I swap.
+- P5: `data/water_points.csv`, `data/quality_notices.csv` (sourced rows only; empty is fine).
+
+## How to test (water-day)
+1. `npm run build`, `npm run lint`, `npx tsx components/home/water-day.ts` -> `water-day ok` (also public-data, rules, time).
+2. `/resident`, pick the locality: "Your water day" top card with the timeline. Tap **Test reminder now**: after 5 s an amber alert in the card (and a system notification if allowed).
+3. On a phone, tap **Add to calendar**, open the .ics: the event has an alert 30 min before. (Checked the file format in the self-check; please confirm on one Android and one iPhone.)
+4. Next water, Water quality (Mare aux Vacoas 33% = watch -> "may look cloudy"), Save water cards. Reservoirs tab: 7 tanks. Landing: 6 tanks.
+5. Checked at 390 and 1440 px with scripted Chrome: no sideways scroll.
+
+## Redesign (previous)
 
 ## Redesign (latest)
 - **Changed.** `/` is an app intro page: hero ("A small app that tells you when water comes") with a phone preview using REAL data (today's window, Mare aux Vacoas level), how it works, four features (window, tanker, one-tap reports, reservoirs), the latest 3 CWA notices, call to action, footer. Map and report pictures are illustrations (labelled for screen readers).

@@ -1,7 +1,8 @@
 // Public information from P5's real CSVs in data/, read at BUILD time (the pages that use it are
 // static, so this runs on the build machine, never in the browser). Every figure keeps its date and source.
 // Self-check: npx tsx components/home/public-data.ts
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import type { QualityNotice } from "@/components/home/water-day";
 import path from "node:path";
 
 /** Header row + comma-separated cells; "double quoted" cells may hold commas.
@@ -72,11 +73,28 @@ export function newsItems(cuts: Record<string, string>[], timeline: Record<strin
   ].sort((a, b) => b.date.localeCompare(a.date));
 }
 
-export type PublicData = { reservoirs: Reading[]; combined: Reading | null; news: NewsItem[] };
+// ---------- water points and quality notices (P5, docs/WATER-DAY-SPLIT.md): optional files, sourced rows only ----------
+
+export type WaterPoint = { name: string; kind: string; lat: number; lng: number; source_url: string };
+
+export function waterPoints(rows: Record<string, string>[]): WaterPoint[] {
+  return rows
+    .map((r) => ({ name: r.name, kind: r.kind, lat: Number(r.lat), lng: Number(r.lng), source_url: r.source_url }))
+    .filter((p) => p.name && p.source_url && Number.isFinite(p.lat) && Number.isFinite(p.lng) && p.lat !== 0); // no source, no point
+}
+
+export type PublicData = { reservoirs: Reading[]; combined: Reading | null; news: NewsItem[]; points: WaterPoint[]; quality: QualityNotice[] };
 
 export function publicData(): PublicData {
-  const read = (file: string) => parseCsv(readFileSync(path.join(process.cwd(), "data", file), "utf8"));
-  return { ...latestReadings(read("reservoir_levels.csv"), read("reservoir.csv")), news: newsItems(read("water_cut_announcements.csv"), read("crisis_timeline.csv")) };
+  const file = (name: string) => path.join(process.cwd(), "data", name);
+  const read = (name: string) => parseCsv(readFileSync(file(name), "utf8"));
+  const optional = (name: string) => (existsSync(file(name)) ? read(name) : []); // P5 adds these; until then the cards say so
+  return {
+    ...latestReadings(read("reservoir_levels.csv"), read("reservoir.csv")),
+    news: newsItems(read("water_cut_announcements.csv"), read("crisis_timeline.csv")),
+    points: waterPoints(optional("water_points.csv")),
+    quality: optional("quality_notices.csv").filter((r): r is QualityNotice => !!(r.day && r.title && r.source_url)) as QualityNotice[],
+  };
 }
 
 if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("public-data.ts")) {
@@ -100,6 +118,8 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("public-data.t
 
   const news = newsItems(parseCsv("effective_date,areas,what,type,source_url\n2026-08-05,Moka,cuts,rationing,u"), parseCsv("date,event,category,source_url\n2026-10-09,x,unrest,u\n2026-10-19,borehole,response,u"));
   console.assert(news.length === 2 && news[0].title === "borehole" && news[1].kind === "Rationing notice", "news sorted, unrest left out");
+
+  console.assert(waterPoints(parseCsv("name,kind,lat,lng,source_url\nTank A,static tank,-20.3,57.5,u\nNo source,standpipe,-20.3,57.5,")).length === 1, "unsourced point dropped");
 
   const real = publicData();
   console.assert(real.reservoirs.length === 7 && real.news.length > 0, "real files load");
