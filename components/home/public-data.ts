@@ -2,7 +2,6 @@
 // static, so this runs on the build machine, never in the browser). Every figure keeps its date and source.
 // Self-check: npx tsx components/home/public-data.ts
 import { existsSync, readFileSync } from "node:fs";
-import type { QualityNotice } from "@/components/home/water-day";
 import path from "node:path";
 
 /** Header row + comma-separated cells; "double quoted" cells may hold commas.
@@ -73,7 +72,7 @@ export function newsItems(cuts: Record<string, string>[], timeline: Record<strin
   ].sort((a, b) => b.date.localeCompare(a.date));
 }
 
-// ---------- water points and quality notices (P5, docs/WATER-DAY-SPLIT.md): optional files, sourced rows only ----------
+// ---------- water points (P5, docs/WATER-DAY-SPLIT.md): optional file, sourced rows only ----------
 
 export type WaterPoint = { name: string; kind: string; lat: number; lng: number; source_url: string };
 
@@ -83,17 +82,16 @@ export function waterPoints(rows: Record<string, string>[]): WaterPoint[] {
     .filter((p) => p.name && p.source_url && Number.isFinite(p.lat) && Number.isFinite(p.lng) && p.lat !== 0); // no source, no point
 }
 
-export type PublicData = { reservoirs: Reading[]; combined: Reading | null; news: NewsItem[]; points: WaterPoint[]; quality: QualityNotice[] };
+export type PublicData = { reservoirs: Reading[]; combined: Reading | null; news: NewsItem[]; points: WaterPoint[] };
 
 export function publicData(): PublicData {
   const file = (name: string) => path.join(process.cwd(), "data", name);
   const read = (name: string) => parseCsv(readFileSync(file(name), "utf8"));
-  const optional = (name: string) => (existsSync(file(name)) ? read(name) : []); // P5 adds these; until then the cards say so
+  const optional = (name: string) => (existsSync(file(name)) ? read(name) : []); // P5 adds it; until then the card says so
   return {
     ...latestReadings(read("reservoir_levels.csv"), read("reservoir.csv")),
     news: newsItems(read("water_cut_announcements.csv"), read("crisis_timeline.csv")),
     points: waterPoints(optional("water_points.csv")),
-    quality: optional("quality_notices.csv").filter((r): r is QualityNotice => !!(r.day && r.title && r.source_url)) as QualityNotice[],
   };
 }
 

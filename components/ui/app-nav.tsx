@@ -8,7 +8,7 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useSyncExternalStore } from "react";
-import { ArrowLeftRight, CalendarClock, Info, LayoutDashboard, LayoutGrid, Map, Megaphone, Newspaper, Route, Truck, Waves, type LucideIcon } from "lucide-react";
+import { ArrowLeftRight, BookOpen, CalendarClock, Info, LayoutDashboard, LayoutGrid, Map, Megaphone, Newspaper, Route, Truck, Waves, type LucideIcon } from "lucide-react";
 import { Logo, ROLE_LABEL, SideWaves, readRole, type Role } from "@/components/ui/brand";
 
 type Item = { href: string; label: string; short: string; Icon: LucideIcon; wideOnly?: boolean };
@@ -21,16 +21,19 @@ const NAV: Record<Role, Item[]> = {
     { href: "/map", label: "Live tanker", short: "Tanker", Icon: Truck },
     { href: "/resident?tab=news", label: "CWA notices", short: "Notices", Icon: Newspaper },
     { href: "/resident?tab=reservoirs", label: "Reservoirs", short: "Reservoirs", Icon: Waves, wideOnly: true }, // phones: from the Overview card
+    { href: "/guide", label: "How to use", short: "Guide", Icon: BookOpen, wideOnly: true }, // phones: "How it works" in the header
   ],
   driver: [
     { href: "/driver", label: "My round", short: "Round", Icon: Route },
     { href: "/map", label: "Live map", short: "Map", Icon: Map },
     { href: "/login", label: "Switch role", short: "Switch", Icon: ArrowLeftRight, wideOnly: true },
+    { href: "/guide", label: "How to use", short: "Guide", Icon: BookOpen },
   ],
   ops: [
     { href: "/ops", label: "Operations", short: "Ops", Icon: LayoutDashboard },
     { href: "/map", label: "Live map", short: "Map", Icon: Map },
     { href: "/driver", label: "Driver view", short: "Driver", Icon: Truck },
+    { href: "/guide", label: "How to use", short: "Guide", Icon: BookOpen },
   ],
 };
 // The driver's phone bar gets "Switch" too (it has room for 3).
