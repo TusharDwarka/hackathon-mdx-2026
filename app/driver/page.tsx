@@ -16,7 +16,7 @@ export default function DriverPage() {
   return (
     <main className="mx-auto flex w-full max-w-[390px] flex-col gap-4 p-4">
       <p className="rounded bg-yellow-100 px-2 py-1 text-center text-xs text-yellow-900">MOCKUP: no GPS sent yet</p>
-      <h1 className="text-2xl font-bold">Chauffeur kamion <span className="block text-sm font-normal text-zinc-500">Tanker driver</span></h1>
+      <h1 className="text-2xl font-bold">Tanker driver</h1>
 
       {!active ? (
         <Button className="h-16 text-lg" onClick={() => { setActive(true); setServed([]); }}>Start round · {WAITING.length} stops</Button>

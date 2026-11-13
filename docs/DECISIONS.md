@@ -11,3 +11,4 @@
 | 7 | Fri 13 Nov 13:46 | Dropped river water suggestions. | Safety: we should not point people to untreated water. |
 | 8 |  | Locality: | |
 | 9 |  | Surprise card handling: | |
+| 10 | Fri 13 Nov ~15:00 | UI text in English only, Kreol labels dropped for now. | Avoid broken/awkward Kreol in the demo; can come back after the core works. |

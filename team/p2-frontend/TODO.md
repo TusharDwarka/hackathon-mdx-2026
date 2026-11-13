@@ -1,5 +1,5 @@
 # TODO (p2-frontend) — Home screen and visual polish
-Branch: feat/home. Own: app/page.tsx, app/layout.tsx, app/globals.css, components/home/*, components/ui/* (shadcn). Mobile-first 390px, Kreol label with English underneath, big tap targets.
+Branch: feat/home. Own: app/page.tsx, app/layout.tsx, app/globals.css, components/home/*, components/ui/* (shadcn). Mobile-first 390px, English labels only (no Kreol), big tap targets.
 Until P3's queries exist, use a small local fake-data object so screens render; swap to the real calls later.
 
 - [ ] Step 2: street picker + today's official window (area, day, start-end, source link)

@@ -72,7 +72,7 @@ HARD RULES:
 - Store reports and requests by street, never by house or person. Track only
   the truck, only while a round is active.
 - Leave an empty <SurpriseCard /> slot on Home for a constraint revealed later.
-- Kreol labels with English underneath. Big tap targets.
+- English labels only for now (Kreol dropped, P1 decision Fri 13 Nov). Big tap targets.
 - Secrets in .env.local, never committed. Service key server-side only.
 - Least code that works. No tests, no abstractions for later.
 - Commit after every working step. No AI co-author line in commit messages.

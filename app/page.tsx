@@ -9,13 +9,8 @@ import { MOCK_AREA, MOCK_HOURS_DRY, MOCK_RELIABILITY, MOCK_STREETS, MOCK_WINDOW 
 // Heat colour: hours since last water_on report
 const heat = (h: number) => (h < 6 ? "bg-emerald-500" : h < 24 ? "bg-amber-400" : h < 48 ? "bg-orange-500" : "bg-red-600");
 
-function Label({ kr, en }: { kr: string; en: string }) {
-  return (
-    <span className="flex flex-col leading-tight">
-      <span className="font-semibold">{kr}</span>
-      <span className="text-xs opacity-75">{en}</span>
-    </span>
-  );
+function Label({ text }: { text: string }) {
+  return <span className="font-semibold">{text}</span>;
 }
 
 export default function Home() {
@@ -34,7 +29,7 @@ export default function Home() {
       </header>
 
       <label className="flex flex-col gap-1">
-        <Label kr="Ki lari ou reste?" en="Which street do you live on?" />
+        <Label text="Which street do you live on?" />
         <select className="h-12 rounded-lg border px-3 text-base" value={streetId} onChange={(e) => setStreetId(Number(e.target.value))}>
           {MOCK_STREETS.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
@@ -43,34 +38,34 @@ export default function Home() {
       </label>
 
       <section className="rounded-xl border bg-sky-50 p-4">
-        <Label kr="Lor program CWA zordi" en="Today's official CWA window" />
+        <Label text="Today's official CWA water window" />
         <p className="mt-2 text-4xl font-bold tabular-nums">{MOCK_WINDOW.start_time} – {MOCK_WINDOW.end_time}</p>
         <a href={MOCK_WINDOW.source_url} className="text-xs text-sky-700 underline">Source: CWA communiqué, {MOCK_WINDOW.source_date}</a>
       </section>
 
       <div className="grid grid-cols-2 gap-3">
         <Button className="h-16 bg-emerald-600 hover:bg-emerald-700" onClick={() => setReported(true)}>
-          <Label kr="Delo inn vini" en="Water is here" />
+          <Label text="Water is here" />
         </Button>
         <Button className="h-16 bg-red-600 hover:bg-red-700" onClick={() => setReported(true)}>
-          <Label kr="Pena delo" en="No water" />
+          <Label text="No water" />
         </Button>
       </div>
-      {reported && <p className="text-center text-sm text-zinc-600">Mersi! Reported for {street.name}.</p>}
+      {reported && <p className="text-center text-sm text-zinc-600">Thanks! Reported for {street.name}.</p>}
 
       <Button className="h-16 text-lg" disabled={requested} onClick={() => setRequested(true)}>
-        <Label kr="Mo bizin delo" en="I need water (request the tanker)" />
+        <Label text="I need water (request the tanker)" />
       </Button>
       {requested && (
         <Link href="/map" className="rounded-xl border-2 border-sky-600 p-3 text-center font-semibold text-sky-700">
-          Kamion pe vini → see the truck live
+          Tanker on the way → see it live
         </Link>
       )}
 
       <SurpriseCard />
 
       <section className="rounded-xl border p-4">
-        <Label kr="Program kont realite" en="Schedule vs reality" />
+        <Label text="Schedule vs reality" />
         <p className="mt-2 text-2xl font-bold">On time {MOCK_RELIABILITY.onTime} of {MOCK_RELIABILITY.days} days</p>
         <div className="mt-2 flex gap-1">
           {Array.from({ length: MOCK_RELIABILITY.days }, (_, i) => (
@@ -80,7 +75,7 @@ export default function Home() {
       </section>
 
       <section className="rounded-xl border p-4">
-        <Label kr="Komie ler san delo" en="Hours without water, by street" />
+        <Label text="Hours without water, by street" />
         <ul className="mt-2 flex flex-col gap-2">
           {MOCK_STREETS.map((s) => (
             <li key={s.id} className="flex items-center gap-2 text-sm">

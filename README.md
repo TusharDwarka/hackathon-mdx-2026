@@ -9,7 +9,7 @@ During CWA water rationing, households in [LOCALITY], Mauritius (locality TBD) d
 One household in [LOCALITY].
 
 ## What it does
-Shows today's official CWA water window for your street, lets neighbours report "Delo inn vini" / "Pena delo", lets a household request the tanker ("I need water"), and shows the tanker truck moving live with "N stops away, about X min". It then compares the official schedule with what actually happened: reliability score and a heat map of hours without water. Kreol labels, English underneath.
+Shows today's official CWA water window for your street, lets neighbours report "Water is here" / "No water", lets a household request the tanker ("I need water"), and shows the tanker truck moving live with "N stops away, about X min". It then compares the official schedule with what actually happened: reliability score and a heat map of hours without water. English labels.
 
 ## Data sources
 - Official CWA water timetable: `/data/schedule.csv` (source_url + source_date kept in the file) — TBD, REAL data

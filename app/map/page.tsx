@@ -58,10 +58,10 @@ export default function MapPage() {
         {stopsAway > 0 ? (
           <>
             <p className="text-2xl font-bold">{stopsAway} stop{stopsAway > 1 ? "s" : ""} away</p>
-            <p className="text-lg">Kamion pe vini · about {eta} min</p>
+            <p className="text-lg">Tanker on the way · about {eta} min</p>
           </>
         ) : (
-          <p className="text-2xl font-bold text-emerald-700">Kamion inn ariv! Served ✓</p>
+          <p className="text-2xl font-bold text-emerald-700">Tanker arrived! Served ✓</p>
         )}
         <p className="text-sm text-zinc-500">Your street: {MY_STREET.name}</p>
         <Link href="/" className="text-sm text-sky-700 underline">← Back</Link>

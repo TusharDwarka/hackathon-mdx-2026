@@ -7,6 +7,7 @@ Stack: Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postg
 ## Golden rules
 - Build only what the demo needs. Judges see the demo: polish the visible 20%, fake or skip the invisible 80%.
 - Demo path first, infrastructure second. No admin panels, settings pages or real auth unless SPEC.md says so.
+- UI text is ENGLISH ONLY for now (no Kreol labels), even where older docs say otherwise.
 - Every demo-path screen needs a fallback (mock data, cached AI response) so it never breaks live.
 - Vibe-coded but understood: every person can explain their part in 30 seconds.
 
@@ -32,9 +33,9 @@ Stack: Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postg
 Read CLAUDE.md, SPEC.md, contracts/api.md and team/<my-folder>/TODO.md. Do ONE task only. When done: run it, append a line to team/<my-folder>/DONE.md, update HANDOFF.md (changed / needs / blocked / how to test), commit.
 
 ## Git
-- `main` is protected: only P1 merges. Work on feat/web, feat/api or feat/ai. Commit small, push at least hourly.
+- `main` is protected: only P1 merges. Work on your own branch: feat/home (P2), feat/data (P3), feat/driver-map (P4), feat/data-files (P5). Commit small, push at least hourly.
 - Before a new task: `git pull origin main` then `git merge main` into your branch.
-- Commit style: `web: add result screen`, `api: POST /reports`, `ai: cache fallback`.
+- Commit style: `home: add report buttons`, `data: queries for reliability`, `map: realtime truck marker`.
 - NEVER add Co-Authored-By or any Claude/Codex attribution to commits or PRs.
 - No `rm -rf`, `git push --force`, `git reset --hard`.
 
