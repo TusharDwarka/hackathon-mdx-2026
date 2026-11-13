@@ -24,6 +24,11 @@ Live bug from the Sat 02:00 test: every Vacoas street exists twice (ids 1-21 and
 - P4: two-line change in your folder, done on feat/data because the tester asked for it before freeze. Shout if you want it moved.
 - P2: the text walker in `components/ui/i18n.tsx` has no entry for "arriving now"; it stays English (English-only rule), add a key if you translate the map.
 
+### Ops tile "Waiting for a tanker: 40 L" (same day, touches P4 file: components/ops/Overview.tsx)
+- Bug from the Sat 02:00 test: the tile summed the demo 20 L per request. Contract V5: residents never choose litres, ops demand = households (waiting requests).
+- Fix: the tile now reads "N households" with "M streets" under it. Capacity stays an ops choice per load in Dispatch. No other file changed.
+- P4: three-line change in your folder, done on feat/data before freeze at the tester's request.
+
 ## V5 (docs/SPLIT-V5.md, P3) — feat/data, commits fc3aa0d, ca917c8, 811cbc3, 709e8a5
 Shapes are in `lib/queries.ts` (import types from `@/lib/queries`). Every new route answers without a database (`demo: true`).
 

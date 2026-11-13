@@ -17,3 +17,4 @@ One line per finished task: what, files, commit hash.
 - Sat 14 Nov: notice reader no longer matches 'Bassin' inside 'Beau Bassin' (localitiesInText: longest name first, covered text not reused; 3 self-checks) — see commit
 - Sat 14 Nov: dropped the unused _ignoredLitres parameter from postRequest (last lint warning) — see commit
 - Sat 14 Nov: map ETA copy: 'about 0 min' -> 'arriving now' (etaLabel in lib/eta.ts, used in app/map/page.tsx; P4 files, asked by P3's tester) — see commit
+- Sat 14 Nov: ops Overview tile 'Waiting for a tanker' shows households (count of waiting requests) instead of a litres sum; P4 file components/ops/Overview.tsx, asked by the tester — see commit
