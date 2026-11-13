@@ -5,6 +5,9 @@
 - **Onboarding.** First visit to `/resident` opens a 7-step tour (native `<dialog>`, glass, Skip / Back / Next, dots). It is remembered on the phone (`kotdelo.onboarded`) and reopens with "How it works" in the header. New page `/guide` (route created by P2, inside the app shell): numbered steps for Resident, Tanker driver and CWA staff, each with a link to the screen. "How to use" is in the sidebar for every role and in the driver/ops phone bars; the landing nav has "Guide".
 - **Motion + transparency** (ideas from the reference site, our colours only): scroll progress bar, landing bar see-through at the top and frosted after 100 px, cards rise into view (`reveal`), drifting aurora behind the hero, headline words slide up, the drop bobs with water ripples, marquee band, count-up numbers, 3D tilt + light spot on cards (mouse only). Scroll effects are pure CSS scroll timelines (no JS on scroll); browsers without them just show everything. Reduced motion turns all of it off. New utilities in `app/globals.css`: `reveal`, `scroll-progress`, `bar-on-scroll`, `tilt`; helpers in `components/ui/motion.tsx` (`tilt` handlers, `CountUp`).
 
+## Merge note for P1
+- I could not merge: `main` is protected (only P1 merges) and the GitHub CLI is not installed on this laptop. `feat/home` already contains main (merge 8), so the pull request merges with no conflicts. Open it here: https://github.com/TusharDwarka/hackathon-mdx-2026/compare/main...feat/home
+
 ## How to test (latest)
 1. `npm run build`, `npm run lint`, `npx tsx components/home/water-day.ts` (and public-data, rules, time).
 2. Private window -> `/resident`: the tour opens; Next through 7 steps; reload: it stays closed; "How it works" reopens it.
