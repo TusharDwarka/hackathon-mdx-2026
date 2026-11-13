@@ -5,7 +5,7 @@
 // POST {tanker_id, dispatch_key, split?}  put ONE load on that tanker (kd_allocate_load):
 //   (or P4 plan body {key, capacity_l, loads} -> {rounds, deferred}: see confirmPlan below)
 //   street order, never above capacity, same dispatch_key -> same round, busy tanker refused.
-import { planDispatch, type DemandItem, type Tanker } from "@/lib/queries";
+import { HOUSEHOLD_L, planDispatch, type DemandItem, type Tanker } from "@/lib/queries";
 import { db, dbError, handle, HttpError, readJson, requireSession, rpc } from "../_lib/server";
 import { roundView } from "../_lib/rounds";
 
@@ -22,7 +22,7 @@ export const GET = handle(async (req) => {
   const url = new URL(req.url);
   const client = db();
   const [reqs, streets, tankersRes, open] = await Promise.all([
-    client.from("requests").select("id,street_id,litres,created_at").eq("status", "waiting"),
+    client.from("requests").select("id,street_id,created_at").eq("status", "waiting"),
     client.from("streets").select("id,order_index"),
     client.from("tankers").select("id,name,capacity_litres,active").order("id"),
     client.from("rounds").select("tanker_id").in("status", ["planned", "active"]),
@@ -38,9 +38,9 @@ export const GET = handle(async (req) => {
   const allocated: Record<number, number> = {};
   for (const a of allocs.data ?? []) allocated[a.request_id] = (allocated[a.request_id] ?? 0) + a.litres;
   const order = Object.fromEntries((streets.data ?? []).map((s) => [s.id, s.order_index]));
+  // V5: a request is one household; its litres are the ops-side share (HOUSEHOLD_L), never the resident's.
   const demand: DemandItem[] = waiting
-    .filter((r) => r.litres !== null)
-    .map((r) => ({ request_id: r.id, street_id: r.street_id, order_index: order[r.street_id] ?? 0, created_at: r.created_at, litres: r.litres! - (allocated[r.id] ?? 0) }))
+    .map((r) => ({ request_id: r.id, street_id: r.street_id, order_index: order[r.street_id] ?? 0, created_at: r.created_at, litres: HOUSEHOLD_L - (allocated[r.id] ?? 0) }))
     .filter((d) => d.litres > 0);
 
   const busy = new Set((open.data ?? []).map((r) => r.tanker_id));
@@ -60,7 +60,8 @@ export const GET = handle(async (req) => {
   if (new Set(pool.map((t) => t.capacity_litres)).size > 1 && url.searchParams.get("capacity") === null) {
     plan.assumptions.unshift(`Tankers have different capacities; this preview uses the smallest (${capacity} L). The real load uses each tanker's own capacity.`);
   }
-  return Response.json({ plan, tankers, requests_without_litres: waiting.filter((r) => r.litres === null).length });
+  plan.assumptions.unshift(`Each waiting household is planned at ${HOUSEHOLD_L} L (demo, ops-side). Residents never pick litres.`);
+  return Response.json({ plan, tankers, households: waiting.length, household_litres: HOUSEHOLD_L });
 });
 
 type PlanLoad = { tanker: string | number; trip: number };

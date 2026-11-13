@@ -25,7 +25,7 @@ export class HttpError extends Error {
 const STATUS: Record<string, number> = {
   throttled: 429, too_many_open_requests: 429,
   unknown_street: 400, invalid_type: 400, invalid_litres: 400, invalid_category: 400, unknown_tanker: 400,
-  not_your_round: 403,
+  not_your_round: 403, sign_in_required: 401,
   unknown_stop: 404, unknown_round: 404,
   tanker_busy: 409, no_outstanding_demand: 409, round_not_active: 409,
 };
@@ -117,6 +117,18 @@ export async function requireSession(...roles: Role[]): Promise<Session> {
   if (!s) throw new HttpError(401, "session_required");
   if (roles.length && !roles.includes(s.role)) throw new HttpError(403, "forbidden", { need: roles });
   return s;
+}
+
+/**
+ * V5 accounts: the Supabase Auth user behind `Authorization: Bearer <access token>`.
+ * 401 sign_in_required for a guest (no token, expired or forged token).
+ */
+export async function requireUser(req: Request): Promise<{ id: string }> {
+  const token = /^Bearer (.+)$/.exec(req.headers.get("authorization") ?? "")?.[1];
+  if (!token) throw new HttpError(401, "sign_in_required");
+  const { data, error } = await db().auth.getUser(token);
+  if (error || !data.user) throw new HttpError(401, "sign_in_required");
+  return { id: data.user.id };
 }
 
 export async function createSession(role: Role, tankerId: number | null): Promise<Session> {

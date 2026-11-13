@@ -1,6 +1,7 @@
 // Supabase queries for the demo path (contracts/api.md ops 1, 2, 3, 10, 11) + V2 (12-17)
 // + V3 (docs/NEXT-TASK-SPLIT.md, P3): sessions, litres, tanker capacity, dispatch, trust reasons,
-// all reservoirs, notices. Everything is stored by street, never by house or person.
+// all reservoirs, notices. V5 (docs/SPLIT-V5.md): accounts, requests without litres, places,
+// notices + AI parser, rivers, safe-to-drink. Everything is stored by street, never by house or person.
 //
 // Reads use the anon client (RLS: public read). WRITES go through /api/* route handlers, which check
 // the session role and the guest limits on the server (sql/v3.sql). Until sql/v3.sql + the service key
@@ -76,20 +77,20 @@ export async function postReport(streetId: number, type: ReportType): Promise<vo
 }
 
 /**
- * "I need water" for `litres` (1..1000) through POST /api/requests. Returns the request id.
- * A repeat click returns the SAME id (one waiting request per session per street).
- * Without `litres` (old Home screen): legacy anon insert with no volume, which dispatch cannot plan
- * (it is listed as "requests without litres"). P2 passes litres from the new request form.
+ * "I need a tanker" for the street (V5: one request = one household, no litres) through
+ * POST /api/requests. Returns the request id; a repeat click returns the SAME id.
+ * Guests may request. The second argument is ignored (old callers that still pass litres).
  */
-export async function postRequest(streetId: number, litres?: number): Promise<number> {
-  if (litres !== undefined) {
+export async function postRequest(streetId: number, _ignoredLitres?: number): Promise<number> {
+  try {
     await ensureGuestSession();
-    const r = await api<{ id: number; duplicate: boolean }>("/api/requests", { method: "POST", body: { street_id: streetId, litres } });
-    return r.id;
+    return (await api<{ id: number; duplicate: boolean }>("/api/requests", { method: "POST", body: { street_id: streetId } })).id;
+  } catch (e) {
+    if (!apiNotDeployed(e)) throw e;
+    const { data, error } = await supabase.from("requests").insert({ street_id: streetId, status: "waiting" }).select("id").single();
+    if (error) throw error;
+    return data.id;
   }
-  const { data, error } = await supabase.from("requests").insert({ street_id: streetId, status: "waiting" }).select("id").single();
-  if (error) throw error;
-  return data.id;
 }
 
 export type MyRequest = {
@@ -220,18 +221,18 @@ export type Complaint = { id: number; street_id: number; category: ComplaintCate
 
 export const COMPLAINT_CATEGORIES: ComplaintCategory[] = ["no_water", "dirty_water", "tanker_no_show", "other"];
 
-/** Through POST /api/complaints; a repeat (same street + category within 6 h) returns the same id. */
+/**
+ * V5: signed-in users only (POST /api/complaints with the access token). A guest gets
+ * ApiError "sign_in_required" (401) without a network call: show the login.
+ * A repeat (same street + category within 6 h) returns the same id.
+ */
 export async function postComplaint(streetId: number, category: ComplaintCategory): Promise<number> {
-  try {
-    await ensureGuestSession();
-    return (await api<{ id: number }>("/api/complaints", { method: "POST", body: { street_id: streetId, category } })).id;
-  } catch (e) {
-    if (!apiNotDeployed(e)) throw e;
-    const { data, error } = await supabase.from("complaints").insert({ street_id: streetId, category }).select("id").single();
-    if (error) throw error;
-    return data.id;
-  }
+  return (await api<{ id: number }>("/api/complaints", { method: "POST", body: { street_id: streetId, category }, auth: true })).id;
 }
+
+/** The signed-in user's own complaints, newest first. */
+export const getMyComplaints = () =>
+  api<{ records: Complaint[] }>("/api/complaints?mine=1", { auth: true }).then((r) => r.records);
 
 /** Open complaints, newest first (Ops). */
 export async function getOpenComplaints(): Promise<Complaint[]> {
@@ -465,7 +466,6 @@ export async function getLikelyWaterTime(streetId: number, now = new Date()): Pr
 export type PriorityAction = "send tanker" | "place a static tank" | "watch";
 export type PriorityRow = {
   street_id: number; name: string; hours_dry: number | null; waiting: number; score: number; action: PriorityAction;
-  waiting_litres: number;       // litres of the street's waiting requests (requests without litres add 0)
   dry_known: boolean;           // false = no water_on report on record: NOT the same as 0 h dry
   reasons: string[];            // why this rank and this action, in plain words for /ops
 };
@@ -474,12 +474,12 @@ export type PriorityRow = {
  * Pure: score = hours dry + 12 x waiting requests (contract op 17). A street that never reported
  * water adds 0 h to the score, and the reasons say "dryness unknown" instead of showing 0 h.
  */
-export function explainPriority(hoursDry: number | null, waiting: number, waitingLitres = 0) {
+export function explainPriority(hoursDry: number | null, waiting: number) {
   const dry = hoursDry ?? 0;
   const score = Math.round(dry + 12 * waiting);
   const action: PriorityAction = waiting > 0 ? "send tanker" : dry > 48 ? "place a static tank" : "watch";
   const reasons: string[] = [];
-  if (waiting > 0) reasons.push(`${waiting} waiting request${waiting > 1 ? "s" : ""}${waitingLitres ? `, ${waitingLitres} L` : ""}`);
+  if (waiting > 0) reasons.push(`${waiting} household${waiting > 1 ? "s" : ""} waiting for a tanker`);
   if (hoursDry === null) reasons.push("no water report on record: dryness unknown (adds 0 to the score)");
   else reasons.push(`last water reported ${Math.round(hoursDry)} h ago`);
   if (action === "place a static tank") reasons.push("dry for more than 48 h with no request waiting");
@@ -496,27 +496,24 @@ export function computePriority(hoursDry: number | null, waiting: number): { sco
 export function priorityRows(
   streets: Pick<Street, "id" | "name">[],
   hoursDry: Record<number, number | null>,
-  waiting: { street_id: number; litres: number | null }[]
+  waiting: { street_id: number }[]
 ): PriorityRow[] {
-  const count: Record<number, number> = {}, litres: Record<number, number> = {};
-  for (const r of waiting) {
-    count[r.street_id] = (count[r.street_id] ?? 0) + 1;
-    litres[r.street_id] = (litres[r.street_id] ?? 0) + (r.litres ?? 0);
-  }
+  const count: Record<number, number> = {};
+  for (const r of waiting) count[r.street_id] = (count[r.street_id] ?? 0) + 1;
   return streets
     .map((s) => {
-      const h = hoursDry[s.id] ?? null, w = count[s.id] ?? 0, l = litres[s.id] ?? 0;
-      return { street_id: s.id, name: s.name, hours_dry: h, waiting: w, waiting_litres: l, ...explainPriority(h, w, l) };
+      const h = hoursDry[s.id] ?? null, w = count[s.id] ?? 0;
+      return { street_id: s.id, name: s.name, hours_dry: h, waiting: w, ...explainPriority(h, w) };
     })
     .sort((a, b) => b.score - a.score);
 }
 
-/** All streets sorted by score, highest first (anon read; needs sql/v3.sql for litres). */
+/** All streets sorted by score, highest first (anon read). waiting = households. */
 export async function getPriorityList(areaId?: number, now = new Date()): Promise<PriorityRow[]> {
   const streets = await getStreets(areaId);
   const [hours, { data: waiting, error }] = await Promise.all([
     getHoursDry(areaId, now),
-    supabase.from("requests").select("street_id,litres").eq("status", "waiting").in("street_id", streets.map((s) => s.id)),
+    supabase.from("requests").select("street_id").eq("status", "waiting").in("street_id", streets.map((s) => s.id)),
   ]);
   if (error) throw error;
   return priorityRows(streets, hours, waiting ?? []);
@@ -529,7 +526,8 @@ export async function getPriorityList(areaId?: number, now = new Date()): Promis
 // ---------- input validation (same rules on the client and in /api/*) ----------
 
 export const LITRES_PER_M3 = 1000;
-export const MAX_REQUEST_LITRES = 1000; // DEMO cap per household request
+/** DEMO, ops-side: litres planned per waiting household. Same as kd_household_litres() in sql/v5.sql. */
+export const HOUSEHOLD_L = 20;
 export type Valid<T> = { ok: true; value: T } | { ok: false; error: string };
 
 const isId = (v: unknown): v is number => typeof v === "number" && Number.isSafeInteger(v) && v > 0;
@@ -542,14 +540,11 @@ export function validateReportInput(body: unknown): Valid<{ street_id: number; t
   return { ok: true, value: { street_id: b.street_id, type: b.type } };
 }
 
-/** Litres: a whole number from 1 to MAX_REQUEST_LITRES. */
-export function validateRequestInput(body: unknown): Valid<{ street_id: number; litres: number }> {
+/** V5: only the street. Any `litres` a resident sends is ignored (tank size is an ops value). */
+export function validateRequestInput(body: unknown): Valid<{ street_id: number }> {
   const b = obj(body);
   if (!b || !isId(b.street_id)) return { ok: false, error: "invalid_street_id" };
-  if (typeof b.litres !== "number" || !Number.isInteger(b.litres) || b.litres < 1 || b.litres > MAX_REQUEST_LITRES) {
-    return { ok: false, error: "invalid_litres" };
-  }
-  return { ok: true, value: { street_id: b.street_id, litres: b.litres } };
+  return { ok: true, value: { street_id: b.street_id } };
 }
 
 export function validateComplaintInput(body: unknown): Valid<{ street_id: number; category: ComplaintCategory }> {
@@ -686,7 +681,7 @@ export type RoundView = {
   litres: number;
   stops: { id: number; street_id: number; street_name: string; stop_order: number; served_at: string | null; litres: number }[];
 };
-export type DispatchPreview = { plan: DispatchPlan; tankers: (Tanker & { busy: boolean })[]; requests_without_litres: number };
+export type DispatchPreview = { plan: DispatchPlan; tankers: (Tanker & { busy: boolean })[]; households: number; household_litres: number };
 
 export async function getTankers(): Promise<Tanker[]> {
   const { data, error } = await supabase.from("tankers").select("id,name,capacity_litres,active").order("id");
@@ -1135,6 +1130,65 @@ export async function ensureGuestSession(): Promise<SessionInfo> {
   return s.role ? s : startGuestSession();
 }
 
+// ---------- V5 accounts: Supabase Auth, email + password ----------
+// Guests report and request; a complaint needs sign-in. No profile, no name. The email is shown
+// only to its owner. Errors are ApiError with Supabase's code, e.g. "invalid_credentials",
+// "user_already_exists", "weak_password", "email_address_invalid", "over_request_rate_limit".
+
+export type User = { id: string; email: string | null };
+export const MIN_PASSWORD = 6; // Supabase default
+
+/** Pure: same checks the form shows before calling Supabase. */
+export function validateCredentials(email: string, password: string): Valid<{ email: string; password: string }> {
+  const e = email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return { ok: false, error: "email_address_invalid" };
+  if (password.length < MIN_PASSWORD) return { ok: false, error: "weak_password" };
+  return { ok: true, value: { email: e, password } };
+}
+
+function authFail(e: { status?: number; code?: string; message?: string }): never {
+  throw new ApiError(e.status ?? 400, e.code ?? "auth_error", { message: e.message });
+}
+const toUser = (u: { id: string; email?: string | null } | null | undefined): User | null => (u ? { id: u.id, email: u.email ?? null } : null);
+
+/**
+ * Creates the account and signs in. Returns null when Supabase still wants the email confirmed
+ * (P1 turns "Confirm email" off for the demo, so this should not happen).
+ */
+export async function signUp(email: string, password: string): Promise<User | null> {
+  const v = validateCredentials(email, password);
+  if (!v.ok) throw new ApiError(400, v.error);
+  const { data, error } = await supabase.auth.signUp(v.value);
+  if (error) authFail(error);
+  // An existing email comes back as a user with no identities and no error (Supabase hides who exists).
+  if (data.user && data.user.identities?.length === 0) throw new ApiError(400, "user_already_exists");
+  return data.session ? toUser(data.user) : null;
+}
+
+export async function signIn(email: string, password: string): Promise<User> {
+  const v = validateCredentials(email, password);
+  if (!v.ok) throw new ApiError(400, v.error === "weak_password" ? "invalid_credentials" : v.error);
+  const { data, error } = await supabase.auth.signInWithPassword(v.value);
+  if (error) authFail(error);
+  return toUser(data.user)!;
+}
+
+export async function signOut(): Promise<void> {
+  const { error } = await supabase.auth.signOut();
+  if (error) authFail(error);
+}
+
+/** The signed-in user from this browser's stored session, or null for a guest. No network call. */
+export async function getUser(): Promise<User | null> {
+  return toUser((await supabase.auth.getSession()).data.session?.user);
+}
+
+/** Calls `cb` now and on every sign-in / sign-out. Returns the unsubscribe function (nav "Signed in" + Log out). */
+export function onAuthChange(cb: (user: User | null) => void): () => void {
+  const { data } = supabase.auth.onAuthStateChange((_event, session) => cb(toUser(session?.user)));
+  return () => data.subscription.unsubscribe();
+}
+
 // ---------- fetch helper for /api/* ----------
 
 export class ApiError extends Error {
@@ -1143,10 +1197,18 @@ export class ApiError extends Error {
   }
 }
 
-async function api<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
+/** auth: true sends the Supabase access token; without a signed-in user it throws sign_in_required. */
+async function api<T>(path: string, init: { method?: string; body?: unknown; auth?: boolean } = {}): Promise<T> {
+  const headers: Record<string, string> = {};
+  if (init.body !== undefined) headers["content-type"] = "application/json";
+  if (init.auth) {
+    const token = (await supabase.auth.getSession()).data.session?.access_token;
+    if (!token) throw new ApiError(401, "sign_in_required");
+    headers.authorization = `Bearer ${token}`;
+  }
   const res = await fetch(path, {
     method: init.method ?? "GET",
-    headers: init.body === undefined ? undefined : { "content-type": "application/json" },
+    headers,
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
     credentials: "same-origin",
     cache: "no-store",
@@ -1257,9 +1319,16 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
   ok(sp.loads.every((l) => l.litres <= 100) && ns.loads.every((l) => l.litres <= 100), "no load above capacity");
 
   // Validation
-  ok(validateRequestInput({ street_id: 1, litres: 20 }).ok, "valid request");
-  ok(!validateRequestInput({ street_id: 1, litres: 0 }).ok && !validateRequestInput({ street_id: 1, litres: 1.5 }).ok && !validateRequestInput({ street_id: 1, litres: 1001 }).ok, "bad litres rejected");
-  ok(!validateRequestInput({ street_id: "1", litres: 20 }).ok && !validateRequestInput(null).ok, "bad street id rejected");
+  ok(validateRequestInput({ street_id: 1 }).ok, "valid request");
+  const withLitres = validateRequestInput({ street_id: 1, litres: 5000 });
+  ok(withLitres.ok && !("litres" in withLitres.value), "V5: litres from a resident are ignored, not stored");
+  ok(!validateRequestInput({ street_id: "1" }).ok && !validateRequestInput(null).ok, "bad street id rejected");
+  // V5 accounts: form checks before Supabase
+  const cred = validateCredentials("  Ana@Example.MU ", "secret1");
+  ok(cred.ok && cred.value.email === "ana@example.mu", "email trimmed + lower-cased");
+  ok(!validateCredentials("ana@", "secret1").ok && !validateCredentials("ana example.mu", "secret1").ok, "bad email rejected");
+  const short = validateCredentials("ana@example.mu", "12345");
+  ok(!short.ok && short.error === "weak_password", "password under 6 characters rejected");
   ok(validateReportInput({ street_id: 3, type: "water_off" }).ok && !validateReportInput({ street_id: 3, type: "maybe" }).ok, "report type checked");
   ok(validateComplaintInput({ street_id: 3, category: "dirty_water" }).ok && !validateComplaintInput({ street_id: 3, category: "rude" }).ok, "complaint category checked");
   ok(validatePositionInput({ round_id: 1, lat: -20.3, lng: 57.5 }).ok && !validatePositionInput({ round_id: 1, lat: 91, lng: 0 }).ok, "position range checked");
@@ -1288,10 +1357,10 @@ if (typeof process !== "undefined" && process.argv?.[1]?.endsWith("queries.ts"))
   ok(all[2].suspect && !all[1].suspect && !all[3].suspect, "computeAllStreetTrust uses neighbours in route order");
 
   // Priority explanation
-  const unknown = explainPriority(null, 1, 200);
-  ok(!unknown.dry_known && unknown.score === 12 && unknown.reasons.some((r) => r.includes("dryness unknown")) && unknown.reasons[0].includes("200 L"), "unknown dryness is said, not shown as 0 h");
-  const rows = priorityRows([{ id: 1, name: "A" }, { id: 2, name: "B" }], { 1: 10, 2: null }, [{ street_id: 2, litres: 100 }, { street_id: 2, litres: null }]);
-  ok(rows[0].street_id === 2 && rows[0].waiting === 2 && rows[0].waiting_litres === 100 && rows[0].hours_dry === null, "priority rows: litres + unknown kept null");
+  const unknown = explainPriority(null, 1);
+  ok(!unknown.dry_known && unknown.score === 12 && unknown.reasons.some((r) => r.includes("dryness unknown")) && unknown.reasons[0] === "1 household waiting for a tanker", "unknown dryness is said, not shown as 0 h");
+  const rows = priorityRows([{ id: 1, name: "A" }, { id: 2, name: "B" }], { 1: 10, 2: null }, [{ street_id: 2 }, { street_id: 2 }]);
+  ok(rows[0].street_id === 2 && rows[0].waiting === 2 && rows[0].hours_dry === null && !rows[0].reasons.join().includes(" L"), "priority rows: households, no litres, unknown kept null");
 
   // Complaints grouped
   const cs: Complaint[] = [
