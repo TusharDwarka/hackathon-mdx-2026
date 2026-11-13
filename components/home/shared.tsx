@@ -5,7 +5,7 @@
 // streets loaded yet -> demo mode on lib/mock.ts with a visible banner.
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase";
-import { getAreas, getHoursDry, getReliability, getStreets, getTodayWindow, type Reliability, type Street, type Window } from "@/lib/queries";
+import { getAreas, getHoursDry, getReliability, getStreets, getTodayWindow, type Reliability, type ReportType, type Street, type Window } from "@/lib/queries";
 import { MOCK_AREA, MOCK_HOURS_DRY, MOCK_STREETS, MOCK_WINDOW } from "@/lib/mock";
 import { reservoirTier, type Report, type ReservoirStatus } from "@/components/home/rules";
 
@@ -21,6 +21,20 @@ export const readStreet = () => {
 };
 export const saveStreet = (id: number) => {
   try { localStorage.setItem(STREET_KEY, String(id)); } catch { /* private mode */ }
+};
+
+// ---------- one report per street per 30 minutes (this phone only, no device id is sent) ----------
+export const REPORT_LIMIT_MS = 30 * 60_000;
+export type MyReport = { type: ReportType; at: number };
+const reportKey = (streetId: number) => `kotdelo.report.${streetId}`;
+export const readMyReport = (streetId: number): MyReport | null => {
+  try { return JSON.parse(localStorage.getItem(reportKey(streetId)) ?? "null"); } catch { return null; }
+};
+export const saveMyReport = (streetId: number, report: MyReport | null) => {
+  try {
+    if (report) localStorage.setItem(reportKey(streetId), JSON.stringify(report));
+    else localStorage.removeItem(reportKey(streetId));
+  } catch { /* private mode: the limit only lasts until the page is closed */ }
 };
 
 // ---------- a clock that re-renders every 30 s ----------
@@ -114,6 +128,13 @@ export function loadStreetData(streetId: number, demo: boolean): Promise<StreetD
 export async function getReservoirStatus(): Promise<ReservoirStatus & { sample: boolean }> {
   const level_pct = 35.9; // Mare aux Vacoas, October 2026, as reported in the press (see team/p5-pitch/numbers/README.md)
   return { level_pct, day: "2026-10-01", tier: reservoirTier(level_pct), sample: true };
+}
+
+/** Op 14, insert only. Needs the `complaints` table from sql/v2.sql. */
+export type ComplaintCategory = "no_water" | "dirty_water" | "tanker_no_show" | "other";
+export async function postComplaint(streetId: number, category: ComplaintCategory): Promise<void> {
+  const { error } = await supabase.from("complaints").insert({ street_id: streetId, category });
+  if (error) throw error;
 }
 
 // ---------- small display helpers ----------

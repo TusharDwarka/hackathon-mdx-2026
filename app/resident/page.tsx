@@ -1,16 +1,18 @@
 "use client";
 
-// Resident screen (contracts/api.md ops 1, 2, 3, 10, 11): one street, its water today,
-// one-tap reports, the free tanker request, schedule vs reality, heat map.
+// Resident screen (contracts/api.md ops 1, 2, 3, 10, 11, 14, 15, 16): one street, its water
+// status with trust, the likely water time, one-tap reports (one per 30 minutes), the free
+// tanker request, a complaint in two taps, schedule vs reality, heat map.
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Check, ChevronDown, ChevronRight, Droplet, DropletOff, ExternalLink, Truck, X } from "lucide-react";
+import { BadgeCheck, Check, ChevronDown, ChevronRight, CircleHelp, Clock, Droplet, DropletOff, ExternalLink, MessageSquareWarning, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DayTrack } from "@/components/home/DayTrack";
 import { HEAT_LEGEND, HeatMap, heatHex } from "@/components/home/HeatMap";
 import { SurpriseCard } from "@/components/home/SurpriseCard";
 import { minOfDay, windowStatus } from "@/components/home/time";
-import { DemoBanner, Skeleton, fmtDate, fmtHours, loadStreetData, plural, readStreet, saveStreet, useBase, useNow, type RequestStatus, type StreetData } from "@/components/home/shared";
+import { likelyWaterTime, streetStatus } from "@/components/home/rules";
+import { DemoBanner, REPORT_LIMIT_MS, Skeleton, fmtDate, fmtHours, loadStreetData, plural, postComplaint, readMyReport, readStreet, saveMyReport, saveStreet, useBase, useNow, type ComplaintCategory, type MyReport, type RequestStatus, type StreetData } from "@/components/home/shared";
 import { supabase } from "@/lib/supabase";
 import { postReport, postRequest, type ReportType } from "@/lib/queries";
 
@@ -19,6 +21,21 @@ const REPORTS = [
   { type: "water_off", label: "No water", Icon: DropletOff, style: "border-red-700/25 bg-red-50 text-red-900 hover:bg-red-100 aria-pressed:border-red-700 aria-pressed:bg-red-700 aria-pressed:text-white" },
 ] as const;
 const REPORT_LABEL = { water_on: "Water is here", water_off: "No water" };
+
+// What neighbours reported in the last 3 hours (op 15). Reports, not a measurement.
+const STATE = {
+  water_on: { text: "Water is running", Icon: Droplet, style: "bg-emerald-50 text-emerald-800" },
+  water_off: { text: "No water", Icon: DropletOff, style: "bg-red-50 text-red-800" },
+  none: { text: "No recent reports", Icon: CircleHelp, style: "bg-muted text-muted-foreground" },
+};
+
+const COMPLAINTS: { category: ComplaintCategory; label: string }[] = [
+  { category: "no_water", label: "No water" },
+  { category: "dirty_water", label: "Dirty water" },
+  { category: "tanker_no_show", label: "Tanker did not come" },
+  { category: "other", label: "Other problem" },
+];
+const hhmm = (t: number) => new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 
 const card = "surface p-5";
 const title = "text-lg leading-snug font-bold tracking-[-0.01em]";
@@ -30,9 +47,12 @@ export default function Resident() {
   const { base, setBase } = useBase();
   const [picked, setPicked] = useState<number | null>(null);
   const [loaded, setLoaded] = useState<StreetData | null>(null);
-  const [reported, setReported] = useState<ReportType | null>(null);
+  // My report in this session, per street. It wins over what localStorage says (null = the save failed, forget it).
+  const [sent, setSent] = useState<{ streetId: number; report: MyReport | null } | null>(null);
   const [request, setRequest] = useState<RequestStatus | null>(null);
-  const [sendError, setSendError] = useState<"report" | "request" | null>(null);
+  // Complaint: closed -> open (pick a category) -> the category that was sent.
+  const [complaint, setComplaint] = useState<"closed" | "open" | ComplaintCategory>("closed");
+  const [sendError, setSendError] = useState<"report" | "request" | "complaint" | null>(null);
 
   const street = base?.streets.find((s) => s.id === (picked ?? readStreet())) ?? null;
   const streetId = street?.id ?? null;
@@ -72,9 +92,13 @@ export default function Resident() {
     };
   }, [streetId, demo]);
 
+  // One report per street per 30 minutes: remembered on this phone only.
+  const lastReport = sent && sent.streetId === streetId ? sent.report : streetId !== null ? readMyReport(streetId) : null;
+  const mine = lastReport && now && now.getTime() - lastReport.at < REPORT_LIMIT_MS ? lastReport : null;
+
   const pickStreet = (id: number) => {
     setPicked(id);
-    setReported(null);
+    setComplaint("closed");
     setRequest(null);
     setSendError(null);
     saveStreet(id);
@@ -82,15 +106,17 @@ export default function Resident() {
 
   // Op 2. The tap answers at once; if the save fails we say so and undo it. Demo mode stays local.
   const report = async (type: ReportType) => {
-    if (!street || type === reported) return; // same answer twice: no duplicate row
-    const before = reported;
-    setReported(type);
+    if (!street || mine) return; // one report per street per 30 minutes
+    const mineNow = { type, at: new Date().getTime() };
+    setSent({ streetId: street.id, report: mineNow });
+    saveMyReport(street.id, mineNow);
     setSendError(null);
     try {
       if (!demo) await postReport(street.id, type);
     } catch (e) {
       console.warn("report not saved:", e);
-      setReported(before);
+      setSent({ streetId: street.id, report: null });
+      saveMyReport(street.id, null);
       setSendError("report");
       return;
     }
@@ -114,6 +140,20 @@ export default function Resident() {
     }
   };
 
+  // Op 14: second tap of the complaint. No free text, street only.
+  const complain = async (category: ComplaintCategory) => {
+    if (!street) return;
+    setComplaint(category);
+    setSendError(null);
+    try {
+      if (!demo) await postComplaint(street.id, category);
+    } catch (e) {
+      console.warn("complaint not saved:", e);
+      setComplaint("open");
+      setSendError("complaint");
+    }
+  };
+
   const areaName = base ? (base.areaNames[street?.area_id ?? base.streets[0].area_id] ?? "") : "";
   const today = now?.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
   const win = data?.win ?? null;
@@ -122,6 +162,9 @@ export default function Resident() {
   const todayReports = data && now ? data.reports.filter((r) => new Date(r.created_at).getTime() >= midnight) : [];
   const saidOn = todayReports.filter((r) => r.type === "water_on").length;
   const saidOff = todayReports.length - saidOn;
+  const live = data && now && !data.failed ? streetStatus(data.reports, now) : null; // op 15
+  const likely = data && now ? likelyWaterTime(data.reports, now) : null; // op 16
+  const state = STATE[live?.state ?? "none"];
   const mapHref = street ? `/map?street=${street.id}` : "/map";
 
   return (
@@ -167,6 +210,70 @@ export default function Resident() {
             </p>
           ) : (
             <>
+              <section aria-labelledby="status-title" className={`flex flex-col gap-4 ${card}`}>
+                <h2 id="status-title" className={title}>Water on {street.name} now</h2>
+                {!data || !now ? (
+                  <Skeleton className="h-14 w-full" />
+                ) : (
+                  <>
+                    <div className="flex items-center gap-4">
+                      <span className={`grid size-14 shrink-0 place-items-center rounded-full ${state.style}`}>
+                        <state.Icon aria-hidden className="size-7" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-2xl leading-tight font-bold tracking-[-0.01em]">{state.text}</p>
+                        {live && live.total > 0 && (
+                          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                            <span className={`chip min-h-7 px-2.5 text-xs ${live.trust === "confirmed" ? "bg-primary/10 text-primary" : "bg-muted text-foreground"}`}>
+                              {live.trust === "confirmed" ? <BadgeCheck aria-hidden className="size-4" /> : <CircleHelp aria-hidden className="size-4" />}
+                              {live.trust === "confirmed" ? "Confirmed" : "Unconfirmed"}
+                            </span>
+                            {live.agree} of {plural(live.total, "report", "reports")} in the last 3 hours
+                          </p>
+                        )}
+                        {live && live.total === 0 && <p className="mt-1 text-sm text-muted-foreground">Nobody on this street has reported in the last 3 hours.</p>}
+                      </div>
+                    </div>
+                    <p className="flex items-start gap-2 text-sm">
+                      <Clock aria-hidden className="mt-0.5 size-4 shrink-0 text-primary" />
+                      {likely ? (
+                        <span>
+                          Water usually comes between <strong className="font-semibold tabular-nums">{likely.from} and {likely.to}</strong>: neighbours reported it then on {likely.days_hit} of the {likely.days_total} days with water in the last 2 weeks.
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">Not enough reports yet to say when water usually comes here.</span>
+                      )}
+                    </p>
+                  </>
+                )}
+                <div className="flex flex-col gap-3 border-t pt-4">
+                  <h3 className="font-semibold">Is water running at your place now?</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {REPORTS.map(({ type, label, Icon, style }) => (
+                      <button
+                        key={type}
+                        type="button"
+                        aria-pressed={mine?.type === type}
+                        disabled={!!mine}
+                        onClick={() => report(type)}
+                        className={`flex h-14 items-center justify-center gap-2 rounded-full border text-base font-semibold transition-[scale,background-color,border-color,color,opacity] duration-150 ease-snap active:scale-[0.97] disabled:pointer-events-none disabled:not-aria-pressed:opacity-45 ${style}`}
+                      >
+                        {mine?.type === type ? <Check aria-hidden className="size-5" /> : <Icon aria-hidden className="size-5" />}
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  {mine && (
+                    <p role="status" className={`text-sm text-muted-foreground ${enter}`}>
+                      Thanks. You reported &quot;{REPORT_LABEL[mine.type]}&quot; at {hhmm(mine.at)}. You can report for this street again at {hhmm(mine.at + REPORT_LIMIT_MS)}.
+                    </p>
+                  )}
+                  {sendError === "report" && (
+                    <p role="alert" className="text-sm text-red-800">Your report was not sent. Check your connection and tap again.</p>
+                  )}
+                </div>
+              </section>
+
               <section className={card} aria-labelledby="window-title">
                 <h2 id="window-title" className={title}>Today&apos;s official water window</h2>
                 <p className="min-h-5 text-sm text-muted-foreground">{areaName}{today && ` · ${today}`}</p>
@@ -210,32 +317,6 @@ export default function Resident() {
                 )}
               </section>
 
-              <section aria-labelledby="report-title" className={`flex flex-col gap-3 ${card}`}>
-                <h2 id="report-title" className={title}>Is water running on {street.name} now?</h2>
-                <div className="grid grid-cols-2 gap-3">
-                  {REPORTS.map(({ type, label, Icon, style }) => (
-                    <button
-                      key={type}
-                      type="button"
-                      aria-pressed={reported === type}
-                      onClick={() => report(type)}
-                      className={`flex h-14 items-center justify-center gap-2 rounded-full border text-base font-semibold transition-[scale,background-color,border-color,color] duration-150 ease-snap active:scale-[0.97] ${style}`}
-                    >
-                      {reported === type ? <Check aria-hidden className="size-5" /> : <Icon aria-hidden className="size-5" />}
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                {reported && (
-                  <p role="status" className={`text-sm text-muted-foreground ${enter}`}>
-                    Thanks. &quot;{REPORT_LABEL[reported]}&quot; is reported for {street.name}.
-                  </p>
-                )}
-                {sendError === "report" && (
-                  <p role="alert" className="text-sm text-red-800">Your report was not sent. Check your connection and tap again.</p>
-                )}
-              </section>
-
               <section aria-labelledby="tanker-title" className={`flex flex-col gap-3 ${card}`}>
                 <div>
                   <h2 id="tanker-title" className={title}>Need the tanker?</h2>
@@ -264,6 +345,40 @@ export default function Resident() {
                 )}
                 {sendError === "request" && (
                   <p role="alert" className="text-sm text-red-800">Your request was not sent. Check your connection and tap again.</p>
+                )}
+              </section>
+
+              <section aria-labelledby="complaint-title" className={`flex flex-col gap-3 ${card}`}>
+                <div>
+                  <h2 id="complaint-title" className={title}>Something wrong?</h2>
+                  <p className="text-sm text-muted-foreground">Two taps send a complaint for {street.name} to CWA operations. No name, no message.</p>
+                </div>
+                {complaint === "closed" ? (
+                  <Button size="tap" variant="secondary" onClick={() => setComplaint("open")}>
+                    <MessageSquareWarning aria-hidden />
+                    Make a complaint
+                  </Button>
+                ) : complaint === "open" ? (
+                  <div className={`grid grid-cols-2 gap-2 ${enter}`}>
+                    {COMPLAINTS.map((c) => (
+                      <button
+                        key={c.category}
+                        type="button"
+                        onClick={() => complain(c.category)}
+                        className="min-h-14 rounded-2xl bg-muted px-3 text-sm font-semibold transition-[scale,background-color] duration-150 ease-snap hover:bg-primary/10 active:scale-[0.97]"
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p role="status" className={`flex items-center gap-2 rounded-2xl bg-primary/10 px-4 py-3 font-semibold text-primary ${enter}`}>
+                    <Check aria-hidden className="size-5 shrink-0" />
+                    Complaint sent: {COMPLAINTS.find((c) => c.category === complaint)?.label}.
+                  </p>
+                )}
+                {sendError === "complaint" && (
+                  <p role="alert" className="text-sm text-red-800">Your complaint was not sent. Check your connection and choose the category again.</p>
                 )}
               </section>
             </>
