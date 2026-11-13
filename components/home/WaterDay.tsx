@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bell, BellRing, CalendarPlus, Car, Info, MapPin, Recycle, ShieldAlert, Truck, Waves, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Source } from "@/components/home/PublicInfo";
-import { addDays, icsFile, km, withOffsets, type Win } from "@/components/home/water-day";
+import { addDays, googleCalUrl, icsFile, km, withOffsets, type Win } from "@/components/home/water-day";
 import { planDay, type Forecast, type PlanStep, type Quality } from "@/lib/queries";
 type WaterPoint = { name: string; kind: string; lat: number; lng: number; source_url: string | null };
 import { fmtDate } from "@/components/home/shared";
@@ -66,6 +66,13 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
   const how = (p: string) => (p === "granted" ? "a notification" : p === "denied" ? "an alert on this page (notifications are blocked in this browser)" : "an alert on this page");
 
   // Primary, demo-safe: a calendar event with its own alarm. Works with the browser closed.
+  // Android: the Google Calendar app cannot import .ics, so it gets Google's "new event" page; iPhone and the rest get the file.
+  const remind = () => (/android/i.test(navigator.userAgent) ? openGoogle() : addToCalendar());
+  const openGoogle = () => {
+    if (!d) return;
+    window.open(googleCalUrl(d, w, place ?? "your area"), "_blank", "noopener");
+    setStatus("Save the event in Google Calendar. It reminds you 30 min before (your default reminder).");
+  };
   const addToCalendar = () => {
     if (!d) return;
     const url = URL.createObjectURL(new Blob([icsFile(d, w, place ?? "your area", new Date())], { type: "text/calendar;charset=utf-8" }));
@@ -74,7 +81,7 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 2000);
-    setStatus(`Calendar event saved for ${dayLabel(d, today).toLowerCase()} ${w.start_time}. Open it to add it. Your phone rings 30 min before.`);
+    setStatus(`Event for ${dayLabel(d, today).toLowerCase()} ${w.start_time} downloaded. Open it and tap Add. Your phone rings 30 min before.`);
   };
   // Extra: only while this tab stays open (no push server, no service worker).
   const remindInTab = async () => {
@@ -136,13 +143,9 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
         </ol>
 
         <div className="flex flex-col gap-3 rounded-2xl bg-muted/70 p-4">
-          <p className="flex items-center gap-2 font-semibold">
-            <Bell aria-hidden className="size-5 text-primary" />
-            Remind me 30 min before
-          </p>
-          <Button data-tour="calendar" size="tap" disabled={sample} onClick={addToCalendar} className="h-12 text-sm">
+          <Button data-tour="calendar" size="tap" disabled={sample} onClick={remind} className="h-12 text-sm">
             <CalendarPlus aria-hidden className="size-5" />
-            Add to calendar
+            Remind me 30 min before
           </Button>
           <Button size="tap" variant="outline" disabled={sample} onClick={remindInTab} className="h-12 border-transparent bg-card text-sm">
             <Bell aria-hidden className="size-5" />
@@ -150,7 +153,11 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
           </Button>
           <button type="button" onClick={test} className="min-h-11 text-sm font-semibold text-primary underline underline-offset-2">Test reminder now (5 s)</button>
           {status && <p role="status" className={`text-xs text-muted-foreground ${enter}`}>{status}</p>}
-          <p className="text-xs text-muted-foreground">Rings even with the browser closed.</p>
+          <p className="text-xs text-muted-foreground">
+            A calendar alarm: rings even with the browser closed. Or use{" "}
+            <button type="button" disabled={sample} onClick={openGoogle} className="py-2 font-semibold text-primary underline underline-offset-2">Google Calendar</button> ·{" "}
+            <button type="button" disabled={sample} onClick={addToCalendar} className="py-2 font-semibold text-primary underline underline-offset-2">.ics file</button>
+          </p>
         </div>
       </div>
     </section>

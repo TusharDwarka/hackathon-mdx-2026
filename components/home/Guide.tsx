@@ -22,7 +22,7 @@ export const GUIDE: Record<Role, { label: string; Icon: LucideIcon; intro: strin
     steps: [
       { title: "Pick your locality", text: "Choose where you live. Today's official CWA water window shows at once. No account, no name.", Icon: MapPin, href: "/resident", cta: "Open Overview" },
       { title: "Plan your water day", text: "The top card turns the window into a plan: start the pump, fill the tank first, washing machine, finish before the water stops.", Icon: CalendarClock, href: "/resident", cta: "See your day" },
-      { title: "Never miss the water", text: "Tap Add to calendar. Your phone rings 30 minutes before the window, even with Kot Delo? closed.", Icon: Bell, href: "/resident", cta: "Set a reminder" },
+      { title: "Never miss the water", text: "Tap Remind me 30 min before. Your phone rings before the window, even with Kot Delo? closed.", Icon: Bell, href: "/resident", cta: "Set a reminder" },
       { title: "Tell your street", text: "In Report, tap Water is here or No water. When neighbours agree, the status says Confirmed.", Icon: Megaphone, href: "/resident?tab=report", cta: "Open Report" },
       { title: "Request a tanker", text: "No water for too long? In Tanker, tap I need a tanker. Free, for your street.", Icon: Truck, href: "/resident?tab=request", cta: "Request a tanker" },
       { title: "Follow it live", text: "Watch the truck move on the map and see how many stops are left before yours.", Icon: Route, href: "/map", cta: "Open the map" },
