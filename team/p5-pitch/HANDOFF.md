@@ -3,6 +3,7 @@
 ## V2 — Fri 13 Nov evening
 
 ### Changed
+- `team/p5-pitch/slides/what-after.md` (V2 step 4): "What after?" slide. It maps the ops priority list (op 17) to three fixes: send tanker → more tankers (CWA private tanker registration, Oct 2026), static tank → Water Tank Grant Scheme (Rs 15,000), streets dry week after week → boreholes (15–20 sought, news). Includes speaker notes, sources and Q&A cautions. Footnote says the priority list in the demo runs on seeded reports.
 - `README.md` (V2 step 3): status, Screens table, "What is demo, not real" (tier thresholds, seeded reports, route order), reservoir + notice sources, how to run.
 - `data/reservoir.csv` (V2 step 1): 7 real Mare aux Vacoas levels, 25 Sep → 5 Nov 2026 (38.5% → 33%). Each row links to the news article that quotes the Water Resources Commission figure for that date. All 7 links open (HTTP 200, checked Fri 13 Nov).
   - Latest row: **33% on 2026-11-05** → tier **watch** (30–60) with the demo thresholds.
@@ -26,7 +27,7 @@
 
 ### Needs from others
 - **P3:** load `data/reservoir.csv` into `reservoir_levels` (columns match `sql/v2.sql`; `level_pct` is a number like `33.8`, `day` is `YYYY-MM-DD`). Op 12 should return `{level_pct: 33, day: "2026-11-05", tier: "watch"}`.
-- **P1:** merge `feat/data-files` when all V2 steps are done. README now says the tier thresholds and seeded reports are demo; please check the Screens table matches what P2/P4 ship.
+- **P1:** `feat/data-files` is ready to merge (all 4 V2 steps done). README now says the tier thresholds and seeded reports are demo; please check the Screens table matches what P2/P4 ship.
 
 ## V1 — Fri 13 Nov afternoon
 
