@@ -73,3 +73,13 @@ Format per step: **Step N — done / changed / blocked** + 5 beginner bullets. P
   3. P3 (small): seed a few `water_on` rows for today, or the heat map has no green and the day track is empty.
   4. P2 (small): Home gives up on the database after 4 s and stays in demo mode until a reload. On venue wifi that can show "Demo mode" in front of the judges. A longer wait or a retry would be safer.
   5. All: two-phone test on the Vercel URL once the data is loaded.
+
+## Merge 4 — Fri 17:46 (P1)
+- Done: PR #12 feat/data, #13 feat/data-files, #14 feat/driver-map and #15 feat/home merged into main (4ea6b92). On the merged code `npm run build` passes (routes: `/`, `/resident`, `/driver`, `/map`, `/ops`) and the self-checks `npx tsx lib/eta.ts` and `npx tsx lib/queries.ts` pass. Not checked: the pages in a browser, and anything against the database.
+- What came in: V2 queries for ops 12, 14, 15, 16, 17 and `getTodayReports`, reservoir load in `load-data`, seed rows for today with complaints and one suspect report (#12); `data/reservoir.csv`, README for V2, water-use notices, what-after slide (#13); demo mode on /map and /driver when `streets` is empty, `kotdelo.street` key, links to `/resident` (#14); landing at `/`, Home at `/resident`, shared nav, trust status, likely water time, two-tap complaint, 30 minute report limit (#15).
+- V2 steps 10, 11, 13, 14, 15, 16 are merged. Closed from Merge 3: items 2 (demo mode on /map and /driver) and 3 (seed rows for today).
+- Left, in order:
+  1. P1: run `sql/v2.sql` in Supabase, then `npm run load-data` and `npm run seed-demo` (step 9). Still the only thing between the team and a real run.
+  2. P4 + P5: #14 added four CSVs under `data/` (P5's folder). `data/reservoir_levels.csv` (P4) and `data/reservoir.csv` (P5) both hold reservoir levels; `load-data` reads `reservoir.csv`. Agree on one, and list the sources of the other three in `data/README.md` or remove them.
+  3. P2: step 12 asked for three design directions; one was built. P1 to confirm it is the one.
+  4. All: two-phone run on the Vercel URL (step 17), then polish only.
