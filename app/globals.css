@@ -90,10 +90,12 @@
   /* Space the shared nav takes: under the page on phones (floating tab bar), above it from 1024px (top bar).
      A full-height page uses h-[calc(100dvh-var(--nav-h))]. */
   --nav-h: 5.75rem;
+  /* Width of the blue sidebar on app screens from 1024px (0 on the landing and sign-in). */
+  --side-w: 15.5rem;
 }
 @media (min-width: 1024px) {
   :root {
-    --nav-h: 4rem;
+    --nav-h: 0rem; /* the nav is a sidebar from 1024px: nothing above or below the page */
   }
 }
 
@@ -188,6 +190,11 @@
   @media (prefers-reduced-transparency: reduce) {
     background: var(--card);
   }
+}
+@utility wave-panel {
+  /* The deep-blue panel of the sidebar, sign-in and call-to-action bands (white text on it). */
+  background: linear-gradient(165deg, oklch(0.66 0.15 238) 0%, oklch(0.54 0.19 256) 55%, oklch(0.44 0.17 262) 100%);
+  color: white;
 }
 @utility chip {
   /* Pill. Active state: add bg-primary text-primary-foreground. */

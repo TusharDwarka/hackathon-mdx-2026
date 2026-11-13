@@ -115,7 +115,7 @@ export function News({ items, locality }: { items: NewsItem[]; locality: string 
   const shown = items.filter((i) => fold(`${i.title} ${i.areas ?? ""} ${i.kind}`).includes(fold(q)));
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr] lg:items-start lg:gap-6">
-      <div className="flex flex-col gap-4 lg:sticky lg:top-[calc(var(--nav-h)+5rem)] lg:gap-6">
+      <div className="flex flex-col gap-4 lg:sticky lg:top-8 lg:gap-6">
         <section className="surface p-5" aria-labelledby="news-title">
           <h2 id="news-title" className={title}>News and CWA notices</h2>
           <p className="mt-1 text-sm text-muted-foreground">
