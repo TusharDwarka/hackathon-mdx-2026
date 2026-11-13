@@ -11,6 +11,9 @@
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --ease-snap: cubic-bezier(0.23, 1, 0.32, 1); /* strong ease-out for press + enter */
+  /* Soft, blue-tinted elevation. Cards use the shadow only, never a border as well. */
+  --shadow-card: 0 10px 28px -12px oklch(0.45 0.12 250 / 0.22), 0 2px 6px -2px oklch(0.45 0.12 250 / 0.08);
+  --shadow-nav: 0 12px 32px -8px oklch(0.4 0.12 250 / 0.3), 0 2px 8px -2px oklch(0.4 0.12 250 / 0.12);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -45,31 +48,31 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-3xl: 1.5rem; /* 24px: every card */
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 :root {
-  /* Kot Delo? palette: water blue shell on a cool tinted ground. State colours
-     (emerald = water / on time, red = no water / late, amber = demo) come from Tailwind. */
-  --background: oklch(0.972 0.009 240);
-  --foreground: oklch(0.24 0.035 255);
+  /* Kot Delo? V2 look: soft sky-blue ground, white cards, one bright blue accent.
+     State colours stay Tailwind's: emerald = water / on time, red = no water / late, amber = demo. */
+  --background: oklch(0.945 0.028 235);
+  --foreground: oklch(0.22 0.04 260);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.035 255);
+  --card-foreground: oklch(0.22 0.04 260);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.035 255);
-  --primary: oklch(0.47 0.13 250);
-  --primary-foreground: oklch(0.985 0.006 240);
-  --secondary: oklch(0.945 0.012 240);
-  --secondary-foreground: oklch(0.24 0.035 255);
-  --muted: oklch(0.945 0.012 240);
-  --muted-foreground: oklch(0.48 0.03 255);
-  --accent: oklch(0.945 0.012 240);
-  --accent-foreground: oklch(0.24 0.035 255);
+  --popover-foreground: oklch(0.22 0.04 260);
+  --primary: oklch(0.54 0.19 258);
+  --primary-foreground: oklch(0.99 0.004 240);
+  --secondary: oklch(0.95 0.02 240);
+  --secondary-foreground: oklch(0.22 0.04 260);
+  --muted: oklch(0.95 0.02 240);
+  --muted-foreground: oklch(0.46 0.035 255);
+  --accent: oklch(0.95 0.02 240);
+  --accent-foreground: oklch(0.22 0.04 260);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.895 0.016 240);
-  --input: oklch(0.895 0.016 240);
-  --ring: oklch(0.62 0.13 250);
+  --border: oklch(0.9 0.02 240);
+  --input: oklch(0.9 0.02 240);
+  --ring: oklch(0.62 0.17 258);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -84,6 +87,14 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Space the shared nav takes: under the page on phones (floating tab bar), above it from 1024px (top bar).
+     A full-height page uses h-[calc(100dvh-var(--nav-h))]. */
+  --nav-h: 5.75rem;
+}
+@media (min-width: 1024px) {
+  :root {
+    --nav-h: 4rem;
+  }
 }
 
 .dark {
@@ -127,6 +138,14 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* The sky: a fixed gradient behind every page (a pseudo-element, because fixed backgrounds stutter on phones). */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(180deg, oklch(0.86 0.07 236) 0%, oklch(0.925 0.04 235) 42%, oklch(0.965 0.018 235) 100%);
+  }
   html {
     @apply font-sans;
   }
@@ -137,4 +156,18 @@
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
+}
+
+/* Shared building blocks for every screen (P2 owns them, everyone uses them). */
+@utility surface {
+  /* White card: 24px corners, soft shadow, no border. Put all text on one of these. */
+  @apply rounded-3xl bg-card text-card-foreground shadow-card;
+}
+@utility chip {
+  /* Pill. Active state: add bg-primary text-primary-foreground. */
+  @apply inline-flex min-h-9 items-center gap-1.5 rounded-full bg-card px-3.5 text-sm font-medium text-foreground;
+}
+@utility icon-btn {
+  /* Round 48px icon button. */
+  @apply inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-card text-foreground shadow-card;
 }

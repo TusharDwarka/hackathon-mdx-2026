@@ -12,3 +12,4 @@ One line per finished task: what, files, commit hash.
 - Step 8: heat map (still Leaflet map + legend + list) of hours since the last water_on report. Files: components/home/HeatMap.tsx, app/page.tsx. Commit 7d262a4
 - Loading and empty states on Home (skeletons, choose-your-street, no window, no reports, no history, failed saves). Files: app/page.tsx. Commit 7d262a4
 - Design pass (Impeccable polish + Emil motion): blue header, palette tokens, day track, icons, press feedback, eased status lines. Files: app/globals.css, app/layout.tsx, components/ui/button.tsx, components/home/DayTrack.tsx, components/home/time.ts. Commit 7d262a4
+- V2 step 1: design tokens (sky gradient, white 24px cards, bright blue accent, surface / chip / icon-btn classes), pill buttons, ProgressRing, shared responsive nav in the layout (bottom tab bar on phones, top bar from 1024px). Checked at 320, 390, 1280px. Files: app/globals.css, app/layout.tsx, components/ui/*. 
