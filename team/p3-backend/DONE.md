@@ -14,3 +14,4 @@ One line per finished task: what, files, commit hash.
 - V5: accounts (complaints need sign-in, sql/v5.sql RLS), requests without litres (household dispatch), OSM places + rivers for all Mauritius (scripts/fetch-osm.ts, localities table, search, river distance), CWA/news scraper + AI notice parser + feed, safe-to-drink op 26 with reasons — fc3aa0d, ca917c8, 811cbc3, 709e8a5
 - Sat 14 Nov: data/localities.csv committed (305 OSM places with district, ODbL source line; from scripts/fetch-osm.ts, asked by P5) — see commit
 - Sat 14 Nov: duplicate streets fix: sql/v6.sql (merge copies, re-point FKs, unique keys), load-data upserts streets on (area_id, name) instead of delete+insert, v6 checks in scripts/test-sql.ts — see commit
+- Sat 14 Nov: notice reader no longer matches 'Bassin' inside 'Beau Bassin' (localitiesInText: longest name first, covered text not reused; 3 self-checks) — see commit
