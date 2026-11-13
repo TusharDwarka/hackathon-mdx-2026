@@ -20,14 +20,14 @@ Prompt source: docs/BUILD-PROMPT.md (wins over the playbook on the product).
 - P1 merges every ~90 min (PR → review → merge → Vercel redeploys main). P5 = data CSVs + pitch on `feat/data-files`.
 
 Owners: P2 steps 2, 3, 4 (UI), 7, 8 (UI) · P3 queries, seed, reliability and heat-map data · P4 steps 5, 6 · P5 data files + pitch · P1 merges. Details in `team/*/TODO.md`.
-Merge 1 (Fri 16:10): PR #1 feat/data, #2 feat/home, #3 feat/driver-map are on main. A tick below = code merged. Nothing has run against real rows yet; what is left is in HANDOFF.md, "Merge 1".
-- [ ] 2. Home: street picker + today's official window — UI merged (#2) on mock streets and window. Left (P2): swap to `getStreets` / `getTodayWindow`; needs 1c
+Merged so far: #1 feat/data, #2 + #7 feat/home, #3 feat/driver-map, #5 feat/data-files. A tick below = code merged. Nothing has run against real rows yet (the database is empty until 1c is run); what is left is in HANDOFF.md, "Merge 3".
+- [x] 2. Home: street picker + today's official window — merged (#2, #7), on `lib/queries.ts`, demo mode while the database is empty
 - [x] 3. One-tap reports: "Water is here" / "No water" — merged (#2)
 - [x] 4. "I need water" request -> stop list grouped by street — merged (#2 Home, #3 driver)
 - [x] 5. /driver: Start round, live location every 5s (watchPosition + Wake Lock), mark stop served, End round stops tracking — merged (#3)
 - [x] 6. /map: truck marker via Supabase Realtime, stops away, ETA — merged (#3)
-- [ ] 7. Schedule vs reality card + reliability score ("on time 4 of 7 days") — card merged on fake data (#2), `getReliability` merged (#1). Left (P2): wire them
-- [ ] 8. Heat map: streets coloured by hours since last water_on report — `getHoursDry` merged (#1), Home list still mock. Left (P2): wire it
+- [x] 7. Schedule vs reality card + reliability score ("on time 4 of 7 days") — merged (#1 query, #7 card + 24 h day track)
+- [x] 8. Heat map: streets coloured by hours since last water_on report — merged (#1 query, #7 map + list)
 - [ ] E2E on the live URL with real streets: Home request -> /driver round -> /map truck moves, on 2 phones (needs 1c)
 
 **STOP after step 8 and ask P1. No extras on your own.**

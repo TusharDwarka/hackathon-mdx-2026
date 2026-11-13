@@ -61,3 +61,15 @@ Format per step: **Step N — done / changed / blocked** + 5 beginner bullets. P
   1. P1 or P3 (needs `.env.local`): `git pull origin main`, `npm run load-data` (expect "Loaded 1 areas, 21 streets, 26 schedule rows."), then `npm run seed-demo`.
   2. P2: demo day (Sat 14 Nov) is NOT a water day for Vacoas (windows are 13 and 15 Nov). `getTodayWindow()` returns null then, so Home needs a "no supply today" state, not an empty card.
   3. P2: `getReliability()` only counts days that have a window, so with every-second-day supply it reads "on time X of 3" or "of 4", not "of 7".
+
+## Merge 3 — Fri 16:56 (P1)
+- Done: PR #7 feat/home merged into main (a75ec2f). Home reads streets, today's window, reliability and hours dry through `lib/queries.ts`; adds the 24 h day track, the step 8 heat map, loading and empty states (including "no supply today"), failed-save messages, the `/map?street=<id>` link and the water-blue design pass. On the merged code `npm run build`, `npm run lint` and `npx tsx components/home/time.ts` pass.
+- Closed by this merge: Merge 1 item 2 (Home on real queries), Merge 2 items 2 and 3 (no-window state, reliability wording), and the Home half of the street-key problem (Home now links to `/map?street=<id>`, which the map reads).
+- Build steps 2 to 8 are all merged. **STOP after step 8: no extras until P1 says so.**
+- The database is still EMPTY, so the live Home shows the amber "Demo mode" banner on mock streets.
+- Left, in order:
+  1. P1 or P3 (needs `.env.local`): `git pull origin main`, `npm run load-data`, `npm run seed-demo`. This is the only thing between the team and a real end-to-end run.
+  2. P4: demo mode on /map and /driver when `streets` is empty (Home already does it). `STREET_KEY = "kotdelo.street"` is now only a nice-to-have.
+  3. P3 (small): seed a few `water_on` rows for today, or the heat map has no green and the day track is empty.
+  4. P2 (small): Home gives up on the database after 4 s and stays in demo mode until a reload. On venue wifi that can show "Demo mode" in front of the judges. A longer wait or a retry would be safer.
+  5. All: two-phone test on the Vercel URL once the data is loaded.
