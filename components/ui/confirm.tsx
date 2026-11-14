@@ -27,7 +27,7 @@ export function ConfirmButton({ title, body, confirm, onConfirm, children, dange
       <dialog
         ref={ref}
         aria-labelledby="confirm-title"
-        className="fixed inset-x-0 bottom-0 z-[1200] m-0 mt-auto w-full max-w-none rounded-t-[1.75rem] bg-card p-0 text-foreground shadow-nav backdrop:bg-black/40 sm:inset-0 sm:m-auto sm:max-w-sm sm:rounded-[1.75rem]"
+        className="fixed inset-x-0 bottom-0 z-[1200] mx-auto mt-auto mb-0 w-full max-w-md rounded-t-[1.75rem] bg-card p-0 text-foreground shadow-nav backdrop:bg-black/40 sm:inset-0 sm:m-auto sm:max-w-sm sm:rounded-[1.75rem]"
       >
         <div className="flex flex-col gap-4 p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           <h2 id="confirm-title" className="text-lg font-bold">{title}</h2>

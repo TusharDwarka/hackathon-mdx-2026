@@ -49,12 +49,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   if (BARE.includes(path)) return <>{children}</>;
   const role: Role = stored === "ops" ? "ops" : path.startsWith("/driver") ? "driver" : path.startsWith("/resident") ? "resident" : (stored ?? "resident");
   return (
-    <>
+    // .phone: app screens are phone-only, a centred phone-width column on a laptop (see app/globals.css).
+    <div className="phone contents">
       <Suspense fallback={<Nav role={role} path={path} tab={null} />}>
         <NavWithTab role={role} path={path} />
       </Suspense>
-      <div className="flex min-h-dvh flex-col pb-(--nav-h) lg:pl-(--side-w)">{children}</div>
-    </>
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col pb-(--nav-h) lg:pl-(--side-w)">{children}</div>
+    </div>
   );
 }
 
