@@ -9,6 +9,7 @@ import { loadSchedule } from "@/components/map/data";
 import { demoSchedule } from "@/components/map/demo";
 import { hoursUntil, loadForecast, needsTankers, type Forecast } from "@/components/ops/forecast";
 import type { OpsData } from "@/components/ops/data";
+import { PipeLoader } from "@/components/ui/pipe-loader";
 
 const BASIS: Record<Forecast["basis"], string> = { official: "Official CWA", every_second_day: "Every second day", history: "Past reports" };
 const CONF: Record<Forecast["confidence"], string> = { high: "bg-emerald-100 text-emerald-900", medium: "bg-amber-100 text-amber-900", low: "bg-red-100 text-red-900" };
@@ -41,9 +42,7 @@ export function Forecasts({ data, now }: { data: OpsData; now: number }) {
   return (
     <section className="surface flex flex-col gap-3 p-4">
       <h2 className="font-semibold">Next water window per area</h2>
-      <p className="text-xs text-muted-foreground">
-        {sorted ? (flagged ? `${flagged} area${flagged === 1 ? "" : "s"} to plan tankers for: next window over 36 h away or a weak estimate.` : "Every area has a window within 36 h.") : "Loading…"}
-      </p>
+      {sorted ? <p className="text-xs text-muted-foreground">{flagged ? `${flagged} area${flagged === 1 ? "" : "s"} may need tankers.` : "Every area gets water within 36 h."}</p> : <PipeLoader />}
       <ul className="flex max-h-96 flex-col gap-2 overflow-y-auto">
         {sorted?.map((r) => {
           const f = r.forecast;
@@ -73,9 +72,6 @@ export function Forecasts({ data, now }: { data: OpsData; now: number }) {
           );
         })}
       </ul>
-      <p className="text-xs text-muted-foreground">
-        {rows?.some((r) => r.fromApi) ? "From /api/forecast." : "Local rule over the CWA timetable (forecast API not live yet)."} An estimate never overrides an official CWA window.
-      </p>
     </section>
   );
 }

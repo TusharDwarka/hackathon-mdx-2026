@@ -5,7 +5,7 @@
 // streets loaded yet -> demo mode on lib/mock.ts with a visible banner.
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { supabase } from "@/lib/supabase";
-import { getAreas, getHoursDry, getReliability, getStreets, getTodayWindow, onAuthChange, type Place, type Reliability, type ReportType, type Street, type User, type Window } from "@/lib/queries";
+import { endSession, getAreas, getHoursDry, getReliability, getStreets, getTodayWindow, onAuthChange, signOut, type Place, type Reliability, type ReportType, type Street, type User, type Window } from "@/lib/queries";
 export type { ComplaintCategory } from "@/lib/queries";
 import { MOCK_AREA, MOCK_HOURS_DRY, MOCK_STREETS, MOCK_WINDOW } from "@/lib/mock";
 import type { Report } from "@/components/home/rules";
@@ -44,6 +44,12 @@ export function useUser(): User | null | undefined {
   const [user, setUser] = useState<User | null | undefined>(undefined);
   useEffect(() => onAuthChange(setUser), []);
   return user;
+}
+/** Log out of everything on this phone: the account, the guest/driver/ops session and the chosen role. */
+export async function logOut() {
+  await Promise.allSettled([signOut(), endSession()]);
+  for (const k of ["kotdelo.role", "kotdelo.guest", "kotdelo.driver.round"]) save(k, null);
+  window.location.href = "/login";
 }
 /** Only same-site paths, so ?next= can never send someone to another site. */
 export const safeNext = (next: string | null | undefined) => (next && next.startsWith("/") && !next.startsWith("//") ? next : null);

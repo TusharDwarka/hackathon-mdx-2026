@@ -28,10 +28,10 @@ export function Overview({ data, go, now }: { data: OpsData; go: (s: Section) =>
   const open = data.complaints.filter((c) => c.status === "open").length;
   const review = data.statuses.filter((s) => s.status === "suspect" || s.status === "unconfirmed").length;
   const tiles: { label: string; value: string; detail: string; to: Section }[] = [
-    { label: "Waiting for a tanker", value: fmtL(waitingL), detail: `${data.waiting.length} requests on ${waitingStreets} street${waitingStreets === 1 ? "" : "s"}`, to: "dispatch" },
-    { label: "Tankers out", value: String(data.rounds.length), detail: data.rounds.length ? data.rounds.map((r) => r.label).join(", ") : "none on the road", to: "dispatch" },
-    { label: "Open complaints", value: String(open), detail: "grouped by category and street", to: "complaints" },
-    { label: "Reports to review", value: String(review), detail: "unconfirmed or contradicted, last 3 h", to: "review" },
+    { label: "Waiting for a tanker", value: fmtL(waitingL), detail: `${waitingStreets} street${waitingStreets === 1 ? "" : "s"}`, to: "dispatch" },
+    { label: "Tankers out", value: String(data.rounds.length), detail: "Dispatch →", to: "dispatch" },
+    { label: "Open complaints", value: String(open), detail: "Complaints →", to: "complaints" },
+    { label: "Reports to check", value: String(review), detail: "last 3 h", to: "review" },
   ];
 
   return (
@@ -53,7 +53,7 @@ export function Overview({ data, go, now }: { data: OpsData; go: (s: Section) =>
       <Forecasts data={data} now={now} />
 
       <section className="surface flex flex-col gap-3 p-4 lg:col-span-3">
-        <h2 className="font-semibold">Hours since water was last reported, per street</h2>
+        <h2 className="font-semibold">Hours without water, per street</h2>
         <HeatMap streets={data.streets} hoursDry={data.hoursDry} myStreetId={null} />
         <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {HEAT_LEGEND.map((l) => (
@@ -101,10 +101,7 @@ function Reservoirs({ tanks }: { tanks: Tanks | null }) {
           ))}
         </ul>
       )}
-      <p className="text-xs text-muted-foreground">
-        Dashed marks at 30% and 20%. Tiers are demo thresholds: 60%+ normal, 30 to 60% watch, under 30% critical. &quot;Old reading&quot; = more than 14 days old.
-        {tanks && !tanks.fromApi && " Latest published figures from our data files (live table not loaded)."} A storage level never says whether tap water is safe to drink.
-      </p>
+      <p className="text-xs text-muted-foreground">Normal 60%+, watch 30–60%, critical under 30%. Tap a date for its source.</p>
     </section>
   );
 }

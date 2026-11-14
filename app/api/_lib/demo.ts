@@ -11,6 +11,7 @@ export const DEMO_MAV_READINGS: TrendPoint[] = [
   { day: "2026-10-19", level_pct: 34.2 },
   { day: "2026-10-30", level_pct: 33.8 },
   { day: "2026-11-05", level_pct: 33 },
+  { day: "2026-11-12", level_pct: 33 },
 ];
 
 const SCHEDULE_SOURCE = "https://cwa.govmu.org/cwa/wp-content/uploads/2026/10/Press-Notice-09102026.pdf";

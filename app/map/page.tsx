@@ -10,6 +10,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Layers as LayersIcon, LocateFixed, Search } from "lucide-react";
+import { PipeLoader } from "@/components/ui/pipe-loader";
+import { LangSwitch } from "@/components/ui/i18n";
 import { supabase } from "@/lib/supabase";
 import { etaMinutes, km } from "@/lib/eta";
 import { NEAR_RIVER_M, foldName, loadPlaces, nearestRiver, placeLabel, searchPlaces, type Place, type Rivers } from "@/lib/queries";
@@ -38,6 +40,7 @@ export default function MapPage() {
   const [streets, setStreets] = useState<Street[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [myId, setMyId] = useState<number | null>(null);
+  const [areaPick, setAreaPick] = useState<number | null>(null); // locality chosen before a street
   const [rounds, setRounds] = useState<LiveRound[]>([]);
   const [fixes, setFixes] = useState<Record<number, Fix>>({});
   const [reports, setReports] = useState<RecentReport[] | null>(null); // null = layer unavailable
@@ -248,6 +251,9 @@ export default function MapPage() {
   }, [schedule, areas, streets, minute]);
 
   const my = streets.find((s) => s.id === myId) ?? null;
+  const areaId = areaPick ?? my?.area_id ?? null;
+  const areaStreets = useMemo(() => streets.filter((s) => s.area_id === areaId).sort((a, b) => a.name.localeCompare(b.name)), [streets, areaId]);
+  const areaOptions = useMemo(() => areas.filter((a) => streets.some((s) => s.area_id === a.id)).sort((a, b) => a.name.localeCompare(b.name)), [areas, streets]);
   const water: WaterMarker[] = useMemo(() => {
     const pts = (waterPoints ?? []).map((p) => ({ ...p, nearest: false, km: my ? km(my, p) : null }));
     const best = pts.reduce<(typeof pts)[number] | null>((b, p) => (p.km != null && (!b || p.km < b.km!) ? p : b), null);
@@ -263,8 +269,14 @@ export default function MapPage() {
 
   function pickStreet(id: number) {
     setJump(null);
+    setAreaPick(null);
     setMyId(id);
     try { localStorage.setItem(STREET_KEY, String(id)); } catch { /* ignore */ }
+  }
+  function pickArea(id: number) {
+    setAreaPick(id);
+    const pts = streets.filter((s) => s.area_id === id);
+    if (pts.length) setJump({ key: `area-${id}`, points: pts });
   }
   const toggle = (k: keyof Layers) => setLayers((l) => ({ ...l, [k]: !l[k] }));
 
@@ -289,11 +301,12 @@ export default function MapPage() {
       </div>
 
       <aside className="flex max-h-[55%] flex-col gap-3 overflow-y-auto bg-card p-4 shadow-card lg:max-h-none lg:w-96 lg:shrink-0">
-        {offline && <p className="rounded-xl bg-amber-100 px-3 py-2 text-xs text-amber-900">Demo mode: sample streets, simulated tankers. ({offline})</p>}
+        <LangSwitch className="self-end" />
+        {offline && <p className="rounded-xl bg-amber-100 px-3 py-2 text-xs text-amber-900">Demo mode: sample streets, simulated tankers.</p>}
 
         <section aria-live="polite" className="flex flex-col gap-1">
           {loading ? (
-            <p className="text-lg text-muted-foreground">Loading…</p>
+            <PipeLoader />
           ) : !rounds.length ? (
             <p className="text-2xl font-bold">No tanker round right now</p>
           ) : !myRound || !myStop ? (
@@ -314,12 +327,28 @@ export default function MapPage() {
           {rounds.length > 1 && myRound && <p className="text-xs text-muted-foreground">{rounds.length} tankers out. Yours is in blue, the others are grey.</p>}
         </section>
 
-        <label className="flex items-center gap-2 text-sm text-muted-foreground">
-          Your street
-          <select className="min-h-11 flex-1 rounded-xl border bg-card px-2 text-foreground" value={myId ?? ""} onChange={(e) => pickStreet(Number(e.target.value))}>
-            {streets.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-          </select>
-        </label>
+        {/* Locality first, then a street of that locality only (type to filter). */}
+        <div className="grid grid-cols-2 gap-2">
+          <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+            Locality
+            <select className="min-h-11 w-full rounded-xl border bg-card px-2 text-base text-foreground" value={areaId ?? ""} onChange={(e) => pickArea(Number(e.target.value))}>
+              {areaOptions.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+            </select>
+          </label>
+          <label className="flex min-w-0 flex-col gap-1 text-xs text-muted-foreground">
+            Your street
+            <input
+              key={`${areaId}-${myId}`}
+              list="area-streets"
+              defaultValue={my?.area_id === areaId ? my?.name : ""}
+              onFocus={(e) => e.currentTarget.select()}
+              onChange={(e) => { const s = areaStreets.find((x) => foldName(x.name) === foldName(e.target.value)); if (s) pickStreet(s.id); }}
+              placeholder="Type your street"
+              className="min-h-11 w-full rounded-xl border bg-card px-2 text-base text-foreground"
+            />
+            <datalist id="area-streets">{areaStreets.map((s) => <option key={s.id} value={s.name} />)}</datalist>
+          </label>
+        </div>
 
         <section aria-label="Find a place" className="flex flex-col gap-2">
           <div className="flex gap-2">
@@ -333,7 +362,7 @@ export default function MapPage() {
             </button>
           </div>
           {query.trim() && (
-            !places ? <p className="text-xs text-muted-foreground">Loading places…</p>
+            !places ? <PipeLoader />
             : hits.length ? (
               <ul className="flex flex-col divide-y rounded-xl border">
                 {hits.map((p) => (
@@ -351,7 +380,6 @@ export default function MapPage() {
               {!river ? "checking rivers…"
                 : river.distance_m <= NEAR_RIVER_M ? <>near {river.name ?? `a ${river.waterway}`} (about {metres(river.distance_m)}). After heavy rain, tap water can turn cloudy and low areas can flood.</>
                 : <>about {metres(river.distance_m)} from the nearest {river.waterway}{river.name ? ` (${river.name})` : ""}.</>}
-              <span className="mt-1 block text-xs text-muted-foreground">Worked out on this phone, never sent. River water is not drinking water.</span>
             </p>
           )}
           {islandError && <p role="alert" className="text-xs text-red-800">{islandError}</p>}
@@ -383,18 +411,17 @@ export default function MapPage() {
                   <p className="flex items-center gap-1.5"><span aria-hidden className="grid size-4 place-items-center rounded bg-cyan-700 text-[9px] font-bold text-white">W</span> tanker stop, public standpipe or static tank. Bigger = nearest to your street.</p>
                   {waterPoints === null && <p>No sourced water points loaded yet.</p>}
                   {waterPoints?.length === 0 && <p>No sourced water points listed yet.</p>}
-                  {offline && <p>Demo points next to the mock streets, not real places.</p>}
-                  <p>Only points with a source.</p>
+                  {offline && <p>Demo points, not real places.</p>}
                 </div>
               )}
               {key === "localities" && (
                 <Legend
                   items={[{ dot: BASIS_HEX.locality_notice, label: "CWA notice" }, { dot: BASIS_HEX.regional_timetable, label: "regional timetable" }, { dot: BASIS_HEX.unknown, label: "not known yet" }]}
-                  note={layers.localities ? (localities.length ? `${localities.length} localities. Tap one for its hours.` : "Loading…") : "Every town and village, by how sure its supply hours are."}
+                  note={layers.localities ? (localities.length ? `${localities.length} localities. Tap one for its hours.` : <PipeLoader />) : "Every town and village, by how sure its supply hours are."}
                 />
               )}
               {key === "rivers" && (
-                <Legend items={[{ dot: "#0284c7", label: "river or stream (OpenStreetMap)" }]} note={layers.rivers && !rivers ? "Loading…" : "Search a place or use your location to check the distance."} />
+                <Legend items={[{ dot: "#0284c7", label: "river or stream (OpenStreetMap)" }]} note={layers.rivers && !rivers ? <PipeLoader /> : "Search a place to see how far the nearest river is."} />
               )}
               {key === "notices" && (
                 <div className="flex flex-col gap-1.5 text-xs text-muted-foreground">
@@ -407,8 +434,7 @@ export default function MapPage() {
                       {a.notice.source_url ? <a className="text-primary underline" href={a.notice.source_url} target="_blank" rel="noreferrer">CWA notice{a.notice.source_date ? ` of ${a.notice.source_date}` : ""}</a> : <span className="text-muted-foreground">Sample timetable (demo).</span>}
                     </p>
                   ))}
-                  {unplotted.length > 0 && <p>Not on this map (no streets loaded for them): {unplotted.join(", ")}.</p>}
-                  <p>Area-level only: a notice does not say which street has water.</p>
+                  {unplotted.length > 0 && <p>Not on this map: {unplotted.join(", ")}.</p>}
                 </div>
               )}
             </fieldset>
@@ -422,7 +448,7 @@ export default function MapPage() {
 }
 
 type LegendItem = { label: string; dot?: string; ring?: string; dashed?: boolean; hatch?: boolean };
-function Legend({ items, note }: { items: LegendItem[]; note?: string }) {
+function Legend({ items, note }: { items: LegendItem[]; note?: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1 text-xs text-muted-foreground">
       <ul className="flex flex-wrap gap-x-3 gap-y-1">
@@ -441,7 +467,7 @@ function Legend({ items, note }: { items: LegendItem[]; note?: string }) {
           </li>
         ))}
       </ul>
-      {note && <p>{note}</p>}
+      {note && <div>{note}</div>}
     </div>
   );
 }

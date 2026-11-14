@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AppShell } from "@/components/ui/app-nav";
+import { Translator } from "@/components/ui/i18n";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full">
         {/* App screens get the role sidebar (1024px+) or the phone tab bar; / and /login are full width. */}
         <AppShell>{children}</AppShell>
+        <Translator />{/* English / Français / Kreol on every screen */}
       </body>
     </html>
   );

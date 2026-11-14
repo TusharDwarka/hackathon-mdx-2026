@@ -42,20 +42,20 @@ async function main() {
   if (ae) throw ae;
   const areaId = Object.fromEntries(areas!.map((a) => [a.name, a.id]));
 
-  // ponytail: delete-all then insert. Fails if reports/rounds already reference old streets; re-seed in that case.
-  await db.from("schedule").delete().gte("id", 0);
-  await db.from("streets").delete().gte("id", 0);
+  // Streets are UPSERTED on (area_id, name), never deleted: reports, requests, round_stops and complaints
+  // point at street ids, so "delete all, insert all" fails once anyone has reported and inserts a second
+  // copy of every street (the ids 1-21 / 22-42 bug). Streets that left the CSV are kept and counted.
+  const { inserted, updated, kept } = await loadStreets(db, streets.map((r) => ({
+    area_id: areaId[r.area.trim()],
+    name: r.name.trim(),
+    lat: +r.lat,
+    lng: +r.lng,
+    order_index: +r.order_index,
+  })));
 
-  const { error: se } = await db.from("streets").insert(
-    streets.map((r) => ({
-      area_id: areaId[r.area.trim()],
-      name: r.name.trim(),
-      lat: +r.lat,
-      lng: +r.lng,
-      order_index: +r.order_index,
-    }))
-  );
-  if (se) throw se;
+  // Nothing references schedule, so replacing it is safe. The delete error is checked, not ignored.
+  const { error: de } = await db.from("schedule").delete().gte("id", 0);
+  if (de) throw de;
   const { error: te } = await db.from("schedule").insert(
     schedule.map((r) => ({
       area_id: areaId[r.area.trim()],
@@ -67,7 +67,9 @@ async function main() {
     }))
   );
   if (te) throw te;
-  console.log(`Loaded ${names.length} areas, ${streets.length} streets, ${schedule.length} schedule rows.`);
+  console.log(
+    `Loaded ${names.length} areas, ${streets.length} streets (${inserted} new, ${updated} updated, ${kept} already in the database but not in the CSV, kept), ${schedule.length} schedule rows.`
+  );
 
   await loadReservoirs(db);
   const { data: allAreas, error: aae } = await db.from("areas").select("id,name");
@@ -77,6 +79,45 @@ async function main() {
   await loadQualityNotices(db, allAreas ?? []);
   await loadWaterPoints(db);
   await loadLocalities(db);
+}
+
+type StreetRow = { area_id: number; name: string; lat: number; lng: number; order_index: number };
+
+/**
+ * Upsert streets on (area_id, name) so re-runs refresh coordinates and order instead of adding copies.
+ * Needs the unique index from sql/v6.sql. Without it (code 42P10) we fall back to inserting only the
+ * streets that are missing, so the database still never gets a second copy, and we say what to run.
+ * Streets in the database but not in the CSV are left alone: rows may point at them.
+ */
+async function loadStreets(db: Db, rows: StreetRow[]) {
+  const seen = new Set<string>();
+  const unique = rows.filter((r) => {
+    const k = `${r.area_id}|${r.name}`;
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  if (unique.length !== rows.length) console.warn(`${STREETS}: ${rows.length - unique.length} duplicate (area, name) row(s) in the CSV, first one kept.`);
+
+  const { data: existing, error: ee } = await db.from("streets").select("id,area_id,name").range(0, 9999);
+  if (ee) throw ee;
+  const have = new Set((existing ?? []).map((s) => `${s.area_id}|${s.name}`));
+  const inserted = unique.filter((r) => !have.has(`${r.area_id}|${r.name}`)).length;
+  const kept = (existing ?? []).filter((s) => !seen.has(`${s.area_id}|${s.name}`)).length;
+
+  const { error } = await db.from("streets").upsert(unique, { onConflict: "area_id,name" });
+  if (error?.code === "42P10") {
+    // No unique index yet: insert the missing streets only, update nothing.
+    const missing = unique.filter((r) => !have.has(`${r.area_id}|${r.name}`));
+    if (missing.length) {
+      const { error: ie } = await db.from("streets").insert(missing);
+      if (ie) throw ie;
+    }
+    console.warn("streets: no unique key on (area_id, name), so existing streets were NOT refreshed. Run sql/v6.sql, then load again.");
+    return { inserted, updated: 0, kept };
+  }
+  if (error) throw error;
+  return { inserted, updated: unique.length - inserted, kept };
 }
 
 /** OSM localities for the island-wide search and map. Rows without a name, district, source or with bad coordinates are skipped. */

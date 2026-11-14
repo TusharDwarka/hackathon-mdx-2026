@@ -134,10 +134,8 @@ function Summary({ t, fromApi, now }: { t: Trend; fromApi: boolean; now: number 
       {/vacoas/i.test(t.reservoir) && (
         <p className="text-xs text-muted-foreground">
           <a className="text-primary underline" href={PRESS_20PCT.url} target="_blank" rel="noreferrer">{PRESS_20PCT.text}</a>.
-          {" "}Our line is slower than the press figure. Both are estimates; we show the gap instead of hiding it.
         </p>
       )}
-      <p className="text-xs text-muted-foreground">{fromApi ? "Model: /api/reservoirs/trend." : "Computed in the browser from data/reservoir.csv (forecast API not live yet)."} A storage level never says whether tap water is safe to drink.</p>
     </div>
   );
 }

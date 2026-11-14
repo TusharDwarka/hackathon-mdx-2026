@@ -256,6 +256,8 @@
 @keyframes tank-flow { to { transform: translateX(-60px); } }
 @keyframes tank-rise { from { transform: translateY(var(--rise)); } }
 @keyframes wave-load { to { transform: translateX(100%); } }
+@keyframes pipe-flow { to { stroke-dashoffset: -18; } }
+@keyframes pipe-drip { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(10px); opacity: 0; } }
 @keyframes flow-svg { to { transform: translateX(-400px); } }
 @keyframes spot-pulse { 50% { outline-offset: 10px; outline-color: oklch(1 0 0 / 0); } }
 

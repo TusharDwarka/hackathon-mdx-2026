@@ -10,8 +10,10 @@
 // Supabase unreachable or no streets -> demo mode (Tanker A/B from a demo dispatch on /ops, nothing saved).
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Check, Map as MapIcon, Truck } from "lucide-react";
+import { Check, Map as MapIcon, Navigation, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmButton } from "@/components/ui/confirm";
+import { PipeLoader } from "@/components/ui/pipe-loader";
 import { BottomWaves, PageHeader } from "@/components/ui/brand";
 import { supabase } from "@/lib/supabase";
 import { ASSUMED_REQUEST_L, fmtL } from "@/components/ops/dispatch";
@@ -22,6 +24,16 @@ import { DEMO_STREETS, demoRounds, readDemoDispatch, simulateStep } from "@/comp
 const SEND_EVERY_MS = 5000;
 const ROUND_KEY = "kotdelo.driver.round";
 type Gps = "waiting" | "live" | "blocked" | "sim";
+
+/** Google Maps directions through the stops left, in order.
+ *  ponytail: Maps URLs take 9 waypoints, so it routes the next 10 stops; reopen it after those. */
+function routeUrl(stops: Stop[]): string | null {
+  const next = stops.slice(0, 10);
+  if (!next.length) return null;
+  const pt = (s: Stop) => `${s.street.lat},${s.street.lng}`;
+  const via = next.slice(0, -1).map(pt).join("|");
+  return `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${pt(next[next.length - 1])}${via ? `&waypoints=${encodeURIComponent(via)}` : ""}`;
+}
 
 function rememberRound(id: number | null) {
   try { if (id === null) localStorage.removeItem(ROUND_KEY); else localStorage.setItem(ROUND_KEY, String(id)); } catch { /* private mode */ }
@@ -40,6 +52,7 @@ export default function DriverPage() {
   const [mine, setMine] = useState<LiveRound | null>(null);
   const [gps, setGps] = useState<Gps>(() => (typeof navigator !== "undefined" && !("geolocation" in navigator) ? "blocked" : "waiting"));
   const [lastSent, setLastSent] = useState<number | null>(null);
+  const [sharing, setSharing] = useState(true); // the driver can pause location sharing at any time
   const [now, setNow] = useState(0);
   const fixRef = useRef<{ lat: number; lng: number } | null>(null);
   const stopsRef = useRef<Stop[]>([]);
@@ -134,7 +147,7 @@ export default function DriverPage() {
   // Op 5: while my round is active, send the latest GPS fix every 5s and keep the screen on.
   const roundId = mine?.round.id ?? null;
   useEffect(() => {
-    if (roundId === null) return;
+    if (roundId === null || !sharing) return;
     let watchId: number | null = null;
     let sentinel: WakeLockSentinel | null = null;
     let cancelled = false;
@@ -168,7 +181,7 @@ export default function DriverPage() {
       document.removeEventListener("visibilitychange", onVisible);
       sentinel?.release().catch(() => {});
     };
-  }, [roundId, gps, offline]);
+  }, [roundId, gps, offline, sharing]);
 
   const ago = lastSent && now ? Math.max(0, Math.round((now - lastSent) / 1000)) : null;
   // Litres per stop: the demo dispatch gives them; live they come from requests waiting when the round started.
@@ -182,13 +195,13 @@ export default function DriverPage() {
     <main className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 pt-5 pb-6 md:max-w-3xl lg:max-w-5xl lg:gap-6 lg:px-8 lg:pt-8">
       <PageHeader eyebrow="Tanker driver" title={mine ? mine.label : "Today's round"}>
         {mine && (
-          <span className={`chip shrink-0 shadow-card ${gps === "blocked" ? "bg-red-50 text-red-900" : "bg-emerald-50 text-emerald-900"}`}>
-            <span aria-hidden className={`size-2 rounded-full ${gps === "blocked" ? "bg-red-600" : "animate-pulse bg-emerald-600 motion-reduce:animate-none"}`} />
-            {gps === "blocked" ? "No GPS" : gps === "waiting" ? "Waiting for GPS" : "Live"}
+          <span className={`chip shrink-0 shadow-card ${!sharing ? "bg-muted text-muted-foreground" : gps === "blocked" ? "bg-red-50 text-red-900" : "bg-emerald-50 text-emerald-900"}`}>
+            <span aria-hidden className={`size-2 rounded-full ${!sharing ? "bg-muted-foreground" : gps === "blocked" ? "bg-red-600" : "animate-pulse bg-emerald-600 motion-reduce:animate-none"}`} />
+            {!sharing ? "Paused" : gps === "blocked" ? "No GPS" : gps === "waiting" ? "Waiting for GPS" : "Live"}
           </span>
         )}
       </PageHeader>
-      {offline && <p className="rounded-2xl bg-amber-100 px-4 py-2.5 text-sm text-amber-950">Demo mode: nothing is saved. ({offline})</p>}
+      {offline && <p className="rounded-2xl bg-amber-100 px-4 py-2.5 text-sm text-amber-950">Demo mode: nothing is saved.</p>}
       {error && <p role="alert" className="rounded-2xl bg-red-100 px-4 py-2.5 text-sm text-red-900">{error}</p>}
 
       {!mine ? (
@@ -199,7 +212,7 @@ export default function DriverPage() {
             </span>
             <div>
               <h2 className="text-xl font-bold tracking-[-0.01em]">Start a new round</h2>
-              <p className="mt-1 text-sm text-white/85">Your position is shared only while the round is on, so residents can see the truck coming.</p>
+              <p className="mt-1 text-sm text-white/85">You get the streets in order and a route to follow.</p>
             </div>
             {!loading && !offline && (
               <dl className="grid grid-cols-2 gap-3">
@@ -214,24 +227,18 @@ export default function DriverPage() {
               </dl>
             )}
             <Button size="tap" className="relative z-10 bg-white text-primary hover:bg-white/90" disabled={loading || (!offline && startStreets.length === 0)} onClick={startRound}>
-              {loading ? "Loading…" : offline ? "Start a demo round · every street" : `Start round · ${startStreets.length} stop${startStreets.length === 1 ? "" : "s"}${startLitres ? ` · ${fmtL(startLitres)}` : ""}`}
+              {loading ? <PipeLoader /> : offline ? "Start a demo round" : `Start round · ${startStreets.length} stop${startStreets.length === 1 ? "" : "s"}`}
             </Button>
-            {!loading && !offline && (
-              <p className="relative z-10 text-sm text-white/85">
-                {startStreets.length === 0
-                  ? "Every street is already on another driver's round."
-                  : waitingFree.length
-                    ? `Streets with waiting requests that no other driver has.${assumed ? ` ${ASSUMED_REQUEST_L} L assumed per request until requests store litres.` : ""}`
-                    : "No waiting requests yet. Starting now visits every street no other driver has (demo)."}
-              </p>
+            {!loading && !offline && startStreets.length === 0 && (
+              <p className="relative z-10 text-sm text-white/85">Every street is already on another round.</p>
             )}
             <BottomWaves className="h-16 text-white/30" />
           </section>
 
           <section className="surface flex flex-col gap-3 p-5">
-            <h2 className="text-lg font-bold tracking-[-0.01em]">{offline ? "Dispatched from Operations (demo)" : "Already on the road"}</h2>
+            <h2 className="text-lg font-bold tracking-[-0.01em]">Sent by CWA</h2>
             <p className="text-sm text-muted-foreground">
-              {others.length === 0 ? "No other round is active right now." : offline ? "Pick the tanker you are driving." : "Only pick a round if you are its driver, for example after your phone restarted."}
+              {others.length === 0 ? "No round sent to you yet." : "Tap the round you are driving."}
             </p>
             <ul className="flex flex-col gap-2">
               {others.map((r) => {
@@ -259,6 +266,16 @@ export default function DriverPage() {
       ) : (
         <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr] lg:items-start lg:gap-6">
           <div className="flex flex-col gap-4 lg:sticky lg:top-8">
+            {remaining.length > 0 && (
+              <section className="wave-panel relative flex flex-col gap-3 overflow-hidden rounded-3xl p-5 shadow-card">
+                <p className="text-sm text-white/85">Next stop</p>
+                <p className="-mt-2 text-2xl font-bold tracking-[-0.01em]">{remaining[0].street.name}</p>
+                <a href={routeUrl(remaining)!} target="_blank" rel="noreferrer" className="flex h-14 items-center justify-center gap-2 rounded-full bg-white text-base font-semibold text-primary">
+                  <Navigation aria-hidden className="size-5" /> Open route in Google Maps
+                </a>
+                <p className="text-xs text-white/80">Drives you through the {Math.min(remaining.length, 10)} stops left, in order.</p>
+              </section>
+            )}
             <dl className="grid grid-cols-2 gap-3">
               <div className="surface p-4">
                 <dt className="text-xs text-muted-foreground">Stops left</dt>
@@ -277,25 +294,29 @@ export default function DriverPage() {
               <StopProgress served={mine.stops.map((s) => !!s.served_at)} className="h-3" />
             </div>
             <section className="surface flex flex-col gap-2 p-5">
-              <h2 className="font-semibold">Location sharing</h2>
-              <p className={`text-sm ${gps === "blocked" ? "text-red-800" : "text-emerald-800"}`} aria-live="polite">
-                {gps === "live" && `Sharing location (only during the round)${ago !== null ? ` · sent ${ago}s ago` : ""}`}
-                {gps === "sim" && `Simulated drive (demo)${ago !== null ? ` · sent ${ago}s ago` : ""}`}
-                {gps === "waiting" && "Waiting for GPS… allow location when asked"}
-                {gps === "blocked" && "GPS blocked or unavailable. Needs https on a phone."}
+              <label className="flex min-h-11 items-center justify-between gap-3">
+                <span className="font-semibold">Share my location</span>
+                <input type="checkbox" role="switch" className="size-6 accent-primary" checked={sharing} onChange={() => { setSharing((v) => !v); setGps((g) => (g === "sim" ? g : "waiting")); }} />
+              </label>
+              <p className={`text-sm ${!sharing ? "text-muted-foreground" : gps === "blocked" ? "text-red-800" : "text-emerald-800"}`} aria-live="polite">
+                {!sharing && "Paused. Residents don't see the truck move."}
+                {sharing && gps === "live" && `Residents see the truck${ago !== null ? ` · sent ${ago}s ago` : ""}`}
+                {sharing && gps === "sim" && `Simulated drive${ago !== null ? ` · sent ${ago}s ago` : ""}`}
+                {sharing && gps === "waiting" && "Waiting for GPS. Allow location when asked."}
+                {sharing && gps === "blocked" && "GPS is blocked. Allow location for this site."}
               </p>
-              {gps !== "sim" && (
+              {sharing && gps === "blocked" && (
                 <button type="button" className="min-h-11 self-start text-sm font-medium text-primary underline underline-offset-2" onClick={() => { fixRef.current = null; setGps("sim"); }}>
-                  No GPS here? Simulate the drive
+                  Simulate the drive instead
                 </button>
               )}
               <Link href="/map" className="flex min-h-11 items-center gap-1.5 text-sm font-semibold text-primary">
                 <MapIcon aria-hidden className="size-4" /> Open the live map
               </Link>
             </section>
-            <Button size="tap" variant="destructive" className="hidden lg:inline-flex" onClick={endRound}>
+            <ConfirmButton size="tap" variant="destructive" className="hidden lg:inline-flex" danger title="End this round?" body={remaining.length ? `${remaining.length} stop${remaining.length === 1 ? " is" : "s are"} not served yet. Location sharing stops.` : "Location sharing stops."} confirm="Yes, end" onConfirm={endRound}>
               End round{remaining.length > 0 ? ` (${remaining.length} left)` : ""}
-            </Button>
+            </ConfirmButton>
           </div>
 
           <section className="surface p-3 sm:p-4">
@@ -328,9 +349,9 @@ export default function DriverPage() {
             </ol>
             {assumed && <p className="px-2 pt-3 text-xs text-muted-foreground">{ASSUMED_REQUEST_L} L assumed per request until requests store litres.</p>}
           </section>
-          <Button size="tap" variant="destructive" className="lg:hidden" onClick={endRound}>
+          <ConfirmButton size="tap" variant="destructive" className="lg:hidden" danger title="End this round?" body={remaining.length ? `${remaining.length} stop${remaining.length === 1 ? " is" : "s are"} not served yet. Location sharing stops.` : "Location sharing stops."} confirm="Yes, end" onConfirm={endRound}>
             End round{remaining.length > 0 ? ` (${remaining.length} left)` : ""}
-          </Button>
+          </ConfirmButton>
         </div>
       )}
     </main>

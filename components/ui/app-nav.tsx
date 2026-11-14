@@ -8,10 +8,9 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useSyncExternalStore } from "react";
-import { ArrowLeftRight, BookOpen, CalendarClock, GlassWater, Info, LayoutDashboard, LayoutGrid, LogIn, LogOut, Map, Megaphone, Newspaper, Route, Truck, Waves, type LucideIcon } from "lucide-react";
+import { BookOpen, Database, CalendarClock, GlassWater, Info, LayoutDashboard, LayoutGrid, LogIn, LogOut, Map, Megaphone, Newspaper, Route, Truck, Waves, type LucideIcon } from "lucide-react";
 import { Logo, ROLE_LABEL, SideWaves, readRole, type Role } from "@/components/ui/brand";
-import { useUser } from "@/components/home/shared";
-import { signOut } from "@/lib/queries";
+import { logOut, useUser } from "@/components/home/shared";
 
 type Item = { href: string; label: string; short: string; Icon: LucideIcon; wideOnly?: boolean };
 // Spotlight tour anchor for a nav link (the tour picks whichever copy, sidebar or tab bar, is visible).
@@ -32,18 +31,14 @@ const NAV: Record<Role, Item[]> = {
   driver: [
     { href: "/driver", label: "My round", short: "Round", Icon: Route },
     { href: "/map", label: "Live map", short: "Map", Icon: Map },
-    { href: "/login", label: "Switch role", short: "Switch", Icon: ArrowLeftRight, wideOnly: true },
     { href: "/guide", label: "How to use", short: "Guide", Icon: BookOpen },
   ],
   ops: [
     { href: "/ops", label: "Operations", short: "Ops", Icon: LayoutDashboard },
     { href: "/map", label: "Live map", short: "Map", Icon: Map },
-    { href: "/driver", label: "Driver view", short: "Driver", Icon: Truck },
     { href: "/guide", label: "How to use", short: "Guide", Icon: BookOpen },
   ],
 };
-// The driver's phone bar gets "Switch" too (it has room for 3).
-const PHONE_EXTRA: Partial<Record<Role, Item>> = { driver: { ...NAV.driver[2], wideOnly: false } };
 
 const noSubscribe = () => () => {};
 const BARE = ["/", "/login"]; // full-width pages with their own header
@@ -72,7 +67,7 @@ function Nav({ role, path, tab }: { role: Role; path: string; tab: string | null
     const [p, q] = href.split("?tab=");
     return path === p && (q ?? "overview") === (p === "/resident" ? (tab ?? "overview") : "overview");
   };
-  const phoneItems = [...NAV[role].filter((i) => !i.wideOnly), ...(PHONE_EXTRA[role] ? [PHONE_EXTRA[role]] : [])];
+  const phoneItems = NAV[role].filter((i) => !i.wideOnly);
   const user = useUser();
   return (
     <>
@@ -104,21 +99,19 @@ function Nav({ role, path, tab }: { role: Role; path: string; tab: string | null
           <p className="text-white/75">Viewing as</p>
           <p className="font-semibold">{ROLE_LABEL[role]}{role === "resident" && user ? " · Signed in" : ""}</p>
           <div className="mt-3 flex flex-col gap-1">
-            {role === "resident" && user && (
-              <button type="button" onClick={() => signOut().catch(() => {})} className="flex min-h-9 items-center gap-2 text-left font-medium text-white underline-offset-2 hover:underline">
-                <LogOut aria-hidden className="size-4" /> Log out
-              </button>
-            )}
             {role === "resident" && user === null && (
               <Link href="/login?mode=login" className="flex min-h-9 items-center gap-2 font-medium text-white underline-offset-2 hover:underline">
                 <LogIn aria-hidden className="size-4" /> Log in or sign up
               </Link>
             )}
-            <Link href="/login" className="flex min-h-9 items-center gap-2 font-medium text-white underline-offset-2 hover:underline">
-              <ArrowLeftRight aria-hidden className="size-4" /> Switch role
-            </Link>
+            <button type="button" onClick={logOut} className="flex min-h-9 items-center gap-2 text-left font-medium text-white underline-offset-2 hover:underline">
+              <LogOut aria-hidden className="size-4" /> Log out
+            </button>
             <Link href="/" className="flex min-h-9 items-center gap-2 font-medium text-white underline-offset-2 hover:underline">
               <Info aria-hidden className="size-4" /> About Kot Delo?
+            </Link>
+            <Link href="/sources" className="flex min-h-9 items-center gap-2 font-medium text-white underline-offset-2 hover:underline">
+              <Database aria-hidden className="size-4" /> Data sources
             </Link>
           </div>
         </div>
@@ -140,6 +133,14 @@ function Nav({ role, path, tab }: { role: Role; path: string; tab: string | null
               </Link>
             </li>
           ))}
+          {role !== "resident" && (
+            <li className="min-w-0 flex-1">
+              <button type="button" onClick={logOut} className="flex h-[3.25rem] w-full flex-col items-center justify-center gap-0.5 rounded-full text-[0.6875rem] leading-none font-medium text-muted-foreground">
+                <LogOut aria-hidden className="size-5" />
+                <span className="max-w-full truncate px-0.5">Log out</span>
+              </button>
+            </li>
+          )}
         </ul>
       </nav>
     </>
