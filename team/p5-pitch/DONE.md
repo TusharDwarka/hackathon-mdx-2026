@@ -15,3 +15,4 @@ One line per finished task: what, files, commit hash.
 - Fri 13 Nov: V5 #2 no official tanker timetable; only CWA level is 20 % (TANKER-TIMETABLE.md) — 39993a8
 - Fri 13 Nov: V5 #3 water-safety sources (CWA, Health, WHO, MMS); no 2026 quality notice — e347e21
 - Fri 13 Nov: V5 #4 notice source URLs, all checked (NOTICE-SOURCES.md) — b84cf89
+- Sat 14 Nov: data/context/ + 4 Statistics Mauritius CSVs (abstraction by sector/source, monthly potable production, notifiable diseases) — 72129c4
