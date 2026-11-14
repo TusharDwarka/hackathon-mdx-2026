@@ -1,5 +1,8 @@
 # HANDOFF (p3-backend)
 
+## Needs from others: decision log (Sat 14 Nov, P3)
+- **P1:** `team/p3-backend/DECISIONS-PROPOSAL.md` is a 10-row replacement for `docs/DECISIONS.md` (the current one has 16 rows, the rules ask for 5 to 10, and six rows have no clock time). Copy the table over if you agree. Row 10 (surprise card) is not filled: the constraint is not written anywhere in the repo. The proposal also flags the English-only rule against the Sat 02:38 EN/FR/Kreol switch.
+
 ## V6 (Sat 14 Nov, P3) — duplicate streets fix, feat/data
 Live bug from the Sat 02:00 test: every Vacoas street exists twice (ids 1-21 and 22-42). Cause: `scripts/load-data.ts` did "delete all streets, insert all streets" and ignored the delete error. Once a report pointed at a street the delete failed silently and every street was inserted again.
 
