@@ -492,7 +492,7 @@ export function Resident({ info }: { info: PublicData }) {
         <p role="alert" className="mt-3 text-sm text-red-800">The timetable did not load. Check your connection, then choose your locality again.</p>
       ) : win ? (
         <>
-          <p className="mt-4 text-[2.5rem] leading-none font-bold tracking-[-0.02em] tabular-nums">{win.start_time} – {win.end_time}</p>
+          <p className="mt-4 text-[clamp(1.5rem,7vw,2.5rem)] leading-tight font-bold tracking-[-0.02em] tabular-nums">{win.start_time} – {win.end_time}</p>
           {status && (
             <p className={`mt-2 flex items-center gap-2 text-sm font-medium ${status.tone === "now" ? "text-primary" : "text-muted-foreground"}`}>
               <span aria-hidden className={`size-2 rounded-full ${status.tone === "now" ? "bg-primary" : "bg-muted-foreground/60"}`} />
@@ -719,7 +719,7 @@ export function Resident({ info }: { info: PublicData }) {
           <MapPin aria-hidden className="size-4" /> Change locality
         </button>
       </div>
-      <div className="mt-5 grid gap-5 md:grid-cols-[1.25fr_1fr] md:gap-6">
+      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] md:gap-6">
         <div className="min-w-0">
           <p className="text-sm text-muted-foreground">{today}</p>
           {!place ? (
@@ -728,7 +728,7 @@ export function Resident({ info }: { info: PublicData }) {
             <p role="alert" className="mt-3 text-sm text-red-800">The timetable did not load. Check your connection, then choose your locality again.</p>
           ) : win ? (
             <>
-              <p className="mt-2 text-[2.75rem] leading-none font-bold tracking-[-0.03em] tabular-nums lg:text-[3.25rem]">{win.start_time} – {win.end_time}</p>
+              <p className="mt-2 text-[clamp(1.5rem,7vw,2.75rem)] leading-tight font-bold tracking-[-0.03em] tabular-nums lg:text-[3.25rem]">{win.start_time} – {win.end_time}</p>
               {status && (
                 <p className={`mt-2 flex items-center gap-2 text-sm font-medium ${status.tone === "now" ? "text-primary" : "text-muted-foreground"}`}>
                   <span aria-hidden className={`size-2 rounded-full ${status.tone === "now" ? "bg-primary" : "bg-muted-foreground/60"}`} />
