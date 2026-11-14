@@ -9,6 +9,7 @@
 //
 // Run:      npm run seed-demo        (node --env-file=.env.local --import tsx scripts/seed-demo.ts)
 // Dry run:  npx tsx scripts/seed-demo.ts --dry-run   (no database; prints what would be inserted)
+// Requests: npm run seed-demo -- --requests          (only tops up waiting tanker requests, see main)
 //
 // Deterministic (seeded random): every run produces the same story.
 import { MOCK_STREETS } from "../lib/mock";
@@ -184,6 +185,31 @@ async function main() {
   if (!streets?.length || !windows?.length) {
     console.error("No streets/schedule in the database. Run `npm run load-data` first. Stopping.");
     process.exit(1);
+  }
+
+  // --requests: ONLY top up waiting tanker requests, so /ops Dispatch shows several households per street
+  // (the streets that already wait, by id, else the 6 lowest ids: 6, 4, 1, 5, 3, 2, ... households; a street
+  // left at 1 shows "Low confidence"). Adds what is missing, never deletes, touches nothing else:
+  // running it twice changes nothing.
+  if (process.argv.includes("--requests")) {
+    const pattern = [6, 4, 1, 5, 3, 2];
+    const { data: open, error: oe } = await db.from("requests").select("street_id").eq("status", "waiting");
+    if (oe) throw oe;
+    const byId = [...streets].sort((a, b) => a.id - b.id);
+    const asking = byId.filter((s) => (open ?? []).some((r) => r.street_id === s.id));
+    const targets = asking.length ? asking : byId.slice(0, pattern.length);
+    const want = targets.map((_, i) => pattern[i % pattern.length]);
+    const add = targets.flatMap((s, i) => {
+      const have = (open ?? []).filter((r) => r.street_id === s.id).length;
+      console.log(`  ${s.name.padEnd(28)} has ${have}, target ${want[i]}`);
+      return Array.from({ length: Math.max(0, want[i] - have) }, () => ({ street_id: s.id, status: "waiting" }));
+    });
+    if (add.length) {
+      const { error: re } = await db.from("requests").insert(add);
+      if (re) throw re;
+    }
+    console.log(`${add.length} waiting tanker requests added (${(open ?? []).length} were already waiting, ${streets.length} streets in total).`);
+    return;
   }
 
   const wins = windows.map((w) => ({ ...w, start_time: w.start_time.slice(0, 5), end_time: w.end_time.slice(0, 5) }));
