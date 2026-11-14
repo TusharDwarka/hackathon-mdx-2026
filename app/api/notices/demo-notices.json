@@ -30,20 +30,22 @@
    "raw_text": "Nouveaux horaires de distribution d’eau pour les régions de Vacoas, Phoenix, St. Pierre, Curepipe, Forest-Side et Floréal\n> Communique (Click Here)",
    "parsed": {
     "localities": [
-     "Curepipe",
-     "Floréal",
-     "Phoenix",
      "Vacoas",
-     "Vacoas-Phoenix"
+     "Phoenix",
+     "Curepipe",
+     "Floréal"
     ],
-    "unmatched_localities": [],
+    "unmatched_localities": [
+     "St. Pierre",
+     "Forest-Side"
+    ],
     "start": null,
     "end": null,
     "dates": [],
     "kind": "rationing",
-    "summary": "Nouveaux horaires de distribution d’eau pour les régions de Vacoas, Phoenix, St."
+    "summary": "New water distribution hours apply to Vacoas, Phoenix, St. Pierre, Curepipe, Forest-Side, and Floréal; specific times are not stated."
    },
-   "ai_extracted": false
+   "ai_extracted": true
   },
   {
    "hash": "8cc20fd10dc911240ba08deb15b8411568b081b30d43d2a2053d7e78cc5e900f",
@@ -58,9 +60,9 @@
     "end": null,
     "dates": [],
     "kind": "other",
-    "summary": "Registration of Private Water Tankers > Registration of Private Water Tankers (Click Here)"
+    "summary": "The notice concerns registration of private water tankers."
    },
-   "ai_extracted": false
+   "ai_extracted": true
   },
   {
    "hash": "b806ac928b4cf15215b937dae444e216405372fc755666581310e487e7a649e6",
@@ -75,9 +77,9 @@
     "end": null,
     "dates": [],
     "kind": "rationing",
-    "summary": "Communiqué – Nouveaux horaires de distribution d’eau > Communiqué (Click here)"
+    "summary": "The authority announces new water distribution hours but provides no details."
    },
-   "ai_extracted": false
+   "ai_extracted": true
   },
   {
    "hash": "e733ada66a7b02d9a17a7f48e707e3d1e6d53a466a3814ce3f0d219336207b66",
@@ -92,9 +94,9 @@
     "end": null,
     "dates": [],
     "kind": "other",
-    "summary": "Communiqué – Situation préoccupante dans nos réservoirs > Communiqué (Click here)"
+    "summary": "The Central Water Authority announces a concerning situation in its reservoirs, with no further details given."
    },
-   "ai_extracted": false
+   "ai_extracted": true
   },
   {
    "hash": "7cc82431ccdfbd095533827121421efb5f49210c962ff3eb2eb11429e56e0000",
@@ -104,14 +106,17 @@
    "raw_text": "Communiqué de la CWA – Révision des horaires de distribution d’eau\n> Communiqué > Hours of Supply – MAV Lower > Hours of Supply – MAV Upper",
    "parsed": {
     "localities": [],
-    "unmatched_localities": [],
+    "unmatched_localities": [
+     "MAV Lower",
+     "MAV Upper"
+    ],
     "start": null,
     "end": null,
     "dates": [],
     "kind": "rationing",
-    "summary": "Communiqué de la CWA – Révision des horaires de distribution d’eau > Communiqué > Hours of Supply – MAV Lower > Hours of Supply – MAV Upper"
+    "summary": "The CWA has revised water distribution hours for MAV Lower and MAV Upper; specific times and dates are not stated."
    },
-   "ai_extracted": false
+   "ai_extracted": true
   },
   {
    "hash": "aa7aec37d4732254334684c70585b58a1bf0c483373ed1ef58b3c20f45f68795",
@@ -126,9 +131,9 @@
     "end": null,
     "dates": [],
     "kind": "interruption",
-    "summary": "Communiqué – Interruption de la Fourniture d’Eau > Communiqué (Click here)"
+    "summary": "A water supply interruption is announced, but no areas, times, or dates are given."
    },
-   "ai_extracted": false
+   "ai_extracted": true
   }
  ]
 }
