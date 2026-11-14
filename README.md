@@ -1,32 +1,43 @@
 # Kot Delo? — Hackathon MDX 2026 (theme: Live Better)
 
-> Status (Fri 13 Nov, evening): **V1 built and live on Vercel** (Home, Map, Driver merged). **V2 in progress**: landing, resident, operations screens and the reservoir level. Real CWA timetable, streets and reservoir levels are in `data/`. Loading them into Supabase is a separate step.
+> Status (Sat 14 Nov, morning): **live at https://hackathon-mdx-2026.vercel.app**. All screens below are merged on `main` (40 pull requests since kickoff). Real CWA timetables, OpenStreetMap streets and reservoir levels are in `data/` and loaded into Supabase. Decision log: `docs/DECISIONS.md`.
 
 ## Problem
 During CWA water rationing, households in Vacoas (La Caverne neighbourhood), Mauritius, don't know when water will really come or when the tanker truck will arrive. Since 10 October 2026 the CWA supplies Vacoas only every second day, 03:00–08:00.
 
 ## User
-One household in La Caverne, Vacoas.
+One household in La Caverne, Vacoas (the demo street set). Any locality on the main island can be searched; the two other users are the tanker driver and CWA operations staff.
 
 ## What it does
-Shows today's official CWA water window for your street, lets neighbours report "Water is here" / "No water", lets a household request the tanker ("I need water"), and shows the tanker truck moving live with "N stops away, about X min". It then compares the official schedule with what actually happened: reliability score and a heat map of hours without water. V2 adds the Mare aux Vacoas reservoir level, a supply tier, a trust check on reports, a likely water time, two-tap complaints, and an operations screen for the CWA. English labels, phone first, also works on desktop, no login.
+- **When does water come?** Search your locality or street, see the official CWA supply window and where that rule comes from (official notice, regional timetable, or "Not known yet"). "Remind me 30 min before" adds it to your calendar.
+- **What is really happening?** Neighbours report "Water is here" / "No water" in one tap. The app compares the official schedule with the reports: reliability score, a 24-hour track and a heat map of hours without water.
+- **Where is the tanker?** A household requests a tanker; the driver's stop list builds itself; the resident watches the truck move live with "N stops away, about X min".
+- **Is my tap water safe to drink?** Official notices, heavy rain in the last 48 h and reservoir level, with sourced advice for each situation (CWA, Ministry of Health, WHO).
+- **How much water is left?** All 7 main reservoirs with their trend, and a supply tier.
+- **For the CWA:** an operations screen that plans tanker loads from the requests, lists complaints and reports to check, and reads pasted CWA notices with AI.
 
-## Screens (V2)
-| Screen | For | What it shows | State |
-|---|---|---|---|
-| Landing `/` | everyone | What Kot Delo? is, reservoir level + supply tier, today's window, three ways in | V2, in progress |
-| Resident `/resident` | a household | Today's window, reports, "I need water", confirmed / unconfirmed status, likely water time, complaint in two taps, schedule vs reality, heat map | V1 Home is live at `/`; moves here in V2 |
-| Map `/map` | a household | Truck moving live, stops away, ETA | live (V1) |
-| Driver `/driver` | tanker driver | Start round, GPS every 5 s, mark stop served, end round | live (V1) |
-| Operations `/ops` | CWA staff (desktop first) | Reservoir status, heat map, priority list with a suggested action per street, open complaints, suspect reports | V2, in progress |
+Phone first, also works on desktop. English, French and Kreol Morisien. Guests can browse, report and request a tanker; a complaint needs an email account.
 
-Everything is rule-based (see `contracts/api.md`), with no AI model inside the app.
+## Screens
+| Screen | For | What it shows |
+|---|---|---|
+| Landing `/` | everyone | What Kot Delo? is, reservoir level + supply tier, today's window, ways in |
+| Resident `/resident` | a household | Tabs: Overview, Is my tap water safe?, Water schedule, Report water, Request a tanker, Reservoirs, CWA notices |
+| Map `/map` | a household | Live tankers, stops away and ETA; layers for reports (last 3 h), supply reliability (14 days), official notices, water points, rivers, localities; search and "near a river?" |
+| Driver `/driver` | tanker driver | Start round, GPS every 5 s, mark stop served, end round |
+| Operations `/ops` | CWA staff (desktop first) | Overview (reservoirs, trend, forecast), Dispatch (tanker loads from requests), Complaints, Reports to check, Notices (paste a notice, AI reads it, staff publish it) |
+| Login `/login` | everyone | Log in, sign up or continue as guest; driver and CWA staff enter an access code |
+| Guide `/guide` | everyone | How to use the app, per role |
+| Sources `/sources` | everyone | Every data source and how it was collected |
+
+The schedule, ETA, reliability score, trust check, forecast and dispatch plan are plain rules (see `contracts/api.md`). The one AI model in the app reads CWA notices; see "AI tools used".
 
 ## What is demo, not real
-- **Supply tier thresholds** (≥ 60% normal, 30–60% watch, < 30% critical) are **our demo values, not CWA policy**. The reservoir **levels** are real. The tier label is not an official CWA status.
-- **Seeded reports**: 7 days of neighbour reports (`is_demo = true`), and the extra rows and complaints the V2 seed adds, are generated so the reliability score, heat map, trust check, likely water time and priority list have history. They are **not real neighbour reports**.
-- **Truck route order** (`order_index`) is our suggested route, not an official CWA tanker route.
-- The app never says whether water is safe or unsafe to drink. It shows the supply tier and official notices only.
+- **Supply tier thresholds** (≥ 60% normal, 30–59% watch, < 30% critical) are **our demo values, not CWA policy**. The reservoir **levels** are real. The tier label is not an official CWA status.
+- **Seeded reports**: 7 days of neighbour reports (`is_demo = true`), and the extra rows and complaints the seed adds, are generated so the reliability score, heat map, trust check, likely water time and dispatch plan have history. They are **not real neighbour reports**.
+- **Truck route order** (`order_index`) is our suggested route, not an official CWA tanker route. **Tanker names and capacities** in Dispatch are demo values: no public CWA tanker timetable or fleet list by locality exists.
+- **Forecasts** (next water window, days until a reservoir reaches 20%) are estimates from the timetable and the recent trend, never a promise.
+- **Drinking-water advice** is quoted from official sources, each line linked. The app does not test water and cannot certify the water at your tap.
 
 ## Data sources
 All collected Fri 13 Nov 2026.
@@ -47,28 +58,33 @@ All collected Fri 13 Nov 2026.
 - **Demo data:** seeded reports flagged `is_demo = true` in the database (see "What is demo, not real"). They are NOT real neighbour reports.
 
 ## Stack
-Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres + Realtime) · Leaflet + OpenStreetMap · Vercel. Mobile-first (390px). The tanker is tracked by the driver's phone (`/driver`, geolocation + Wake Lock), not hardware.
+Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres + Realtime + Auth) · Leaflet + OpenStreetMap · Vercel. Mobile-first (390px). The tanker is tracked by the driver's phone (`/driver`, geolocation + Wake Lock), not hardware.
 
 ## AI tools used
 - Claude Code (Anthropic) — planning, code generation, review
 - Codex CLI (OpenAI) — code review, bug hunting
 - Skills/plugins: Ponytail, Karpathy guidelines
-- AI features inside the app: Claude reads pasted CWA notices (places, dates, times) for staff to check; the core ETA and reliability score are rule-based
+- AI inside the app: Claude (`claude-haiku-4-5`) reads CWA notices, scraped from the CWA site and news feeds or pasted by staff, into localities, dates and times. Staff check the reading before publishing; results are cached and labelled "AI-read". With no API key or an AI error, a rule reader takes over. The ETA, reliability score, forecast and dispatch plan are rule-based.
 - French and Kreol Morisien translations of the whole UI were drafted with Claude (components/ui/i18n-dict-*.ts) and reviewed by the team
 - Every data source and how it was collected is listed in the app at /sources
 
 ## Surprise card
-TBD (revealed during the event). The Home/Resident screen has an empty `<SurpriseCard />` slot for it.
+**"Let a new user reach the main feature independently."** (`docs/DECISIONS.md` #8)
+- **First-visit tour** (`components/home/Guide.tsx`): a skippable 30-second spotlight tour on the landing page and on `/resident` that points at the real buttons: search your place → today's water window → reminder → report → request a tanker.
+- **Always reachable again:** the drop logo pulses with a tip and reopens the tour; `/guide` explains each role (resident, tanker driver, CWA staff).
+- **No wall before the feature:** "Browse" on the landing goes straight to the resident screen as a guest; the main feature (today's water time for your place) needs one search, no account.
+- **Visible in the app:** the surprise card sits first on the Resident overview and links to `/guide`.
 
 ## Privacy
-Reports, requests and complaints are stored by street, never by house or person. Complaints are a fixed category only: no free text, no device id. Only the truck is tracked, and only while a round is active.
+Reports and requests are stored by street, never by house or person. A complaint is a fixed category only (no free text) and needs a signed-in account, so it can be traced if abused: the app stores an email login and nothing else, no name and no profile. Guest sessions are an opaque random token that expires after 24 h (only its hash is stored), used for rate limits. Only the truck is tracked, and only while a round is active.
 
 ## How to run
 1. `npm install`
-2. Copy `.env.example` to `.env.local` and fill in the Supabase keys (shared over WhatsApp DM, never committed).
-3. In Supabase, open the SQL Editor and run `sql/schema.sql`, then `sql/v2.sql`.
+2. Copy `.env.example` to `.env.local` and fill in the Supabase keys (shared over WhatsApp DM, never committed). Optional, server only: `ANTHROPIC_API_KEY` (AI notice reading; without it the rule reader is used), `DRIVER_ACCESS_CODE` and `OPS_ACCESS_CODE` (without them the codes `demo-driver` and `demo-ops` work in local dev only).
+3. In Supabase, open the SQL Editor and run, in this order: `sql/schema.sql`, `sql/v2.sql`, `sql/v3.sql`, `sql/v4.sql`, `sql/v5.sql`, `sql/v6.sql`. Then Authentication → Providers → Email on, "Confirm email" off for the demo.
 4. `npm run load-data` loads the CSVs from `data/`. `npm run seed-demo` adds the demo reports.
 5. `npm run dev`, then open http://localhost:3000
+6. Self-checks: `npx tsx lib/queries.ts`, `npx tsx lib/eta.ts`, `npx tsx components/ops/rules.ts`.
 
 ## Team
 See `team/` for per-person notes, `docs/DECISIONS.md` for decisions and times, `docs/PLAYBOOK.md` for how we work.

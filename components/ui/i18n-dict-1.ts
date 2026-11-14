@@ -305,4 +305,8 @@ export const DICT_1: Record<string, [string, string]> = {
   "Reports, tanker requests, complaints": ["Signalements, demandes de camion, plaintes", "Rapor, demann kamion, plint"],
   "Residents using Kot Delo?": ["Les résidents qui utilisent Kot Delo?", "Abitan ki servi Kot Delo?"],
   "Stored by street only. Seeded demo reports are flagged as demo.": ["Enregistrés par rue uniquement. Les signalements de démo sont marqués comme tels.", "Sove par lari selman. Rapor demo make kouma demo."],
+  // ---- surprise card ----
+  "New here? Find your water time on your own": ["Nouveau ici ? Trouvez l'heure de votre eau tout seul", "Nouvo isi? Trouv ler ou dilo ou mem"],
+  "Your first visit opens a 30-second tour that points at each button. Search your locality and today's CWA water window shows at once, no account needed. Tap the drop to see the tour again.": ["Votre première visite ouvre une visite guidée de 30 secondes qui montre chaque bouton. Cherchez votre localité et l'horaire d'eau CWA du jour s'affiche aussitôt, sans compte. Touchez la goutte pour revoir la visite.", "Premie fwa ou vini, enn vizit 30 segonn montre ou sak bouton. Rod ou lokalite ek ler dilo CWA zordi paret toutswit, pa bizin kont. Tap lagout pou trouv vizit-la ankor."],
+  "Open the guide": ["Ouvrir le guide", "Ouver gid-la"],
 };
