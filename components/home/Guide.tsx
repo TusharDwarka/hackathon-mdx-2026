@@ -148,7 +148,7 @@ export function OnboardingTour({ tour = "resident", drop = false, label = "How i
             <LogoMark className="size-11 rounded-2xl" />
           </button>
           {hint && (
-            <span role="status" className={`absolute top-full left-0 z-40 mt-3 flex items-center gap-1 rounded-2xl bg-primary py-1 pr-1 pl-3.5 text-sm font-semibold whitespace-nowrap text-primary-foreground shadow-nav ${enter}`}>
+            <span role="status" className={`absolute top-full left-0 z-40 mt-3 flex w-max max-w-[calc(100vw-3rem)] items-center gap-1 rounded-2xl bg-primary py-1 pr-1 pl-3.5 text-sm font-semibold whitespace-normal text-primary-foreground shadow-nav ${enter}`}>
               <span aria-hidden className="absolute -top-1.5 left-4 size-3 rotate-45 rounded-[2px] bg-primary" />
               Tap the drop for a quick guide
               <button type="button" onClick={dismiss} aria-label="Hide the tip" className="relative grid size-9 shrink-0 place-items-center rounded-full hover:bg-white/15">

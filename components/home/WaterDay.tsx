@@ -123,7 +123,7 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
         </p>
       )}
 
-      <div className="mt-4 grid gap-6 md:grid-cols-[1fr_0.9fr]">
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] md:gap-6">
         <ol className="relative flex flex-col">
           {steps.map((s, i) => {
             const isNow = i === current && current < steps.length - 1;
@@ -142,12 +142,12 @@ export function Planner({ place, day, win, kind, now, today }: { place: string |
           })}
         </ol>
 
-        <div className="flex flex-col gap-3 rounded-2xl bg-muted/70 p-4">
-          <Button data-tour="calendar" size="tap" disabled={sample} onClick={remind} className="h-12 text-sm">
+        <div className="flex min-w-0 flex-col gap-3 rounded-2xl bg-muted/70 p-3 sm:p-4">
+          <Button data-tour="calendar" size="tap" disabled={sample} onClick={remind} className="h-auto min-h-12 px-3 py-2 text-sm whitespace-normal">
             <CalendarPlus aria-hidden className="size-5" />
             Remind me 30 min before
           </Button>
-          <Button size="tap" variant="outline" disabled={sample} onClick={remindInTab} className="h-12 border-transparent bg-card text-sm">
+          <Button size="tap" variant="outline" disabled={sample} onClick={remindInTab} className="h-auto min-h-12 border-transparent bg-card px-3 py-2 text-sm whitespace-normal">
             <Bell aria-hidden className="size-5" />
             Also alert me in this tab
           </Button>
@@ -184,7 +184,7 @@ export function ForecastCard({ forecast, loading, today }: { forecast: Forecast 
       ) : (
         <>
           <p className="mt-2 text-sm text-muted-foreground">{dayLabel(forecast.next.day, today)}</p>
-          <p className="text-[2.25rem] leading-none font-bold tracking-[-0.02em] tabular-nums">{forecast.next.start_time} – {forecast.next.end_time}</p>
+          <p className="text-[clamp(1.5rem,7vw,2.25rem)] leading-tight font-bold tracking-[-0.02em] tabular-nums">{forecast.next.start_time} – {forecast.next.end_time}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
             <span className={`${tag} bg-muted`}>{BASIS[forecast.basis]}</span>
             <span className={`${tag} bg-muted`} aria-label={`Confidence: ${forecast.confidence}`}>
@@ -241,7 +241,7 @@ const TIPS = [
 export function SaveWaterCard({ points, from }: { points: WaterPoint[]; from: { lat: number; lng: number; name: string } | null }) {
   const near = from ? points.map((p) => ({ ...p, d: km(from, p) })).sort((a, b) => a.d - b.d).slice(0, 2) : [];
   return (
-    <section className={`${card} grid gap-5 md:grid-cols-2 md:gap-8`} aria-labelledby="save-title">
+    <section className={`${card} grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-8`} aria-labelledby="save-title">
       <div>
         <h2 id="save-title" className={title}>Save water</h2>
         <ul className="mt-3 flex flex-col gap-3">

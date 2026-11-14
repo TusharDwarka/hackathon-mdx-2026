@@ -8,11 +8,12 @@ import type { ScheduleRow } from "@/components/map/layers";
 
 export type Street = { id: number; area_id: number; name: string; lat: number; lng: number; order_index: number };
 export type Area = { id: number; name: string };
-export type Round = { id: number; status: "active" | "done"; started_at: string };
+/** `planned` = CWA staff assigned it to a tanker, the driver has not tapped Start yet. */
+export type Round = { id: number; status: "planned" | "active" | "done"; started_at: string };
 export type Stop = { id: number; round_id: number; street_id: number; stop_order: number; served_at: string | null; street: Street; litres?: number; trip?: number };
 export type Fix = { lat: number; lng: number; recorded_at: string };
-/** One tanker on the road. `label` is "Round 12" live (no vehicle table yet) or "Tanker A" in demo. */
-export type LiveRound = { round: Round; label: string; stops: Stop[] };
+/** One tanker with a round. `label` is the tanker's name, "Round 12" for a round without a tanker, "Tanker A" in demo. */
+export type LiveRound = { round: Round; label: string; stops: Stop[]; tanker_id?: number | null };
 /** litres: the request's own litres once P3 adds the column, else ASSUMED_REQUEST_L (`assumed` = true). */
 export type WaitingRequest = { street_id: number; created_at: string; litres: number; assumed: boolean };
 
@@ -32,16 +33,16 @@ export async function loadAreas(): Promise<Area[]> {
   return (data ?? []) as Area[];
 }
 
-/** Every active round with its stops, oldest first. */
+/** Every open round (assigned by CWA staff or already on the road) with its stops, oldest first. */
 export async function loadActiveRounds(): Promise<LiveRound[]> {
-  const { data, error } = await supabase.from("rounds").select("id,status,started_at").eq("status", "active").order("started_at");
+  const { data, error } = await supabase.from("rounds").select("id,status,started_at,tanker_id,tanker:tankers(name)").in("status", ["planned", "active"]).order("started_at");
   if (error) throw error;
-  const rounds = (data ?? []) as Round[];
+  const rounds = (data ?? []) as unknown as (Round & { tanker_id: number | null; tanker: { name: string } | null })[];
   if (!rounds.length) return [];
   const { data: stops, error: e2 } = await supabase.from("round_stops").select(STOP_COLS).in("round_id", rounds.map((r) => r.id)).order("stop_order");
   if (e2) throw e2;
   const all = (stops ?? []) as unknown as Stop[];
-  return rounds.map((round) => ({ round, label: roundLabel(round.id), stops: all.filter((s) => s.round_id === round.id) }));
+  return rounds.map(({ tanker, tanker_id, ...round }) => ({ round, tanker_id, label: tanker?.name ?? roundLabel(round.id), stops: all.filter((s) => s.round_id === round.id) }));
 }
 
 /** Op 8: latest GPS fix per round. */

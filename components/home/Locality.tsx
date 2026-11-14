@@ -46,7 +46,7 @@ export function SupplyCard({ name }: { name: string }) {
   const basis = known[0]?.b ?? "unknown";
   return (
     <section className={card} aria-labelledby="supply-title">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="supply-title" className={title}>Water supply in {name}</h2>
         {mine && <span className={`${tag} shrink-0 ${BASIS[basis].style}`}>{BASIS[basis].label}</span>}
       </div>
@@ -59,7 +59,7 @@ export function SupplyCard({ name }: { name: string }) {
           <p className="mt-1 text-sm text-muted-foreground">{FREQ[known[0].f] ?? "Planned"}</p>
           <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {known.map((r) => (
-              <li key={`${r.s}-${r.e}`} className="text-[2rem] leading-none font-bold tracking-[-0.02em] tabular-nums">{r.s} – {r.e}</li>
+              <li key={`${r.s}-${r.e}`} className="text-[clamp(1.5rem,7vw,2rem)] leading-tight font-bold tracking-[-0.02em] tabular-nums">{r.s} – {r.e}</li>
             ))}
           </ul>
           <p className="mt-2 text-xs text-muted-foreground">

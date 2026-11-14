@@ -72,9 +72,9 @@ export function Landing({ info }: { info: PublicData }) {
       <div aria-hidden className="scroll-progress" />
       {/* Top bar: see-through at the top, frosted once the page scrolls. */}
       <header className="sticky top-0 z-50 px-3 pt-3 sm:px-4 lg:px-6">
-        <div className="glass bar-on-scroll mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 rounded-full pr-2 pl-3 shadow-card sm:pl-4">
+        <div className="glass bar-on-scroll mx-auto flex h-16 max-w-6xl items-center justify-between gap-1 rounded-full pr-2 pl-3 shadow-card sm:gap-3 sm:pl-4">
           {/* The drop opens the quick guide (and pulses with a tip on the first visit). */}
-          <span className="flex items-center gap-2.5 text-lg font-bold tracking-[-0.02em]">
+          <span className="flex shrink-0 items-center gap-1 text-sm font-bold tracking-[-0.02em] whitespace-nowrap sm:gap-2.5 sm:text-lg">
             <OnboardingTour tour="landing" drop />
             Kot Delo?
           </span>
@@ -84,9 +84,9 @@ export function Landing({ info }: { info: PublicData }) {
             <a href="#notices" className="hover:text-foreground">CWA notices</a>
             <Link href="/sources" className="hover:text-foreground">Data sources</Link>
           </nav>
-          <span className="flex items-center gap-2">
-            <LangSwitch className="shadow-none" />
-            <Link href="/login" data-tour="open" className={cn(buttonVariants(), "h-12 px-5 text-sm font-semibold")}>Start</Link>
+          <span className="flex items-center gap-1 sm:gap-2">
+            <LangSwitch compact className="shadow-none" />
+            <Link href="/login" data-tour="open" className={cn(buttonVariants(), "h-12 px-2 text-xs font-semibold sm:px-5 sm:text-sm")}>Start</Link>
           </span>
         </div>
       </header>
@@ -108,7 +108,7 @@ export function Landing({ info }: { info: PublicData }) {
               </span>
               Made for Mauritius · CWA water rationing
             </p>
-            <h1 aria-label="Know when water comes, and if it's safe to drink." className="mt-6 text-[2.5rem] leading-[1.04] font-bold tracking-[-0.035em] sm:text-6xl lg:text-7xl">
+            <h1 aria-label="Know when water comes, and if it's safe to drink." className="mt-6 text-[clamp(2rem,8vw,2.5rem)] leading-[1.08] font-bold tracking-[-0.035em] sm:text-6xl lg:text-7xl">
               {/* Each word slides up into place once, on load. Words wrap freely, so it fits 360 px. */}
               {HEADLINE.map((w, n) => (
                 <span key={n}>

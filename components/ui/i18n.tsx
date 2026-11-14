@@ -147,10 +147,15 @@ const LANGS: { id: Lang; label: string; name: string }[] = [
   { id: "mfe", label: "KR", name: "Kreol" },
 ];
 /** EN · FR · KR switch. Never translated itself. */
-export function LangSwitch({ className = "" }: { className?: string }) {
+export function LangSwitch({ className = "", compact = false }: { className?: string; compact?: boolean }) {
   const lang = useLang();
   return (
     <div data-no-translate role="group" aria-label="Language / Langue / Lang" className={`inline-flex shrink-0 gap-0.5 rounded-full bg-card p-1 shadow-card ${className}`}>
+      {compact && (
+        <select aria-label="Language" value={lang} onChange={(e) => setLang(e.target.value as Lang)} className="h-11 rounded-full bg-card px-2 text-base font-semibold text-foreground sm:hidden">
+          {LANGS.map((l) => <option key={l.id} value={l.id} lang={l.id}>{l.label}</option>)}
+        </select>
+      )}
       {LANGS.map((l) => (
         <button
           key={l.id}
@@ -159,7 +164,7 @@ export function LangSwitch({ className = "" }: { className?: string }) {
           title={l.name}
           aria-pressed={lang === l.id}
           onClick={() => setLang(l.id)}
-          className="min-h-9 min-w-10 rounded-full px-2 text-xs font-bold text-muted-foreground aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+          className={`min-h-9 min-w-10 rounded-full px-2 text-xs font-bold text-muted-foreground aria-pressed:bg-primary aria-pressed:text-primary-foreground ${compact ? "hidden sm:block" : ""}`}
         >
           {l.label}
         </button>

@@ -12,3 +12,4 @@ One line per finished task: what, files, commit hash.
 - Map legend + one dot per street; 360 px check (no sideways scroll; ops tabs and map link now 44 px)
 - Pitch deck: team/p4-ai/slides/deck.html (6 slides, open in a browser, arrows or tap to move)
 - Pitch deck as PowerPoint: team/p4-ai/slides/kot-delo.pptx (6 slides, speaker notes)
+- Pitch deck with speaker notes and timing: team/p4-ai/slides/kot-delo-pitch.pptx
