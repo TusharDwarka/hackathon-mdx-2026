@@ -4,7 +4,18 @@
 
 Built for **Hackathon MDX 2026 · Life Powered by Tech · Live Better**.
 
-[Open the app](https://hackathon-mdx-2026.vercel.app) · [Backup demo video](docs/demo-backup.mp4) · [Data sources](https://hackathon-mdx-2026.vercel.app/sources) · [Decision log](docs/DECISIONS.md)
+## 📦 Submission
+
+| Deliverable | Link |
+|---|---|
+| 📱 **Live app (test link)** | **https://hackathon-mdx-2026.vercel.app** |
+| 🎬 **Backup demo video (~2 min)** | [docs/demo-backup.mp4](docs/demo-backup.mp4) |
+| 📊 **Pitch slides (6)** | [team/p4-ai/slides/kot-delo-pitch.pptx](team/p4-ai/slides/kot-delo-pitch.pptx) |
+| 🧭 **Decision log (10 decisions, with times)** | [docs/DECISIONS.md](docs/DECISIONS.md) |
+| 📚 **Data sources** | [In the app at /sources](https://hackathon-mdx-2026.vercel.app/sources) · [README section](#data-sources) |
+| 🤖 **AI tools used** | [README section](#ai-tools-used) |
+| 🃏 **Surprise card** | [README section](#surprise-card) |
+| 🛠️ **How to run** | [README section](#how-to-run) |
 
 ## Final app screenshots
 
