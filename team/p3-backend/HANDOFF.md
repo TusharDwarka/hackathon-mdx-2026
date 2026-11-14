@@ -1,5 +1,17 @@
 # HANDOFF (p3-backend)
 
+## Notices keep themselves current (Sat 14 Nov, P3) — feat/data
+The notices feed no longer needs anyone to run the scraper.
+- **How:** `GET /api/notices/feed` answers as before, then (after the response) starts one scrape of CWA / GIS / news if this server has not run one for 3 h. New and changed notices are upserted into `notices`; a notice already stored with the same text is skipped, so there is no repeated AI call.
+- **New route:** `GET /api/notices/refresh` runs the same scrape and answers `{found, updated, ai_read, ran_at}` or `{skipped: true}`. `?force=1` shortens the 3 h spacing to 5 min.
+- **Files:** `app/api/_lib/notice-scrape.ts` (the scraper core, moved out of the script), `app/api/_lib/notice-refresh.ts`, `app/api/notices/refresh/route.ts`. `scripts/scrape-notices.ts` uses the same core and still writes the cache file.
+- **Tested:** `npx tsc --noEmit`, eslint and `npm run build` pass. On `next start` with the real database: refresh answered `{"found":6,"updated":0,"ai_read":0}` in 4 s; after a feed call, refresh answered `{"skipped":true}` (the feed had started the run).
+
+### Needs from others
+- **P1:** set `ANTHROPIC_API_KEY` on Vercel. Without it the refresh still runs but every notice is read by the rule reader (`ai_extracted: false`): today all 7 stored notices are rule-read. With the key, the next refresh re-reads them with the AI.
+- **P1 (optional, `vercel.json` is yours):** a daily cron on `/api/notices/refresh` keeps notices current even when nobody opens the app: `"crons": [{ "path": "/api/notices/refresh", "schedule": "0 2 * * *" }]`.
+- **Not automatic yet:** the timetable (`data/schedule.csv`, ends 13 Dec) and reservoir levels (typed from news articles, no structured source) still need `npm run load-data`.
+
 ## Needs from others: decision log (Sat 14 Nov, P3)
 - **P1:** `team/p3-backend/DECISIONS-PROPOSAL.md` is a 10-row replacement for `docs/DECISIONS.md` (the current one has 16 rows, the rules ask for 5 to 10, and six rows have no clock time). Copy the table over if you agree. Row 10 (surprise card) is not filled: the constraint is not written anywhere in the repo. The proposal also flags the English-only rule against the Sat 02:38 EN/FR/Kreol switch.
 
