@@ -4,7 +4,6 @@
 // the reservoir trend chart (op 25), next window per area (op 24) and the heat map (op 11).
 import { useEffect, useState } from "react";
 import { HEAT_LEGEND, HeatMap } from "@/components/home/HeatMap";
-import { fmtL } from "@/components/ops/dispatch";
 import type { OpsData } from "@/components/ops/data";
 import { loadTanks, type Tanks } from "@/components/ops/forecast";
 import { Forecasts } from "@/components/ops/Forecasts";
@@ -23,12 +22,13 @@ const TIER: Record<Tier, { label: string; style: string }> = {
 export function Overview({ data, go, now }: { data: OpsData; go: (s: Section) => void; now: number }) {
   const [tanks, setTanks] = useState<Tanks | null>(null);
   useEffect(() => { loadTanks().then(setTanks); }, []);
-  const waitingL = data.waiting.reduce((s, r) => s + r.litres, 0);
+  // V5 contract: one waiting request = one household. Ops never sees litres here (capacity is chosen per load in Dispatch).
+  const households = data.waiting.length;
   const waitingStreets = new Set(data.waiting.map((r) => r.street_id)).size;
   const open = data.complaints.filter((c) => c.status === "open").length;
   const review = data.statuses.filter((s) => s.status === "suspect" || s.status === "unconfirmed").length;
   const tiles: { label: string; value: string; detail: string; to: Section }[] = [
-    { label: "Waiting for a tanker", value: fmtL(waitingL), detail: `${waitingStreets} street${waitingStreets === 1 ? "" : "s"}`, to: "dispatch" },
+    { label: "Waiting for a tanker", value: `${households} household${households === 1 ? "" : "s"}`, detail: `${waitingStreets} street${waitingStreets === 1 ? "" : "s"}`, to: "dispatch" },
     { label: "Tankers out", value: String(data.rounds.length), detail: "Dispatch →", to: "dispatch" },
     { label: "Open complaints", value: String(open), detail: "Complaints →", to: "complaints" },
     { label: "Reports to check", value: String(review), detail: "last 3 h", to: "review" },

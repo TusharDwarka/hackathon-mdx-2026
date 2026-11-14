@@ -16,3 +16,8 @@ One line per finished task: what, files, commit hash.
 - Sat 14 Nov: duplicate streets fix: sql/v6.sql (merge copies, re-point FKs, unique keys), load-data upserts streets on (area_id, name) instead of delete+insert, v6 checks in scripts/test-sql.ts — see commit
 - Sat 14 Nov: notice reader no longer matches 'Bassin' inside 'Beau Bassin' (localitiesInText: longest name first, covered text not reused; 3 self-checks) — see commit
 - Sat 14 Nov: dropped the unused _ignoredLitres parameter from postRequest (last lint warning) — see commit
+- Sat 14 Nov: map ETA copy: 'about 0 min' -> 'arriving now' (etaLabel in lib/eta.ts, used in app/map/page.tsx; P4 files, asked by P3's tester) — see commit
+- Sat 14 Nov: ops Overview tile 'Waiting for a tanker' shows households (count of waiting requests) instead of a litres sum; P4 file components/ops/Overview.tsx, asked by the tester — see commit
+- Sat 14 Nov: notices feed refreshes itself: scraper core moved to app/api/_lib/notice-scrape.ts, feed re-scrapes after answering when 3 h old, new GET /api/notices/refresh for a cron; scraper run against the live database (7 notices stored) — see commit
+- Sat 14 Nov: notice reader accepts a second AI provider (any OpenAI-compatible API via AI_BASE_URL + AI_API_KEY + AI_MODEL, used when ANTHROPIC_API_KEY is not set) — see commit
+- Sat 14 Nov: scraper run with the AI reader on (OpenRouter free model): 6 of 7 notices AI-read in the live database and in the cache file — see commit

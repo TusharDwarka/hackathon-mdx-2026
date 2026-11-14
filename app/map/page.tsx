@@ -13,7 +13,7 @@ import { Layers as LayersIcon, LocateFixed, Search } from "lucide-react";
 import { PipeLoader } from "@/components/ui/pipe-loader";
 import { LangSwitch } from "@/components/ui/i18n";
 import { supabase } from "@/lib/supabase";
-import { etaMinutes, km } from "@/lib/eta";
+import { etaLabel, etaMinutes, km } from "@/lib/eta";
 import { NEAR_RIVER_M, foldName, loadPlaces, nearestRiver, placeLabel, searchPlaces, type Place, type Rivers } from "@/lib/queries";
 import { getRivers, loadSupply } from "@/components/home/Locality";
 import { BASIS_HEX, LiveMap, type AreaNotice, type Layers, type LocalityMarker, type TankerMarker, type WaterMarker } from "@/components/map/LiveMap";
@@ -316,7 +316,7 @@ export default function MapPage() {
           ) : (
             <>
               <p className="text-2xl font-bold">{stopsAway} stop{stopsAway > 1 ? "s" : ""} away</p>
-              <p className="text-lg">{myRound.label} on the way · about {eta} min{stale ? " (GPS signal lost, estimate)" : ""}</p>
+              <p className="text-lg">{myRound.label} on the way · {etaLabel(eta)}{stale ? " (GPS signal lost, estimate)" : ""}</p>
               {myLitres > 0 && <p className="text-sm text-muted-foreground">About {myLitres} L planned for your street.</p>}
               {!myFix && <p className="text-sm text-muted-foreground">Waiting for the driver&apos;s first GPS fix…</p>}
             </>

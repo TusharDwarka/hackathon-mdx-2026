@@ -1,9 +1,14 @@
 // GET ?locality=&limit=  the notices feed (scraped CWA / news notices + ops pastes), newest first.
 // locality keeps notices naming it plus notices with no locality (island-wide or not stated).
 // Without the database: the last scrape (demo-notices.json) with demo: true.
+// Keeps itself current: after answering, it re-scrapes the sources if this server has not for 3 h.
+import { after } from "next/server";
 import { foldName, type FeedNotice, type FeedKind } from "@/lib/queries";
+import { refreshIfStale } from "../../_lib/notice-refresh";
 import { db, dbError, handle, HttpError } from "../../_lib/server";
 import cache from "../demo-notices.json";
+
+export const maxDuration = 60;
 
 function forLocality(rows: FeedNotice[], locality: string | null): FeedNotice[] {
   if (!locality) return rows;
@@ -16,6 +21,8 @@ export const GET = handle(async (req) => {
   const locality = params.get("locality")?.trim() || null;
   const limit = Number(params.get("limit") ?? 20);
   if (!Number.isInteger(limit) || limit < 1 || limit > 50) throw new HttpError(400, "invalid_limit");
+
+  after(() => refreshIfStale()); // runs once the response is sent; never fails the feed
 
   let rows: FeedNotice[];
   let demo = false;
