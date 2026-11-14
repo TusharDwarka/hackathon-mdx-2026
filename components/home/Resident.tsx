@@ -827,7 +827,7 @@ export function Resident({ info }: { info: PublicData }) {
   // Dashboard: 1 column on phones, 2 on tablets, 3 from 1280px.
   const overview = (
     <div className="grid gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
-      {/* Surprise card (DECISIONS #8): a new user reaches the main feature on their own. */}
+      {/* Surprise card (DECISIONS #9): a new user reaches the main feature on their own. */}
       <SurpriseCard
         title="New here? Find your water time on your own"
         body="Your first visit opens a 30-second tour that points at each button. Search your locality and today's CWA water window shows at once, no account needed. Tap the drop to see the tour again."

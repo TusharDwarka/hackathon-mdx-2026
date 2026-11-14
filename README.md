@@ -69,7 +69,7 @@ Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres + R
 - Every data source and how it was collected is listed in the app at /sources
 
 ## Surprise card
-**"Let a new user reach the main feature independently."** (`docs/DECISIONS.md` #8)
+**"Let a new user reach the main feature independently."** (`docs/DECISIONS.md` #9)
 - **First-visit tour** (`components/home/Guide.tsx`): a skippable 30-second spotlight tour on the landing page and on `/resident` that points at the real buttons: search your place → today's water window → reminder → report → request a tanker.
 - **Always reachable again:** the drop logo pulses with a tip and reopens the tour; `/guide` explains each role (resident, tanker driver, CWA staff).
 - **No wall before the feature:** "Browse" on the landing goes straight to the resident screen as a guest; the main feature (today's water time for your place) needs one search, no account.
