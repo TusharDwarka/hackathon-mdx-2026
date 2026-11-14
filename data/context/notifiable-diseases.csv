@@ -1,0 +1,71 @@
+year,disease,disease_type,Number
+2012,Water borne diseases,Amoebiasis (gastroenteritis),0
+2012,Food borne diseases,Typhoid,4
+2012,Food borne diseases,Food poisoning,264
+2012,Mosquito borne diseases,Malaria,33
+2012,Mosquito borne diseases,Dengue,13
+2012,Mosquito borne diseases,Chickunguya,1
+2012,Mammal borne disease,Leptospirosis,16
+2013,Water borne diseases,Amoebiasis (gastroenteritis),0
+2013,Food borne diseases,Typhoid,5
+2013,Food borne diseases,Food poisoning,390
+2013,Mosquito borne diseases,Malaria,49
+2013,Mosquito borne diseases,Dengue,19
+2013,Mosquito borne diseases,Chickunguya,0
+2013,Mammal borne disease,Leptospirosis,25
+2014,Water borne diseases,Amoebiasis (gastroenteritis),0
+2014,Food borne diseases,Typhoid,1
+2014,Food borne diseases,Food poisoning,169
+2014,Mosquito borne diseases,Malaria,20
+2014,Mosquito borne diseases,Dengue,64
+2014,Mosquito borne diseases,Chickunguya,2
+2014,Mammal borne disease,Leptospirosis,16
+2015,Water borne diseases,Amoebiasis (gastroenteritis),1
+2015,Food borne diseases,Typhoid,1
+2015,Food borne diseases,Food poisoning,82
+2015,Mosquito borne diseases,Malaria,32
+2015,Mosquito borne diseases,Dengue,91
+2015,Mosquito borne diseases,Chickunguya,0
+2015,Mammal borne disease,Leptospirosis,30
+2016,Water borne diseases,Amoebiasis (gastroenteritis),0
+2016,Food borne diseases,Typhoid,2
+2016,Food borne diseases,Food poisoning,147
+2016,Mosquito borne diseases,Malaria,25
+2016,Mosquito borne diseases,Dengue,24
+2016,Mosquito borne diseases,Chickunguya,7
+2016,Mammal borne disease,Leptospirosis,17
+2017,Water borne diseases,Amoebiasis (gastroenteritis),0
+2017,Food borne diseases,Typhoid,0
+2017,Food borne diseases,Food poisoning,208
+2017,Mosquito borne diseases,Malaria,28
+2017,Mosquito borne diseases,Dengue,13
+2017,Mosquito borne diseases,Chickunguya,3
+2017,Mammal borne disease,Leptospirosis,23
+2018,Water borne diseases,Amoebiasis (gastroenteritis),0
+2018,Food borne diseases,Typhoid,4
+2018,Food borne diseases,Food poisoning,65
+2018,Mosquito borne diseases,Malaria,41
+2018,Mosquito borne diseases,Dengue,6
+2018,Mosquito borne diseases,Chickunguya,1
+2018,Mammal borne disease,Leptospirosis,18
+2019,Water borne diseases,Amoebiasis (gastroenteritis),0
+2019,Food borne diseases,Typhoid,2
+2019,Food borne diseases,Food poisoning,83
+2019,Mosquito borne diseases,Malaria,41
+2019,Mosquito borne diseases,Dengue,152
+2019,Mosquito borne diseases,Chickunguya,1
+2019,Mammal borne disease,Leptospirosis,24
+2020,Water borne diseases,Amoebiasis (gastroenteritis),0
+2020,Food borne diseases,Typhoid,0
+2020,Food borne diseases,Food poisoning,58
+2020,Mosquito borne diseases,Malaria,12
+2020,Mosquito borne diseases,Dengue,228
+2020,Mosquito borne diseases,Chickunguya,0
+2020,Mammal borne disease,Leptospirosis,23
+2021,Water borne diseases,Amoebiasis (gastroenteritis),0
+2021,Food borne diseases,Typhoid,0
+2021,Food borne diseases,Food poisoning,148
+2021,Mosquito borne diseases,Malaria,16
+2021,Mosquito borne diseases,Dengue,0
+2021,Mosquito borne diseases,Chickunguya,0
+2021,Mammal borne disease,Leptospirosis,25
