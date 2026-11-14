@@ -10,3 +10,5 @@ One line per finished task: what, files, commit hash.
 - Fri 13 Nov: NEXT-TASK-SPLIT P4 steps 1-8 (responsive /map + /driver, map layers, notice overlay, unconfirmed report rings, /ops sections, dispatch preview with litres/loads, multiple drivers, grouped complaints). Self-checks + build + lint pass; demo browser checks at 360-1440 px pass.
 - Fri 13 Nov: WATER-DAY-SPLIT P4 items 1-5: ops reservoir tank row, SVG trend chart (op 25, local least-squares fallback), next window per area (op 24, local rule fallback), map water points layer with nearest highlighted, diagram pass (dry bars, load/capacity bars, stop progress on ops + driver). Self-check `npx tsx components/ops/forecast.ts` — (see git log)
 - Map legend + one dot per street; 360 px check (no sideways scroll; ops tabs and map link now 44 px)
+- Pitch deck: team/p4-ai/slides/deck.html (6 slides, open in a browser, arrows or tap to move)
+- Pitch deck as PowerPoint: team/p4-ai/slides/kot-delo.pptx (6 slides, speaker notes)
