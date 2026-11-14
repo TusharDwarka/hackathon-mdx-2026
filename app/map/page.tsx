@@ -19,7 +19,8 @@ import { getRivers, loadSupply } from "@/components/home/Locality";
 import { BASIS_HEX, LiveMap, type AreaNotice, type Layers, type LocalityMarker, type TankerMarker, type WaterMarker } from "@/components/map/LiveMap";
 import { errText, loadActiveRounds, loadAreas, loadLatestFixes, loadReports, loadSchedule, loadStreets, loadWaterPoints, type Area, type Fix, type LiveRound, type Street, type WaterPoint } from "@/components/map/data";
 import { areaNotice, noticeTimes, reportSignals, streetReliability, RELIABILITY_DAYS, type ScheduleRow } from "@/components/map/layers";
-import { arrived, DEMO_AREA, DEMO_STREETS, DEMO_WATER_POINTS, demoHistory, demoRounds, demoSchedule, simulateStep } from "@/components/map/demo";
+import { arrived, DEMO_AREA, DEMO_STREETS, DEMO_WATER_POINTS, demoHistory, demoRounds, demoSchedule } from "@/components/map/demo";
+import { roadSim } from "@/components/map/road";
 import type { RecentReport } from "@/components/ops/rules";
 
 const STREET_KEY = "kotdelo.street"; // shared with /resident
@@ -130,18 +131,18 @@ export default function MapPage() {
     return () => { clearTimeout(timer); clearInterval(poll); supabase.removeChannel(ch); };
   }, [offline, loading, reloadRounds]);
 
-  // Demo: every tanker glides to its next stop and serves it on arrival. A dispatch confirmed on /ops in
+  // Demo: every tanker drives along the road to its next stop and serves it on arrival. A dispatch confirmed on /ops in
   // another tab (same browser) replaces the demo rounds.
   useEffect(() => {
     if (!offline) return;
-    const pos = new Map<number, { lat: number; lng: number }>();
+    const sims = new Map<number, ReturnType<typeof roadSim>>();
     const t = setInterval(() => {
       const served: { round: number; stop: number }[] = [];
       const next: Record<number, Fix> = {};
       for (const r of roundsRef.current) {
-        const p = simulateStep(pos.get(r.round.id) ?? null, r.stops);
-        if (!p) continue;
-        pos.set(r.round.id, p);
+        if (!sims.has(r.round.id)) sims.set(r.round.id, roadSim());
+        const p = sims.get(r.round.id)!(r.stops, 25);
+        if (!p) continue; // its first route is still loading
         next[r.round.id] = { ...p, recorded_at: new Date().toISOString() };
         const stop = r.stops.find((s) => !s.served_at);
         if (stop && arrived(p, stop.street)) served.push({ round: r.round.id, stop: stop.id });
@@ -152,7 +153,7 @@ export default function MapPage() {
         setRounds((prev) => prev.map((r) => ({ ...r, stops: r.stops.map((s) => (served.some((x) => x.stop === s.id) ? { ...s, served_at: at } : s)) })));
       }
     }, 1000);
-    const onStorage = (e: StorageEvent) => { if (e.key === "kotdelo.demo-dispatch") { pos.clear(); setRounds(demoRounds()); } };
+    const onStorage = (e: StorageEvent) => { if (e.key === "kotdelo.demo-dispatch") { sims.clear(); setRounds(demoRounds()); } };
     window.addEventListener("storage", onStorage);
     return () => { clearInterval(t); window.removeEventListener("storage", onStorage); };
   }, [offline]);
@@ -316,9 +317,11 @@ export default function MapPage() {
           ) : (
             <>
               <p className="text-2xl font-bold">{stopsAway} stop{stopsAway > 1 ? "s" : ""} away</p>
-              <p className="text-lg">{myRound.label} on the way · {etaLabel(eta)}{stale ? " (GPS signal lost, estimate)" : ""}</p>
+              {myRound.round.status === "planned"
+                ? <p className="text-lg">CWA assigned {myRound.label} to your street. It has not left yet.</p>
+                : <p className="text-lg">{myRound.label} on the way · {etaLabel(eta)}{stale ? " (GPS signal lost, estimate)" : ""}</p>}
               {myLitres > 0 && <p className="text-sm text-muted-foreground">About {myLitres} L planned for your street.</p>}
-              {!myFix && <p className="text-sm text-muted-foreground">Waiting for the driver&apos;s first GPS fix…</p>}
+              {!myFix && myRound.round.status === "active" && <p className="text-sm text-muted-foreground">Waiting for the driver&apos;s first GPS fix…</p>}
             </>
           )}
           {nearest && layers.water && (

@@ -1,9 +1,9 @@
 // DEMO data for /map, /driver and /ops when the database is unreachable or empty. Never used live.
 // Mock streets, sample reports, a sample timetable in the shape of the real CWA one, and the
-// demo dispatch hand-off: /ops "Confirm dispatch" saves it in this browser, /driver lets you pick
-// Tanker A or B, /map follows the tanker that carries your street.
+// demo dispatch hand-off: /ops Dispatch "Send" saves it in this browser, /driver shows the rounds
+// sent to Tanker A or B, /map follows the tanker that carries your street.
 import { MOCK_STREETS } from "@/lib/mock";
-import { ASSUMED_REQUEST_L, type Plan } from "@/components/ops/dispatch";
+import { ASSUMED_REQUEST_L } from "@/components/ops/dispatch";
 import type { RecentReport } from "@/components/ops/rules";
 import type { ScheduleRow } from "@/components/map/layers";
 import type { LiveRound, Stop, Street, WaitingRequest, WaterPoint } from "@/components/map/data";
@@ -71,19 +71,6 @@ export function saveDemoDispatch(d: DemoDispatch | null) {
   try { if (d) localStorage.setItem(KEY, JSON.stringify(d)); else localStorage.removeItem(KEY); } catch { /* private mode: demo stays on this page */ }
 }
 
-/** One demo round per tanker; a tanker with two trips keeps both in order (refill in between). */
-export function dispatchFromPlan(plan: Plan): DemoDispatch {
-  const tankers = [...new Set(plan.loads.map((l) => l.tanker))];
-  return {
-    created_at: new Date().toISOString(),
-    rounds: tankers.map((tanker, i) => ({
-      id: -(i + 1),
-      tanker,
-      stops: plan.loads.filter((l) => l.tanker === tanker).sort((a, b) => a.trip - b.trip).flatMap((l) => l.deliveries.map((d) => ({ street_id: d.street_id, litres: d.litres, trip: l.trip }))),
-    })),
-  };
-}
-
 /** Demo rounds as LiveRounds. No dispatch saved yet -> one demo round over every mock street. */
 export function demoRounds(startedAt = new Date().toISOString()): LiveRound[] {
   const byId = new Map(DEMO_STREETS.map((s) => [s.id, s]));
@@ -99,11 +86,5 @@ export function demoRounds(startedAt = new Date().toISOString()): LiveRound[] {
   }));
 }
 
-/** Demo truck: glide 30% of the way toward the next unserved stop. */
-export function simulateStep(pos: { lat: number; lng: number } | null, stops: Stop[]) {
-  const next = stops.find((s) => !s.served_at)?.street ?? stops[stops.length - 1]?.street;
-  if (!next) return pos;
-  if (!pos) return { lat: next.lat + 0.004, lng: next.lng - 0.004 }; // start ~600 m away
-  return { lat: pos.lat + (next.lat - pos.lat) * 0.3, lng: pos.lng + (next.lng - pos.lng) * 0.3 };
-}
+/** The demo truck (components/map/road.ts) ends each leg exactly on the stop. */
 export const arrived = (pos: { lat: number; lng: number }, s: Street) => Math.hypot(s.lat - pos.lat, s.lng - pos.lng) < 0.0003;

@@ -1,6 +1,43 @@
-# Kot Delo? — Hackathon MDX 2026 (theme: Live Better)
+# Kot Delo? — Know when the water comes
 
-> Status (Sat 14 Nov, morning): **live at https://hackathon-mdx-2026.vercel.app**. All screens below are merged on `main` (40 pull requests since kickoff). Real CWA timetables, OpenStreetMap streets and reservoir levels are in `data/` and loaded into Supabase. Decision log: `docs/DECISIONS.md`.
+**A mobile-first water companion for Mauritius.** Official supply windows, neighbourhood reports, sourced drinking-water advice, and live tanker tracking in one app.
+
+Built for **Hackathon MDX 2026 · Life Powered by Tech · Live Better**.
+
+[Open the app](https://hackathon-mdx-2026.vercel.app) · [Backup demo video](docs/demo-backup.mp4) · [Data sources](https://hackathon-mdx-2026.vercel.app/sources) · [Decision log](docs/DECISIONS.md)
+
+## Final app screenshots
+
+Actual screenshots of the final local production build, captured on 14 November 2026 at a 390 × 844 mobile viewport. Data is a snapshot; reports and tanker activity may include the demo records described below. These are app captures, not design mockups.
+
+<table>
+  <tr><th>Welcome</th><th>Resident overview</th><th>Water schedule</th></tr>
+  <tr>
+    <td><img src="team/p5-pitch/screenshots/landing.png" width="250" alt="Kot Delo landing page with Start and Just browse actions"></td>
+    <td><img src="team/p5-pitch/screenshots/resident.png" width="250" alt="Resident overview for Vacoas and the water-day planner"></td>
+    <td><img src="team/p5-pitch/screenshots/schedule.png" width="250" alt="Vacoas locality, selected street and official water schedule"></td>
+  </tr>
+  <tr><th>Drinking-water advice</th><th>Live map</th><th>Backup demonstration</th></tr>
+  <tr>
+    <td><img src="team/p5-pitch/screenshots/water-advice.png" width="250" alt="Water advice screen showing sourced guidance for the selected locality"></td>
+    <td><img src="team/p5-pitch/screenshots/map.png" width="250" alt="Mobile map with streets, water layers and tanker information"></td>
+    <td><a href="docs/demo-backup.mp4">Watch or download the backup demo video (MP4, 20.4 MB)</a></td>
+  </tr>
+</table>
+
+## The demo in five steps
+
+1. Open **Resident**, choose a locality and street, and check the official water window.
+2. Report **No water**, then use **Request a tanker**.
+3. CWA staff open **Operations → Dispatch**, pick the waiting streets and assign them to one free tanker.
+4. That tanker's driver signs in, sees the assigned round, and taps **Start**.
+5. Watch the tanker on the resident map. As the driver marks stops **Served**, the street status updates.
+
+**The wow moment:** the driver's phone moves the truck on the resident's map, with stops remaining and an estimated arrival time. GPS uses the phone; simulated driving is available for the demonstration. Only staff assign rounds—the driver starts the round assigned to their tanker.
+
+## Final responsive pass
+
+The production build was checked across 11 routes at 320, 360, 390, 430, 768 and 1280px, with additional EN/FR/Kreol landing-header checks. Narrow cards and reminder buttons wrap instead of expanding the page. These checks used Chromium emulation, not a physical-device certification. Production build and ESLint on changed files passed.
 
 ## Problem
 During CWA water rationing, households in Vacoas (La Caverne neighbourhood), Mauritius, don't know when water will really come or when the tanker truck will arrive. Since 10 October 2026 the CWA supplies Vacoas only every second day, 03:00–08:00.
@@ -11,7 +48,7 @@ One household in La Caverne, Vacoas (the demo street set). Any locality on the m
 ## What it does
 - **When does water come?** Search your locality or street, see the official CWA supply window and where that rule comes from (official notice, regional timetable, or "Not known yet"). "Remind me 30 min before" adds it to your calendar.
 - **What is really happening?** Neighbours report "Water is here" / "No water" in one tap. The app compares the official schedule with the reports: reliability score, a 24-hour track and a heat map of hours without water.
-- **Where is the tanker?** A household requests a tanker; the driver's stop list builds itself; the resident watches the truck move live with "N stops away, about X min".
+- **Where is the tanker?** A household requests a tanker; CWA staff assign the requested streets to a tanker, its driver starts that assigned round; the resident watches the truck move live with "N stops away, about X min".
 - **Is my tap water safe to drink?** Official notices, heavy rain in the last 48 h and reservoir level, with sourced advice for each situation (CWA, Ministry of Health, WHO).
 - **How much water is left?** All 7 main reservoirs with their trend, and a supply tier.
 - **For the CWA:** an operations screen that plans tanker loads from the requests, lists complaints and reports to check, and reads pasted CWA notices with AI.
@@ -32,12 +69,16 @@ Phone first, also works on desktop. English, French and Kreol Morisien. Guests c
 
 The schedule, ETA, reliability score, trust check, forecast and dispatch plan are plain rules (see `contracts/api.md`). The one AI model in the app reads CWA notices; see "AI tools used".
 
-## What is demo, not real
+## Demo boundaries and known limitations
 - **Supply tier thresholds** (≥ 60% normal, 30–59% watch, < 30% critical) are **our demo values, not CWA policy**. The reservoir **levels** are real. The tier label is not an official CWA status.
 - **Seeded reports**: 7 days of neighbour reports (`is_demo = true`), and the extra rows and complaints the seed adds, are generated so the reliability score, heat map, trust check, likely water time and dispatch plan have history. They are **not real neighbour reports**.
 - **Truck route order** (`order_index`) is our suggested route, not an official CWA tanker route. **Tanker names and capacities** in Dispatch are demo values: no public CWA tanker timetable or fleet list by locality exists.
 - **Forecasts** (next water window, days until a reservoir reaches 20%) are estimates from the timetable and the recent trend, never a promise.
 - **Drinking-water advice** is quoted from official sources, each line linked. The app does not test water and cannot certify the water at your tap.
+
+- **Road routing:** GPS snapping and simulated driving use the public OSRM service. If routing fails, the app falls back to raw GPS or a straight path.
+- **Dispatch concurrency:** assigning picked streets currently uses separate database inserts, not one transaction. Simultaneous dispatchers can race; this needs a transactional database operation before production use.
+- **Fallbacks:** unavailable services can show labelled demo or cached data. A successful demo does not imply a live CWA integration or endorsement.
 
 ## Data sources
 All collected Fri 13 Nov 2026.
@@ -63,11 +104,11 @@ All collected Fri 13 Nov 2026.
 - **Demo data:** seeded reports flagged `is_demo = true` in the database (see "What is demo, not real"). They are NOT real neighbour reports.
 
 ## Stack
-Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres + Realtime + Auth) · Leaflet + OpenStreetMap · Vercel. Mobile-first (390px). The tanker is tracked by the driver's phone (`/driver`, geolocation + Wake Lock), not hardware.
+Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres + Realtime + Auth) · Leaflet + OpenStreetMap · Vercel. Mobile-first, with responsive checks from 320px through desktop. The tanker is tracked by the driver's phone (`/driver`, geolocation + Wake Lock), not hardware.
 
 ## AI tools used
 - Claude Code (Anthropic) — planning, code generation, review
-- Codex CLI (OpenAI) — code review, bug hunting
+- Codex (OpenAI) — implementation, code review, responsive-layout fixes, browser checks and final documentation
 - Skills/plugins: Ponytail, Karpathy guidelines
 - AI inside the app: Claude (`claude-haiku-4-5`) reads CWA notices, scraped from the CWA site and news feeds or pasted by staff, into localities, dates and times. Staff check the reading before publishing; results are cached and labelled "AI-read". With no API key or an AI error, a rule reader takes over. The ETA, reliability score, forecast and dispatch plan are rule-based.
 - French and Kreol Morisien translations of the whole UI were drafted with Claude (components/ui/i18n-dict-*.ts) and reviewed by the team

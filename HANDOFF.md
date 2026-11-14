@@ -83,3 +83,26 @@ Format per step: **Step N — done / changed / blocked** + 5 beginner bullets. P
   2. P4 + P5: #14 added four CSVs under `data/` (P5's folder). `data/reservoir_levels.csv` (P4) and `data/reservoir.csv` (P5) both hold reservoir levels; `load-data` reads `reservoir.csv`. Agree on one, and list the sources of the other three in `data/README.md` or remove them.
   3. P2: step 12 asked for three design directions; one was built. P1 to confirm it is the one.
   4. All: two-phone run on the Vercel URL (step 17), then polish only.
+
+## Sat 14 Nov — hierarchy, road snapping, mobile fixes (P1 session, STOPPED MID-WAY: read the TODO)
+State: all of this is UNCOMMITTED in the `release` worktree. The merge of P4's pitch deck (origin/feat/driver-map -> release, commit 124f6ce) is committed locally but NOT pushed.
+
+### Done (builds: `npx next build` passes, `npx tsc --noEmit` clean, self-checks `npx tsx components/map/road.ts` and `components/ops/dispatch.ts` pass)
+- Hierarchy: a driver no longer builds a round from requests. Ops Dispatch = pick streets -> pick ONE free tanker -> Send. New server step `assignStreets` in `app/api/dispatch/route.ts` (POST `{tanker_id, dispatch_key, street_ids}`) creates a `planned` round with only the picked streets. `/driver` (rewritten) shows only the signed-in tanker's round ("Sent by CWA"), Start/Served/End/position all go through `/api/rounds`. No driver session -> "Sign in as a tanker driver".
+- `components/map/data.ts` `loadActiveRounds` now returns planned + active rounds, labelled with the tanker name, with `tanker_id`. `/map` says "CWA assigned X to your street. It has not left yet" for a planned round.
+- Road: new `components/map/road.ts` (public OSRM server). Real GPS fixes are snapped to the nearest road (max 60 m, else left alone); the simulated drive and the demo tankers on `/map` follow the driving route instead of a straight line. Any OSRM failure falls back to the raw point.
+- Mobile: `/resident` was 1,565 px wide on a 390 px phone after picking a locality (a chip strip stretched the page grid). Fixed with `grid-cols-1` on every single-column page grid (Resident, DrinkingWater, PublicInfo, ops panels, driver). Ops Overview tile now reads "Households waiting / 6" (was "6 households" overflowing its square). Dispatch rebuilt for phones, with a "Cancel round" button per tanker.
+- Database reset: rounds, round_stops, truck_positions, allocations emptied (old self-started rounds, one had 379 stops). Requests kept: 6 waiting, 6 served.
+
+### Verified on a 390 px screen against the production build
+- `/resident` all 5 tabs: no sideways scroll. `/ops` Overview and Dispatch: no sideways scroll.
+- Ops sent 2 picked streets to Demo tanker 1 -> planned round with exactly those 2 stops, 40 L. Demo tanker 2's driver saw "No round assigned yet". Tanker 1's driver started it (round went `active`, positions were saved).
+
+### TODO for whoever continues
+1. NOT verified yet: that the saved positions really sit on the road (the check was cut short), Served flipping the resident's request to served, End round, Cancel round, and `/map` with a live round. Run the wow path once on two phones on the Vercel URL.
+2. The local dev server on port 3005 does not pick up new Tailwind classes (`grid-cols-1`): restart it before judging layout locally. The production build is fine.
+3. Commit (style: `ops: staff assign streets to a tanker, driver only sees its round`, `map: keep the truck on the road`, `home: no sideways scroll on phones`), push `release`, open the PR into `main`, check the Vercel deploy.
+4. On Vercel, staff sign-in needs `DRIVER_ACCESS_CODE` / `OPS_ACCESS_CODE` (or `KD_DEMO_ACCESS=1` for the demo codes). Check they are set.
+5. `docs/` test checklist and Guide text still say the driver taps "Start round" right after login. New flow: resident requests -> ops Dispatch sends to a tanker -> driver taps Start. Update the pitch script too.
+6. Known limits to say out loud if asked: `assignStreets` is plain inserts, not one SQL transaction (two dispatchers in the same second could double-allocate); OSRM is a public demo server (about 1 request a second); new UI strings are English only (no FR/KR entries).
+7. Delete the stray `bash.exe.stackdump` in the repo root (untracked).

@@ -64,7 +64,7 @@ export function NoticePaste() {
 
   const n = res?.notice;
   return (
-    <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start">
       <section className="flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-card" aria-labelledby="paste-title">
         <h2 id="paste-title" className="text-lg font-bold">Paste a CWA notice</h2>
         <p className="-mt-2 text-sm text-muted-foreground">AI reads the places, dates and times. Check, then publish.</p>

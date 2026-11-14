@@ -131,3 +131,8 @@ Washing a car with soap in a river matches s.87. That is our reading of the Act,
 3. Open `data/sources/cwa-communique-2026-10-10.pdf` and compare it with `schedule.csv`: Vacoas, from samedi 10 octobre 2026, 3:00a.m–8:00a.m, un jour sur deux.
 4. `npm run load-data` should print: `Loaded 1 areas, 21 streets, 26 schedule rows.`
 5. Paste a few `lat,lng` pairs from `streets.csv` into openstreetmap.org: they should land on the named street in Vacoas.
+
+## 2026-11-14 — final submission README
+- Changed: README.md and screenshots/ (five 390x844 PNG captures from local production build). Preserved dataset provenance and setup instructions; corrected resident → ops assignment → driver flow; linked backup video.
+- Needs: none. Blocked: none.
+- How to test: open README on GitHub, inspect all five images and backup-video link; follow the five-step demo. Screenshots represent a dated snapshot, not live fleet evidence.

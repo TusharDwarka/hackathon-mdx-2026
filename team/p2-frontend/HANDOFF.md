@@ -176,3 +176,12 @@
    - Tap "I need water": blue "Tanker requested" card, one `waiting` row in `requests`, the card opens `/map?street=<id>`. Set the row to `served`: the green "Served" line appears without a reload.
    - Tap "Make a complaint", then "Dirty water": "Complaint sent: Dirty water." and one row in `complaints` (needs `sql/v2.sql`).
 5. Turn the network off and reload `/resident`: after about 8 seconds the amber "Demo mode" banner shows with sample streets. Turn the network on, tap "Try again": the real streets come back.
+
+## 2026-11-14 — narrow-phone responsive fix
+- Changed: app/globals.css; components/home/{Resident,WaterDay,Locality,Landing}.tsx; components/ui/i18n.tsx. Nested grids now use explicit shrinkable columns; cards can shrink; reminder labels wrap with at least 48px height; water-time and landing headings scale to phone width. Landing uses a native language picker on phones to leave room for the logo and translated Start label.
+- Cause: intrinsic grid/button minimum widths expanded the 320px resident viewport to 339px; the landing header also squeezed the logo around three language buttons. No zoom lock or page-wide overflow hiding added.
+- Verified: production build, changed-file ESLint, Chromium mobile emulation at 320/360/390/430 and tablet/desktop at 768/1280 on 11 routes each. Selected Vacoas and waited for loaded data at 320px. Browser checker and screenshots are temporary local audit artifacts, with no project dependency changes.
+- Needs from others: check the deployed release on the actual affected phone; physical Safari/Android devices were not available in this session.
+- Blocked: none.
+- How to test: open /resident, choose Vacoas, inspect reminders and Schedule, then / with EN/FR/KR at 320px. Cards and controls should fit without sideways scrolling; desktop retains columns. Restart an old dev server if Tailwind classes appear stale.
+- Final first-visit check: Guide.tsx tooltip now wraps within viewport width, including longer FR/KR text. Landing header language selection checked in EN/FR/KR at 320/360/390px.

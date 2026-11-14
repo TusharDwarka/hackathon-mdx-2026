@@ -198,6 +198,7 @@
 
 /* Shared building blocks for every screen (P2 owns them, everyone uses them). */
 @utility surface {
+  min-width: 0;
   /* Glossy white card: 24px corners, soft shadow, no border. Slightly see-through (no blur, so it stays
      cheap on phones) with a light sheen on top and a bright top edge. Put all text on one of these. */
   @apply rounded-3xl text-card-foreground shadow-card;
@@ -228,6 +229,7 @@
   }
 }
 @utility wave-panel {
+  min-width: 0;
   /* The deep-blue panel of the sidebar, sign-in and call-to-action bands (white text on it). */
   background: linear-gradient(165deg, oklch(0.66 0.15 238) 0%, oklch(0.54 0.19 256) 55%, oklch(0.44 0.17 262) 100%);
   color: white;
