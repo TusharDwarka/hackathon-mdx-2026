@@ -1,5 +1,17 @@
 # HANDOFF (p5-pitch)
 
+## Decision log — Sat 14 Nov
+
+### Changed
+- **`team/p5-pitch/DECISIONS-DRAFT.md`**: a 10-row decision log, with times taken from the git commits that recorded each decision. The current `docs/DECISIONS.md` has 16 rows, but the rules ask for 5 to 10. Old rows are merged (#1+#2, #6+#7) or left out (#11, #12, #14, #15).
+
+### Needs from others
+- **P1:** replace the rows in `docs/DECISIONS.md` with the draft. Fill row 10 (surprise card) with the time and answer once it's revealed. If it never is, put old #11 (accounts) back as row 10.
+
+### How to test
+1. Count the rows in the draft: 10.
+2. Check each time against `git log --date=format:'%a %d %b %H:%M' --format='%ad %s' -- docs/`.
+
 ## V5 (docs/SPLIT-V5.md) — Fri 13 Nov night
 
 ### Changed
