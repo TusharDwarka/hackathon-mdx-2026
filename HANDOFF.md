@@ -84,8 +84,8 @@ Format per step: **Step N — done / changed / blocked** + 5 beginner bullets. P
   3. P2: step 12 asked for three design directions; one was built. P1 to confirm it is the one.
   4. All: two-phone run on the Vercel URL (step 17), then polish only.
 
-## Sat 14 Nov — hierarchy, road snapping, mobile fixes (P1 session, STOPPED MID-WAY: read the TODO)
-State: all of this is UNCOMMITTED in the `release` worktree. The merge of P4's pitch deck (origin/feat/driver-map -> release, commit 124f6ce) is committed locally but NOT pushed.
+## Sat 14 Nov — hierarchy, road snapping, mobile fixes (P1 session)
+State: committed and pushed on `release`, together with the merge of P4's pitch deck (origin/feat/driver-map -> release, 124f6ce).
 
 ### Done (builds: `npx next build` passes, `npx tsc --noEmit` clean, self-checks `npx tsx components/map/road.ts` and `components/ops/dispatch.ts` pass)
 - Hierarchy: a driver no longer builds a round from requests. Ops Dispatch = pick streets -> pick ONE free tanker -> Send. New server step `assignStreets` in `app/api/dispatch/route.ts` (POST `{tanker_id, dispatch_key, street_ids}`) creates a `planned` round with only the picked streets. `/driver` (rewritten) shows only the signed-in tanker's round ("Sent by CWA"), Start/Served/End/position all go through `/api/rounds`. No driver session -> "Sign in as a tanker driver".
@@ -99,9 +99,9 @@ State: all of this is UNCOMMITTED in the `release` worktree. The merge of P4's p
 - Ops sent 2 picked streets to Demo tanker 1 -> planned round with exactly those 2 stops, 40 L. Demo tanker 2's driver saw "No round assigned yet". Tanker 1's driver started it (round went `active`, positions were saved).
 
 ### TODO for whoever continues
-1. NOT verified yet: that the saved positions really sit on the road (the check was cut short), Served flipping the resident's request to served, End round, Cancel round, and `/map` with a live round. Run the wow path once on two phones on the Vercel URL.
+1. Checked locally on the production build with a simulated drive: all 5 saved positions were 0.0 m from a road, Served flipped the request to `served`, End round released the unserved stop and freed the tanker. NOT checked: real phone GPS, Cancel round, `/map` with a live round, and anything on the Vercel URL. Run the wow path once on two phones there.
 2. The local dev server on port 3005 does not pick up new Tailwind classes (`grid-cols-1`): restart it before judging layout locally. The production build is fine.
-3. Commit (style: `ops: staff assign streets to a tanker, driver only sees its round`, `map: keep the truck on the road`, `home: no sideways scroll on phones`), push `release`, open the PR into `main`, check the Vercel deploy.
+3. Open the PR from `release` into `main`, merge, check the Vercel deploy. Until it is deployed the live site still lets a driver self-start a round over every street (a teammate did it at about 05:30 on Sat).
 4. On Vercel, staff sign-in needs `DRIVER_ACCESS_CODE` / `OPS_ACCESS_CODE` (or `KD_DEMO_ACCESS=1` for the demo codes). Check they are set.
 5. `docs/` test checklist and Guide text still say the driver taps "Start round" right after login. New flow: resident requests -> ops Dispatch sends to a tanker -> driver taps Start. Update the pitch script too.
 6. Known limits to say out loud if asked: `assignStreets` is plain inserts, not one SQL transaction (two dispatchers in the same second could double-allocate); OSRM is a public demo server (about 1 request a second); new UI strings are English only (no FR/KR entries).

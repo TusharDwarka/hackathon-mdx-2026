@@ -9,3 +9,4 @@ One line per finished task: what, files, commit hash.
 - Merge 3: PR #7 feat/home into main (Home on real queries, heat map, day track, design pass); build, lint and time self-check pass; TASKS.md steps 2, 7, 8 ticked, HANDOFF.md updated — a75ec2f
 
 - Merge 5: feat/data, feat/driver-map, feat/home into main; build fix (tsconfig excludes scripts/test-sql.ts); build, lint and all 6 self-checks pass; contract V3 adopted, TASKS 18 to 21 added
+- Sat 14 Nov: staff assign streets to a tanker (driver only sees its own round), truck snapped to the road, no sideways scroll on phones, mobile Dispatch, tanker test data reset; P4 pitch deck merged into release. Details in HANDOFF.md
