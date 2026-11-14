@@ -26,6 +26,13 @@ const REFUSED: Record<string, string> = {
   no_outstanding_demand: "Those streets are already covered by another round.",
   unknown_tanker: "That tanker is not in service.",
 };
+// How far to trust a street's demand before sending a truck: more households asking = more likely real.
+// One household with no "no water" report behind it could be a mistake or a prank: check first.
+function confidence(households: number, hoursDry: number | null): { label: string; cls: string } {
+  if (households >= 3) return { label: "High confidence", cls: "bg-emerald-100 text-emerald-900" };
+  if (households === 2 || hoursDry != null) return { label: "Medium confidence", cls: "bg-amber-100 text-amber-900" };
+  return { label: "Low confidence · check first", cls: "bg-red-100 text-red-900" };
+}
 
 type Props = { data: OpsData; name: (id: number) => string; setRounds: (r: LiveRound[]) => void };
 
@@ -121,6 +128,7 @@ export function DispatchPanel({ data, name, setRounds }: Props) {
         <ul className="flex flex-col gap-2">
           {addable.map((p) => {
             const on = selected.includes(p.street_id);
+            const conf = confidence(p.waiting, p.hours_dry);
             return (
               <li key={p.street_id}>
                 <button
@@ -138,6 +146,7 @@ export function DispatchPanel({ data, name, setRounds }: Props) {
                       <span aria-hidden className="inline-block size-2 shrink-0 rounded-full" style={{ background: heatHex(p.hours_dry) }} />
                       <span className="truncate">{dryFor(p.hours_dry)} · {p.waiting} household{p.waiting === 1 ? "" : "s"}</span>
                     </span>
+                    <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${conf.cls}`}>{conf.label}</span>
                   </span>
                   <span className="shrink-0 font-bold tabular-nums">{fmtL(p.litres)}</span>
                 </button>

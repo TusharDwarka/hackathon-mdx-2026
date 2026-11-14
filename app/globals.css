@@ -4,6 +4,16 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Phone-only app screens: inside .phone (the AppShell in components/ui/app-nav.tsx) the sm:/md:/lg:/xl:
+   classes never apply, so those screens keep the phone layout on a laptop too. The landing and sign-in
+   pages are outside .phone and stay responsive. Delete this block to get the desktop layouts back. */
+@theme { --breakpoint-*: initial; } /* drop Tailwind's own sm..2xl so the ones below replace them */
+@custom-variant sm { @media (width >= 40rem) { &:not(:where(.phone, .phone *)) { @slot; } } }
+@custom-variant md { @media (width >= 48rem) { &:not(:where(.phone, .phone *)) { @slot; } } }
+@custom-variant lg { @media (width >= 64rem) { &:not(:where(.phone, .phone *)) { @slot; } } }
+@custom-variant xl { @media (width >= 80rem) { &:not(:where(.phone, .phone *)) { @slot; } } }
+@custom-variant 2xl { @media (width >= 96rem) { &:not(:where(.phone, .phone *)) { @slot; } } }
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -97,6 +107,9 @@
   :root {
     --nav-h: 0rem; /* the nav is a sidebar from 1024px: nothing above or below the page */
   }
+}
+.phone {
+  --nav-h: 5.75rem; /* phone-only app screens keep the bottom tab bar at every width */
 }
 
 .dark {

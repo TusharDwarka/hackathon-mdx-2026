@@ -164,12 +164,13 @@ export async function deleteSession(): Promise<void> {
 
 /**
  * Staff access codes come from the server env (DRIVER_ACCESS_CODE / OPS_ACCESS_CODE, set by P1).
- * Without them, the DEMO codes "demo-driver" / "demo-ops" work only outside production, or when
- * KD_DEMO_ACCESS=1 is set on purpose; the session then says demo_access: true.
+ * Without them, the DEMO codes "demo-driver" / "demo-ops" work (hackathon pitch: the live site must
+ * open with no extra setup); the session then says demo_access: true. KD_DEMO_ACCESS=0 turns them off.
+ * A real code, once set, always replaces the demo code.
  */
 export function checkAccessCode(role: "driver" | "ops", code: unknown): { demo: boolean } {
   const configured = role === "driver" ? process.env.DRIVER_ACCESS_CODE : process.env.OPS_ACCESS_CODE;
-  const demoAllowed = process.env.NODE_ENV !== "production" || process.env.KD_DEMO_ACCESS === "1";
+  const demoAllowed = process.env.KD_DEMO_ACCESS !== "0";
   const expected = configured || (demoAllowed ? `demo-${role}` : null);
   if (!expected) throw new HttpError(503, "staff_access_not_configured");
   const a = Buffer.from(typeof code === "string" ? code : "");

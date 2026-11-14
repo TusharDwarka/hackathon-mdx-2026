@@ -45,6 +45,7 @@ const WRONG: Record<string, string> = {
   bad_access_code: "That access code is not right. Check it and try again.",
   unknown_tanker: "That tanker is not in service. Choose another one.",
   invalid_tanker_id: "Choose your tanker first.",
+  staff_access_not_configured: "Staff sign-in is not set up on this server yet. Ask the team lead.",
 };
 const input = "h-12 w-full rounded-full bg-muted px-4 text-base text-foreground placeholder:text-muted-foreground";
 
@@ -274,7 +275,9 @@ export function Login({ asked, next, mode: askedMode }: { asked: Role; next?: st
             )}
           </form>
           )}
-          <p className="mt-5 text-center text-xs text-muted-foreground">Stored by street, never by house or person.</p>
+          <p className="mt-5 text-center text-xs text-muted-foreground">
+            By continuing you agree to our <Link href="/privacy" className="font-semibold text-primary underline underline-offset-2">Privacy and terms</Link>. Stored by street, never by house or person.
+          </p>
         </div>
       </section>
     </main>

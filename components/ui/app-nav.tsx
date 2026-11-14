@@ -46,15 +46,16 @@ const BARE = ["/", "/login"]; // full-width pages with their own header
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const stored = useSyncExternalStore(noSubscribe, readRole, () => null);
-  if (BARE.includes(path)) return <>{children}</>;
+  if (BARE.includes(path)) return <div className="phone mx-auto w-full max-w-md">{children}</div>; // phone-width too, no nav
   const role: Role = stored === "ops" ? "ops" : path.startsWith("/driver") ? "driver" : path.startsWith("/resident") ? "resident" : (stored ?? "resident");
   return (
-    <>
+    // .phone: app screens are phone-only, a centred phone-width column on a laptop (see app/globals.css).
+    <div className="phone contents">
       <Suspense fallback={<Nav role={role} path={path} tab={null} />}>
         <NavWithTab role={role} path={path} />
       </Suspense>
-      <div className="flex min-h-dvh flex-col pb-(--nav-h) lg:pl-(--side-w)">{children}</div>
-    </>
+      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col pb-(--nav-h) lg:pl-(--side-w)">{children}</div>
+    </div>
   );
 }
 
