@@ -826,7 +826,7 @@ export function Resident({ info }: { info: PublicData }) {
 
   // Dashboard: 1 column on phones, 2 on tablets, 3 from 1280px.
   const overview = (
-    <div className="grid gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
       {/* Surprise card (DECISIONS #9): a new user reaches the main feature on their own. */}
       <SurpriseCard
         title="New here? Find your water time on your own"
@@ -889,7 +889,7 @@ export function Resident({ info }: { info: PublicData }) {
 
   const week = place?.week;
   const schedule = (
-    <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
       <div className={col}>
         {base ? placeCard : loading}
         {spot && <SupplyCard name={spot.l} />}
@@ -953,7 +953,7 @@ export function Resident({ info }: { info: PublicData }) {
   );
 
   const reportSection = (
-    <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
       <div className={col}>
         {gate("report")}
         {area && guest && street && (
@@ -1048,7 +1048,7 @@ export function Resident({ info }: { info: PublicData }) {
 
   // Request: one tap, no litres (a household never chooses tank capacity; ops plans the load).
   const requestSection = (
-    <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
       <div className={col}>
         {gate("request a tanker")}
         {area && guest && street && (
@@ -1099,7 +1099,7 @@ export function Resident({ info }: { info: PublicData }) {
     overview,
     drink: (
       <div className="flex flex-col gap-4 lg:gap-6">
-        <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:items-start lg:gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr] lg:items-start lg:gap-6">
           <SafeToDrink quality={quality} locality={localityName} more={false} />
           {centre ? <RiverCard name={localityName} lat={centre.lat} lng={centre.lng} /> : spot ? <RiverCard name={spot.l} lat={spot.lat} lng={spot.lng} /> : base ? placeCard : loading}
         </div>
@@ -1112,7 +1112,7 @@ export function Resident({ info }: { info: PublicData }) {
     reservoirs: <Reservoirs reservoirs={info.reservoirs} combined={info.combined} now={now} />,
     news: (
       <div className="flex flex-col gap-4 lg:gap-6">
-        <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr] lg:items-start lg:gap-6">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr] lg:items-start lg:gap-6">
           <NoticeFeed locality={localityName} />
           <div className={col}>
             <SafeToDrink quality={quality} locality={localityName} />

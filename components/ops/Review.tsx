@@ -38,7 +38,7 @@ export function Review({ data, name }: { data: OpsData; name: (id: number) => st
       </div>
       <p className="text-xs text-muted-foreground">Last 3 hours. Confirmed = 2 or more reports, at least 2 of 3 agree.</p>
       {shown.length === 0 && <p className="surface p-5 text-sm text-muted-foreground">Nothing to check right now.</p>}
-      <ul className="grid gap-2 md:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
         {shown.map((s) => (
           <li key={s.street_id} className={`surface flex flex-col gap-1 p-4 text-sm ${s.status === "suspect" ? "ring-2 ring-amber-300" : ""}`}>
             <div className="flex items-center justify-between gap-2">

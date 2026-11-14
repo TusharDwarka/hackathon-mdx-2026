@@ -7,8 +7,6 @@
 
 /** Requests do not store litres yet (P3 adds them). Until then each waiting request counts as this. */
 export const ASSUMED_REQUEST_L = 20;
-/** Live default: CWA private tanker registration asks for at least 5 m³ (Oct 2026). 1 m³ = 1,000 L. */
-export const LIVE_TANK_L = 5000;
 /** Demo default, small on purpose so the 120 L -> 2 loads example shows on the demo data. */
 export const DEMO_TANK_L = 100;
 
@@ -89,32 +87,6 @@ export function explainLoads(totalL: number, capacityL: number, loads: number): 
   const head = `${fmtL(totalL)} at ${fmtL(capacityL)} per tank = ${loads} load${loads === 1 ? "" : "s"}.`;
   if (loads <= 1) return `${head} One tanker, one trip.`;
   return `${head} That is ${loads} tankers leaving at once, or fewer tankers doing more trips with a refill in between. The plan does not check travel time, so a refill trip must still fit in the day.`;
-}
-
-// ---------- Confirm: P3's allocation API (not table writes from the browser) ----------
-
-export type DispatchBody = {
-  key: string; // idempotency key: the same preview confirmed twice must not allocate twice
-  capacity_l: number;
-  loads: { tanker: string; trip: number; deliveries: { street_id: number; litres: number }[] }[];
-};
-export type DispatchResult = { rounds: { round_id: number; tanker: string }[] };
-
-export async function confirmDispatch(plan: Plan, key: string): Promise<DispatchResult> {
-  const body: DispatchBody = {
-    key,
-    capacity_l: plan.capacity_l,
-    loads: plan.loads.map((l) => ({ tanker: l.tanker, trip: l.trip, deliveries: l.deliveries.map(({ street_id, litres }) => ({ street_id, litres })) })),
-  };
-  let res: Response;
-  try {
-    res = await fetch("/api/dispatch", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-  } catch {
-    throw new Error("Could not reach the dispatch API. Check the connection and try again.");
-  }
-  if (res.status === 404) throw new Error("The dispatch API is not live yet (P3). Drivers can still start rounds on /driver.");
-  if (!res.ok) throw new Error(`Dispatch was not saved (error ${res.status}). Try again.`);
-  return (await res.json()) as DispatchResult;
 }
 
 // ---------- self-check ----------

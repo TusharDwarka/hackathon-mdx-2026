@@ -63,7 +63,7 @@ export function Complaints({ data, now, name, area, setComplaints }: Props) {
       </div>
 
       {visible.length === 0 && <p className="surface p-5 text-sm text-muted-foreground">{status === "open" ? "No open complaints." : "Nothing resolved in the last 14 days."}</p>}
-      <ul className="grid gap-2 md:grid-cols-2">
+      <ul className="grid grid-cols-1 gap-2 md:grid-cols-2">
         {visible.map((c) => (
           <li key={c.id} className="surface flex items-center gap-3 p-4">
             <div className="min-w-0 flex-1">

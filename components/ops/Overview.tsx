@@ -28,19 +28,19 @@ export function Overview({ data, go, now }: { data: OpsData; go: (s: Section) =>
   const open = data.complaints.filter((c) => c.status === "open").length;
   const review = data.statuses.filter((s) => s.status === "suspect" || s.status === "unconfirmed").length;
   const tiles: { label: string; value: string; detail: string; to: Section }[] = [
-    { label: "Waiting for a tanker", value: `${households} household${households === 1 ? "" : "s"}`, detail: `${waitingStreets} street${waitingStreets === 1 ? "" : "s"}`, to: "dispatch" },
+    { label: "Households waiting", value: String(households), detail: `${waitingStreets} street${waitingStreets === 1 ? "" : "s"} →`, to: "dispatch" },
     { label: "Tankers out", value: String(data.rounds.length), detail: "Dispatch →", to: "dispatch" },
     { label: "Open complaints", value: String(open), detail: "Complaints →", to: "complaints" },
     { label: "Reports to check", value: String(review), detail: "last 3 h", to: "review" },
   ];
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <ul className="grid grid-cols-2 gap-3 lg:col-span-3 lg:grid-cols-4">
         {tiles.map((t) => (
           <li key={t.label}>
-            <button type="button" onClick={() => go(t.to)} className="surface flex h-full w-full flex-col items-start gap-1 p-4 text-left transition-transform duration-150 ease-snap active:scale-[0.98] motion-reduce:transition-none">
-              <span className="text-sm text-muted-foreground">{t.label}</span>
+            <button type="button" onClick={() => go(t.to)} className="surface flex h-full w-full min-w-0 flex-col items-start gap-1 p-4 text-left transition-transform duration-150 ease-snap active:scale-[0.98] motion-reduce:transition-none">
+              <span className="text-sm leading-tight text-muted-foreground">{t.label}</span>
               <span className="text-3xl font-bold tabular-nums">{t.value}</span>
               <span className="text-xs text-muted-foreground">{t.detail}</span>
             </button>

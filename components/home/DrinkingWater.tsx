@@ -82,7 +82,7 @@ export function DrinkingWater() {
         </ul>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
         <section className={card} aria-labelledby="how-title">
           <h2 id="how-title" className={`flex items-center gap-2 ${title}`}><ShieldCheck aria-hidden className="size-5 text-primary" />How CWA makes tap water safe</h2>
           <dl className="mt-3 grid grid-cols-2 gap-3">
@@ -139,7 +139,7 @@ export function DrinkingWater() {
         </section>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
         <section className={card} aria-labelledby="tank-title">
           <h2 id="tank-title" className={`flex items-center gap-2 ${title}`}><Sparkles aria-hidden className="size-5 text-primary" />Clean your water tank</h2>
           <p className="mt-1 text-sm text-muted-foreground">At least every 6 months. With water cuts, most homes drink from a tank.</p>

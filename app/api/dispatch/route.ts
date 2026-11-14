@@ -2,6 +2,7 @@
 // GET ?capacity=&tankers=&max_trips=&split=  preview from live outstanding demand (planDispatch).
 //   Defaults: capacity = smallest free tanker, tankers = free tankers, max_trips = 1, split = true.
 //   Overrides are "what if" (e.g. capacity=100&tankers=1 shows the 120 L / 100 L two-load case).
+// POST {tanker_id, dispatch_key, street_ids}  ops assigns the picked streets to that tanker (assignStreets below).
 // POST {tanker_id, dispatch_key, split?}  put ONE load on that tanker (kd_allocate_load):
 //   (or P4 plan body {key, capacity_l, loads} -> {rounds, deferred}: see confirmPlan below)
 //   street order, never above capacity, same dispatch_key -> same round, busy tanker refused.
@@ -124,10 +125,81 @@ async function confirmPlan(b: Record<string, unknown>): Promise<Response> {
   return Response.json({ rounds, deferred }, { status: rounds.some((r) => !r.duplicate) ? 201 : 200 });
 }
 
+const isId = (v: unknown): v is number => typeof v === "number" && Number.isSafeInteger(v) && v > 0;
+
+/**
+ * The hierarchy step: CWA staff pick streets and ONE tanker. That tanker gets a planned round with a stop per
+ * picked street (street order) and an allocation per waiting household there, up to its capacity. Nothing
+ * outside the picked streets is added. The driver sees the round and taps Start; no round exists before this.
+ * Same dispatch_key -> same round (double tap). A tanker with an open round is refused.
+ * ponytail: plain inserts, not one transaction like kd_allocate_load (no SQL change on demo day). Two
+ * dispatchers sending in the same second could allocate one request twice: move into a SQL function after the demo.
+ */
+async function assignStreets(b: Record<string, unknown>): Promise<Response> {
+  const tankerId = b.tanker_id;
+  if (!isId(tankerId)) throw new HttpError(400, "invalid_tanker_id");
+  const key = b.dispatch_key;
+  if (typeof key !== "string" || key.length < 8 || key.length > 100) throw new HttpError(400, "invalid_dispatch_key");
+  const ids = b.street_ids as unknown[];
+  if (ids.length === 0 || ids.length > 200 || !ids.every(isId)) throw new HttpError(400, "invalid_street_ids");
+  const client = db();
+
+  const dup = await client.from("rounds").select("id").eq("dispatch_key", key).maybeSingle();
+  dbError(dup.error);
+  if (dup.data) return Response.json({ round_id: dup.data.id, duplicate: true, round: await roundView(dup.data.id) });
+
+  const [tanker, open, reqs, streets] = await Promise.all([
+    client.from("tankers").select("id,capacity_litres").eq("id", tankerId).eq("active", true).maybeSingle(),
+    client.from("rounds").select("id").eq("tanker_id", tankerId).in("status", ["planned", "active"]),
+    client.from("requests").select("id,street_id,created_at").eq("status", "waiting").in("street_id", ids).order("created_at"),
+    client.from("streets").select("id,order_index").in("id", ids),
+  ]);
+  for (const r of [tanker, open, reqs, streets]) dbError(r.error);
+  if (!tanker.data) throw new HttpError(400, "unknown_tanker");
+  if (open.data?.length) throw new HttpError(409, "tanker_busy");
+  const waiting = reqs.data ?? [];
+  const allocs = waiting.length
+    ? await client.from("allocations").select("request_id,litres").in("request_id", waiting.map((r) => r.id)).is("released_at", null)
+    : { data: [], error: null };
+  dbError(allocs.error);
+  const taken: Record<number, number> = {};
+  for (const a of allocs.data ?? []) taken[a.request_id] = (taken[a.request_id] ?? 0) + a.litres;
+  const order = Object.fromEntries((streets.data ?? []).map((s) => [s.id, s.order_index]));
+
+  let left = tanker.data.capacity_litres;
+  const plan: { street_id: number; allocs: { request_id: number; litres: number }[] }[] = [];
+  for (const r of [...waiting].sort((x, y) => (order[x.street_id] ?? 0) - (order[y.street_id] ?? 0))) {
+    const litres = Math.min(HOUSEHOLD_L - (taken[r.id] ?? 0), left);
+    if (litres <= 0) continue;
+    let stop = plan.find((p) => p.street_id === r.street_id);
+    if (!stop) plan.push((stop = { street_id: r.street_id, allocs: [] }));
+    stop.allocs.push({ request_id: r.id, litres });
+    left -= litres;
+  }
+  if (!plan.length) throw new HttpError(409, "no_outstanding_demand");
+
+  const round = await client.from("rounds").insert({ status: "planned", tanker_id: tankerId, dispatch_key: key }).select("id").single();
+  dbError(round.error);
+  const roundId = round.data!.id as number;
+  try {
+    const stops = await client.from("round_stops").insert(plan.map((p, i) => ({ round_id: roundId, street_id: p.street_id, stop_order: i + 1 }))).select("id,street_id");
+    dbError(stops.error);
+    const stopId = Object.fromEntries((stops.data ?? []).map((s) => [s.street_id, s.id]));
+    const saved = await client.from("allocations").insert(plan.flatMap((p) => p.allocs.map((a) => ({ round_id: roundId, round_stop_id: stopId[p.street_id], ...a }))));
+    dbError(saved.error);
+  } catch (e) {
+    // A half-written round would keep the tanker "busy" for ever: close it, then report the error.
+    await client.from("rounds").update({ status: "done", ended_at: new Date().toISOString() }).eq("id", roundId);
+    throw e;
+  }
+  return Response.json({ round_id: roundId, duplicate: false, round: await roundView(roundId) }, { status: 201 });
+}
+
 export const POST = handle(async (req) => {
   await requireSession("ops");
   const b = (await readJson(req)) as Record<string, unknown> | null;
   if (b && Array.isArray(b.loads)) return confirmPlan(b);
+  if (b && Array.isArray(b.street_ids)) return assignStreets(b);
   const tankerId = b?.tanker_id;
   if (typeof tankerId !== "number" || !Number.isSafeInteger(tankerId) || tankerId <= 0) throw new HttpError(400, "invalid_tanker_id");
   const key = b?.dispatch_key;
