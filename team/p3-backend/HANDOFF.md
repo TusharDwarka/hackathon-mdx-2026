@@ -9,6 +9,7 @@ The notices feed no longer needs anyone to run the scraper.
 
 ### Needs from others
 - **P1:** set `ANTHROPIC_API_KEY` on Vercel. Without it the refresh still runs but every notice is read by the rule reader (`ai_extracted: false`): today all 7 stored notices are rule-read. With the key, the next refresh re-reads them with the AI.
+- **Another AI instead of Claude:** set `AI_BASE_URL`, `AI_API_KEY` and `AI_MODEL` (any OpenAI-compatible chat API: Gemini, Groq, OpenRouter, OpenAI...). Used only when `ANTHROPIC_API_KEY` is not set. Text only, the notice PDF is not sent. Tested against a local fake server, not against a real provider. **P4 / P2:** the ops label "Read by AI (Claude)" and the `/sources` line name Claude; reword them if another AI is used. **P5:** list that AI in the README.
 - **P1 (optional, `vercel.json` is yours):** a daily cron on `/api/notices/refresh` keeps notices current even when nobody opens the app: `"crons": [{ "path": "/api/notices/refresh", "schedule": "0 2 * * *" }]`.
 - **Not automatic yet:** the timetable (`data/schedule.csv`, ends 13 Dec) and reservoir levels (typed from news articles, no structured source) still need `npm run load-data`.
 

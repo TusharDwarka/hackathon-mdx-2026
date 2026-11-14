@@ -19,7 +19,7 @@ async function main() {
 
   console.log("Fetching CWA posts, GIS and news feeds...");
   const { found, changed } = await scrapeNotices(byUrl);
-  console.log(`${found} water notices found. AI reader: ${aiConfigured() ? "on" : "off (no ANTHROPIC_API_KEY): rule reader"}`);
+  console.log(`${found} water notices found. AI reader: ${aiConfigured() ? "on" : "off (no ANTHROPIC_API_KEY, no AI_BASE_URL + AI_API_KEY + AI_MODEL): rule reader"}`);
   for (const n of changed) {
     byUrl.set(n.url, n);
     console.log(`  ${n.ai_extracted ? "AI " : "rules"} ${n.published_on ?? "????-??-??"} ${n.source} ${n.parsed.kind}: ${n.parsed.summary.slice(0, 80)}`);

@@ -19,3 +19,4 @@ One line per finished task: what, files, commit hash.
 - Sat 14 Nov: map ETA copy: 'about 0 min' -> 'arriving now' (etaLabel in lib/eta.ts, used in app/map/page.tsx; P4 files, asked by P3's tester) — see commit
 - Sat 14 Nov: ops Overview tile 'Waiting for a tanker' shows households (count of waiting requests) instead of a litres sum; P4 file components/ops/Overview.tsx, asked by the tester — see commit
 - Sat 14 Nov: notices feed refreshes itself: scraper core moved to app/api/_lib/notice-scrape.ts, feed re-scrapes after answering when 3 h old, new GET /api/notices/refresh for a cron; scraper run against the live database (7 notices stored) — see commit
+- Sat 14 Nov: notice reader accepts a second AI provider (any OpenAI-compatible API via AI_BASE_URL + AI_API_KEY + AI_MODEL, used when ANTHROPIC_API_KEY is not set) — see commit
