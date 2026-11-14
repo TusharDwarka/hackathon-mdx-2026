@@ -1,6 +1,7 @@
 # HANDOFF (p1-dwarka)
 
 ## Changed
+- 2026-11-14: Merged origin/main and origin/fix/mobile-layout through 4f0ffe7 into release without conflicts (03e639d): mobile layouts, privacy page, dispatch confidence labels, demo staff codes and optional request top-up seed. Needs: none for this merge. Blocked: none. How to test: npm run build passed; npm run lint -- --ignore-pattern ".vercel/**" passed with two existing warnings. Plain lint also scans generated .vercel output and fails there. Database seed was not run.
 - Merge 5 (Fri evening): feat/data (V3 API + sql/v3.sql), feat/driver-map (responsive map, layers, dispatch preview, ops sections), feat/home (resident tabs, locality first, reservoirs, news) on main. `tsconfig.json` excludes `scripts/test-sql.ts` (its pglite import is `--no-save`, it broke `next build`). Contract V3 adopted in contracts/api.md; follow-ups are TASKS.md 18 to 21.
 - 2026-11-13 planning task: added `docs/NEXT-TASK-SPLIT.md` and linked it from TASKS.md. Contains source-backed gaps, P1–P5 task packages, ready-to-send prompts and merge/QA order. No application code or frozen contracts changed. User explicitly asked for splitting only; teammates implement later.
 - Merge 1 (Fri 16:10): PR #1 feat/data, #2 feat/home, #3 feat/driver-map are on main (9ed0071) and deployed by Vercel. Full notes: root `HANDOFF.md`, "Merge 1".

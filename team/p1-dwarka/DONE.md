@@ -2,6 +2,8 @@
 
 One line per finished task: what, files, commit hash.
 
+- 2026-11-14: Merged origin/main and latest origin/fix/mobile-layout (4f0ffe7) into release, merge 03e639d. Production build passed; source lint passed with two existing warnings when generated .vercel output was excluded.
+
 - 2026-11-13: Reviewed current source and split the requested improvements into P1–P5 implementation briefs, ownership boundaries, merge order and acceptance checks in docs/NEXT-TASK-SPLIT.md; linked from TASKS.md. Planning only; no app changes. Commit: docs: split next improvements by owner.
 
 - Merge 1: PR #1 feat/data, #2 feat/home, #3 feat/driver-map into main; build, lint and self-checks pass on the merged code; TASKS.md + HANDOFF.md updated, `npm run seed-demo` added — 9ed0071
