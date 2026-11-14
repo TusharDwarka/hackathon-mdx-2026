@@ -45,6 +45,7 @@ const WRONG: Record<string, string> = {
   bad_access_code: "That access code is not right. Check it and try again.",
   unknown_tanker: "That tanker is not in service. Choose another one.",
   invalid_tanker_id: "Choose your tanker first.",
+  staff_access_not_configured: "Staff sign-in is not set up on this server yet. Ask the team lead.",
 };
 const input = "h-12 w-full rounded-full bg-muted px-4 text-base text-foreground placeholder:text-muted-foreground";
 
