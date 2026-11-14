@@ -1,5 +1,21 @@
 # HANDOFF (p3-backend)
 
+## Notices keep themselves current (Sat 14 Nov, P3) — feat/data
+The notices feed no longer needs anyone to run the scraper.
+- **How:** `GET /api/notices/feed` answers as before, then (after the response) starts one scrape of CWA / GIS / news if this server has not run one for 3 h. New and changed notices are upserted into `notices`; a notice already stored with the same text is skipped, so there is no repeated AI call.
+- **New route:** `GET /api/notices/refresh` runs the same scrape and answers `{found, updated, ai_read, ran_at}` or `{skipped: true}`. `?force=1` shortens the 3 h spacing to 5 min.
+- **Files:** `app/api/_lib/notice-scrape.ts` (the scraper core, moved out of the script), `app/api/_lib/notice-refresh.ts`, `app/api/notices/refresh/route.ts`. `scripts/scrape-notices.ts` uses the same core and still writes the cache file.
+- **Tested:** `npx tsc --noEmit`, eslint and `npm run build` pass. On `next start` with the real database: refresh answered `{"found":6,"updated":0,"ai_read":0}` in 4 s; after a feed call, refresh answered `{"skipped":true}` (the feed had started the run).
+
+### Needs from others
+- **P1:** set `ANTHROPIC_API_KEY` on Vercel. Without it the refresh still runs but every notice is read by the rule reader (`ai_extracted: false`): today all 7 stored notices are rule-read. With the key, the next refresh re-reads them with the AI.
+- **Another AI instead of Claude:** set `AI_BASE_URL`, `AI_API_KEY` and `AI_MODEL` (any OpenAI-compatible chat API: Gemini, Groq, OpenRouter, OpenAI...). Used only when `ANTHROPIC_API_KEY` is not set. Text only, the notice PDF is not sent. Tested against a local fake server, not against a real provider. **P4 / P2:** the ops label "Read by AI (Claude)" and the `/sources` line name Claude; reword them if another AI is used. **P5:** list that AI in the README.
+- **P1 (optional, `vercel.json` is yours):** a daily cron on `/api/notices/refresh` keeps notices current even when nobody opens the app: `"crons": [{ "path": "/api/notices/refresh", "schedule": "0 2 * * *" }]`.
+- **Not automatic yet:** the timetable (`data/schedule.csv`, ends 13 Dec) and reservoir levels (typed from news articles, no structured source) still need `npm run load-data`.
+
+## Needs from others: decision log (Sat 14 Nov, P3)
+- **P1:** `team/p3-backend/DECISIONS-PROPOSAL.md` is a 10-row replacement for `docs/DECISIONS.md` (the current one has 16 rows, the rules ask for 5 to 10, and six rows have no clock time). Copy the table over if you agree. Row 10 (surprise card) is not filled: the constraint is not written anywhere in the repo. The proposal also flags the English-only rule against the Sat 02:38 EN/FR/Kreol switch.
+
 ## V6 (Sat 14 Nov, P3) — duplicate streets fix, feat/data
 Live bug from the Sat 02:00 test: every Vacoas street exists twice (ids 1-21 and 22-42). Cause: `scripts/load-data.ts` did "delete all streets, insert all streets" and ignored the delete error. Once a report pointed at a street the delete failed silently and every street was inserted again.
 
@@ -17,6 +33,17 @@ Live bug from the Sat 02:00 test: every Vacoas street exists twice (ids 1-21 and
 - Bug from the Sat 02:00 test: the rule reader found "Bassin" inside "Beau Bassin". The data has 19 such pairs (Choisy / Mon Choisy, Bel Air / Grand Bel Air, Beau Bassin / Beau Bassin-Rose Hill...).
 - Fix: `localitiesInText(text, known)` in `lib/queries.ts` matches the longest names first and never reuses text already covered by a longer match. A short name still counts where it stands alone. `extractNoticeRules` uses it; same signature, same output shape. The AI path is unchanged (its localities are validated by exact folded name, not by searching the text).
 - Test: `npx tsx lib/queries.ts` prints `queries ok` (3 new checks).
+
+### ETA copy (same day, touches P4 files: lib/eta.ts, app/map/page.tsx)
+- Bug from the Sat 02:00 test: the map said "about 0 min" when the truck was within ~170 m of the stop (the 20 km/h rule rounds to 0).
+- Fix: `etaLabel(minutes)` in `lib/eta.ts` returns "arriving now" under 1 min, else "about N min". The map line uses it; `etaMinutes` is unchanged. Self-check `npx tsx lib/eta.ts` prints `eta ok` (3 new asserts).
+- P4: two-line change in your folder, done on feat/data because the tester asked for it before freeze. Shout if you want it moved.
+- P2: the text walker in `components/ui/i18n.tsx` has no entry for "arriving now"; it stays English (English-only rule), add a key if you translate the map.
+
+### Ops tile "Waiting for a tanker: 40 L" (same day, touches P4 file: components/ops/Overview.tsx)
+- Bug from the Sat 02:00 test: the tile summed the demo 20 L per request. Contract V5: residents never choose litres, ops demand = households (waiting requests).
+- Fix: the tile now reads "N households" with "M streets" under it. Capacity stays an ops choice per load in Dispatch. No other file changed.
+- P4: three-line change in your folder, done on feat/data before freeze at the tester's request.
 
 ## V5 (docs/SPLIT-V5.md, P3) — feat/data, commits fc3aa0d, ca917c8, 811cbc3, 709e8a5
 Shapes are in `lib/queries.ts` (import types from `@/lib/queries`). Every new route answers without a database (`demo: true`).

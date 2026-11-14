@@ -44,3 +44,13 @@ Read CLAUDE.md, SPEC.md, contracts/api.md and team/<my-folder>/TODO.md. Do ONE t
 ## Timeline
 Real schedule: core working end to end by Fri 15:30 · solid by Fri 22:00 · FEATURE FREEZE Sat 08:00 (bug fixes only) · submit by Sat 12:30. See docs/CHALLENGE.md.
 Rules: real dataset required, public repo, list AI tools in README, never identify or profile individuals.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+## This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

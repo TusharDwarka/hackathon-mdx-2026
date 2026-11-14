@@ -1,4 +1,5 @@
-// V5 AI notice parser (docs/SPLIT-V5.md, P3 item 6). SERVER ONLY: uses ANTHROPIC_API_KEY.
+// V5 AI notice parser (docs/SPLIT-V5.md, P3 item 6). SERVER ONLY: uses ANTHROPIC_API_KEY,
+// or another provider through AI_BASE_URL + AI_API_KEY + AI_MODEL (see `other` below).
 // Sends a CWA / news notice (text, optionally its PDF) to Claude and gets back JSON
 // {localities[], start, end, dates[], kind, summary}. The caller validates it with
 // validateParsedNotice (lib/queries.ts) and caches the result: the demo never needs a live call.
@@ -32,15 +33,49 @@ They are in French, English or Mauritian Creole. Extract what the notice states 
 - summary: one short plain English sentence a resident understands.
 Only use what the notice says. If something is not stated, use null or an empty list. Never guess a time, date or place.`;
 
-/** True when the server can call Claude. */
-export const aiConfigured = () => !!process.env.ANTHROPIC_API_KEY;
+/**
+ * A second provider: any OpenAI-compatible chat API (Gemini, Groq, OpenRouter, OpenAI, Mistral...).
+ * Set all three: AI_BASE_URL (up to and including /v1 or equivalent, no trailing slash), AI_API_KEY, AI_MODEL.
+ * Used when ANTHROPIC_API_KEY is not set. Text only: the PDF is not sent on this path.
+ */
+const other = () => {
+  const { AI_BASE_URL: url, AI_API_KEY: key, AI_MODEL: model } = process.env;
+  return url && key && model ? { url: url.replace(/\/+$/, ""), key, model } : null;
+};
+
+/** True when the server can call an AI (Claude, or the OpenAI-compatible provider). */
+export const aiConfigured = () => !!process.env.ANTHROPIC_API_KEY || !!other();
+
+async function otherReadNotice(o: { url: string; key: string; model: string }, user: string): Promise<unknown> {
+  const res = await fetch(`${o.url}/chat/completions`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${o.key}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      model: o.model,
+      temperature: 0,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: `${SYSTEM}\nAnswer with one JSON object only, matching this JSON schema:\n${JSON.stringify(SCHEMA)}` },
+        { role: "user", content: user },
+      ],
+    }),
+    signal: AbortSignal.timeout(45_000),
+  });
+  const body = (await res.json().catch(() => ({}))) as { choices?: { message?: { content?: string } }[]; error?: { message?: string } };
+  if (!res.ok) throw new Error(`ai_http_${res.status}: ${body.error?.message ?? ""}`.trim());
+  const text = body.choices?.[0]?.message?.content;
+  if (!text) throw new Error("ai_empty");
+  return JSON.parse(text.replace(/^\s*```(?:json)?\s*|\s*```\s*$/g, "")); // some models wrap the JSON in a code fence
+}
 
 /**
- * One Claude call. Returns the raw JSON object (validate it before use), or throws.
- * `pdf` = the notice PDF bytes when the text is only a link to it.
+ * One AI call. Returns the raw JSON object (validate it before use), or throws.
+ * `pdf` = the notice PDF bytes when the text is only a link to it (Claude only).
  */
 export async function aiReadNotice(input: { text: string; publishedOn?: string | null; pdf?: Buffer }): Promise<unknown> {
   const key = process.env.ANTHROPIC_API_KEY;
+  const o = other();
+  if (!key && o) return otherReadNotice(o, `Published: ${input.publishedOn ?? "unknown"}\n\nNotice:\n${input.text}`);
   if (!key) throw new Error("ai_not_configured");
   const content: unknown[] = [];
   if (input.pdf) content.push({ type: "document", source: { type: "base64", media_type: "application/pdf", data: input.pdf.toString("base64") } });

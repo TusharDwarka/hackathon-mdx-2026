@@ -1,32 +1,43 @@
 # Kot Delo? — Hackathon MDX 2026 (theme: Live Better)
 
-> Status (Fri 13 Nov, evening): **V1 built and live on Vercel** (Home, Map, Driver merged). **V2 in progress**: landing, resident, operations screens and the reservoir level. Real CWA timetable, streets and reservoir levels are in `data/`. Loading them into Supabase is a separate step.
+> Status (Sat 14 Nov, morning): **live at https://hackathon-mdx-2026.vercel.app**. All screens below are merged on `main` (40 pull requests since kickoff). Real CWA timetables, OpenStreetMap streets and reservoir levels are in `data/` and loaded into Supabase. Decision log: `docs/DECISIONS.md`.
 
 ## Problem
 During CWA water rationing, households in Vacoas (La Caverne neighbourhood), Mauritius, don't know when water will really come or when the tanker truck will arrive. Since 10 October 2026 the CWA supplies Vacoas only every second day, 03:00–08:00.
 
 ## User
-One household in La Caverne, Vacoas.
+One household in La Caverne, Vacoas (the demo street set). Any locality on the main island can be searched; the two other users are the tanker driver and CWA operations staff.
 
 ## What it does
-Shows today's official CWA water window for your street, lets neighbours report "Water is here" / "No water", lets a household request the tanker ("I need water"), and shows the tanker truck moving live with "N stops away, about X min". It then compares the official schedule with what actually happened: reliability score and a heat map of hours without water. V2 adds the Mare aux Vacoas reservoir level, a supply tier, a trust check on reports, a likely water time, two-tap complaints, and an operations screen for the CWA. English labels, phone first, also works on desktop, no login.
+- **When does water come?** Search your locality or street, see the official CWA supply window and where that rule comes from (official notice, regional timetable, or "Not known yet"). "Remind me 30 min before" adds it to your calendar.
+- **What is really happening?** Neighbours report "Water is here" / "No water" in one tap. The app compares the official schedule with the reports: reliability score, a 24-hour track and a heat map of hours without water.
+- **Where is the tanker?** A household requests a tanker; the driver's stop list builds itself; the resident watches the truck move live with "N stops away, about X min".
+- **Is my tap water safe to drink?** Official notices, heavy rain in the last 48 h and reservoir level, with sourced advice for each situation (CWA, Ministry of Health, WHO).
+- **How much water is left?** All 7 main reservoirs with their trend, and a supply tier.
+- **For the CWA:** an operations screen that plans tanker loads from the requests, lists complaints and reports to check, and reads pasted CWA notices with AI.
 
-## Screens (V2)
-| Screen | For | What it shows | State |
-|---|---|---|---|
-| Landing `/` | everyone | What Kot Delo? is, reservoir level + supply tier, today's window, three ways in | V2, in progress |
-| Resident `/resident` | a household | Today's window, reports, "I need water", confirmed / unconfirmed status, likely water time, complaint in two taps, schedule vs reality, heat map | V1 Home is live at `/`; moves here in V2 |
-| Map `/map` | a household | Truck moving live, stops away, ETA | live (V1) |
-| Driver `/driver` | tanker driver | Start round, GPS every 5 s, mark stop served, end round | live (V1) |
-| Operations `/ops` | CWA staff (desktop first) | Reservoir status, heat map, priority list with a suggested action per street, open complaints, suspect reports | V2, in progress |
+Phone first, also works on desktop. English, French and Kreol Morisien. Guests can browse, report and request a tanker; a complaint needs an email account.
 
-Everything is rule-based (see `contracts/api.md`), with no AI model inside the app.
+## Screens
+| Screen | For | What it shows |
+|---|---|---|
+| Landing `/` | everyone | What Kot Delo? is, reservoir level + supply tier, today's window, ways in |
+| Resident `/resident` | a household | Tabs: Overview, Is my tap water safe?, Water schedule, Report water, Request a tanker, Reservoirs, CWA notices |
+| Map `/map` | a household | Live tankers, stops away and ETA; layers for reports (last 3 h), supply reliability (14 days), official notices, water points, rivers, localities; search and "near a river?" |
+| Driver `/driver` | tanker driver | Start round, GPS every 5 s, mark stop served, end round |
+| Operations `/ops` | CWA staff (desktop first) | Overview (reservoirs, trend, forecast), Dispatch (tanker loads from requests), Complaints, Reports to check, Notices (paste a notice, AI reads it, staff publish it) |
+| Login `/login` | everyone | Log in, sign up or continue as guest; driver and CWA staff enter an access code |
+| Guide `/guide` | everyone | How to use the app, per role |
+| Sources `/sources` | everyone | Every data source and how it was collected |
+
+The schedule, ETA, reliability score, trust check, forecast and dispatch plan are plain rules (see `contracts/api.md`). The one AI model in the app reads CWA notices; see "AI tools used".
 
 ## What is demo, not real
-- **Supply tier thresholds** (≥ 60% normal, 30–60% watch, < 30% critical) are **our demo values, not CWA policy**. The reservoir **levels** are real. The tier label is not an official CWA status.
-- **Seeded reports**: 7 days of neighbour reports (`is_demo = true`), and the extra rows and complaints the V2 seed adds, are generated so the reliability score, heat map, trust check, likely water time and priority list have history. They are **not real neighbour reports**.
-- **Truck route order** (`order_index`) is our suggested route, not an official CWA tanker route.
-- The app never says whether water is safe or unsafe to drink. It shows the supply tier and official notices only.
+- **Supply tier thresholds** (≥ 60% normal, 30–59% watch, < 30% critical) are **our demo values, not CWA policy**. The reservoir **levels** are real. The tier label is not an official CWA status.
+- **Seeded reports**: 7 days of neighbour reports (`is_demo = true`), and the extra rows and complaints the seed adds, are generated so the reliability score, heat map, trust check, likely water time and dispatch plan have history. They are **not real neighbour reports**.
+- **Truck route order** (`order_index`) is our suggested route, not an official CWA tanker route. **Tanker names and capacities** in Dispatch are demo values: no public CWA tanker timetable or fleet list by locality exists.
+- **Forecasts** (next water window, days until a reservoir reaches 20%) are estimates from the timetable and the recent trend, never a promise.
+- **Drinking-water advice** is quoted from official sources, each line linked. The app does not test water and cannot certify the water at your tap.
 
 ## Data sources
 All collected Fri 13 Nov 2026.
@@ -42,33 +53,43 @@ All collected Fri 13 Nov 2026.
 - **Context data** → `data/context/` (REAL, from the national open data portal [data.govmu.org](https://data.govmu.org)). `cwa-branches.csv` is from [Location of CWA branches](https://data.govmu.org/dataset/location-cwa-branches-mauritius). `water-balance-2000-2021.csv` is from data.govmu.org dataset `0e4ea8f5-c1c6-4c63-b34d-a3aa695d6c5b`. Neither is used by the app yet.
 - **Supply days by locality and tanker facts** → `data/context/cwa-supply-localities-oct-2026.csv` (53 localities) and `data/context/cwa-tankers-oct-2026.csv` (REAL, not used by the app yet). Localities: Vacoas and Phoenix from the CWA communiqué of 10 Oct 2026. The Saint-Pierre and Curepipe lists come from Defimedia of 14 Oct 2026 ([Saint-Pierre](https://defimedia.info/saint-pierre-et-ses-environs-distribution-deau-un-jour-sur-deux-de-3-h-8-h), [Curepipe](https://defimedia.info/curepipe-distribution-deau-un-jour-sur-deux-de-3-h-8-h)), which quotes the CWA communiqué. Group A gets water on even October dates, group B on odd ones, 03:00–08:00. Tanker facts: [Defimedia, 29 Oct 2026](https://defimedia.info/crise-hydrique-les-camions-citernes-peinent-repondre-la-demande) (31 CWA tankers, 15 for Upper/Lower Mare-aux-Vacoas) and the [CWA private tanker notice](https://cwa.govmu.org/cwa/wp-content/uploads/2026/10/WATER-TANKERS-Oct-2026.pdf). **No public tanker timetable by locality exists.** The CWA sends tankers on request (hotline 170 / 601 5000), which is the gap Kot Delo fills.
 - **Hours of supply by locality** → `data/context/cwa-hours-of-supply-2026-06.csv` (234 localities, not used by the app yet). Coverage: MAV Upper (Vacoas 52, Curepipe 48, St Pierre 36) and MAV Lower (98). It lists normal and dry-season windows, hours per day and, for MAV Lower, subscriber counts. Source: [water.cyber.mu](https://water.cyber.mu/hours-of-supply/mav-upper-vacoas/), an **independent site republishing CWA data, not the CWA itself**. Retrieved 13 Nov 2026. The data is the CWA revision of **June 2026**. For Vacoas, Phoenix, St Pierre, Curepipe, Forest-Side and Floréal, the CWA communiqué of 10 Oct 2026 has since replaced it (every 2 days, 03:00–08:00).
+- **National water and health statistics** → `data/context/` (REAL, not used by the app yet). Statistics Mauritius tables, downloaded 14 Nov 2026 as CSV, most likely from [data.govmu.org](https://data.govmu.org). **The exact dataset URLs are still to be added.** Values are unchanged from the download.
+  - `fresh-water-abstractions-by-sector.csv`: surface and ground water abstraction by sector (CWA, manufacturing, agriculture), 2010–2022, Mm³.
+  - `fresh-water-abstractions1-by-source.csv`: abstraction from reservoirs, rivers and streams, and ground water, 2010–2022, Mm³.
+  - `average-monthly-potable-water-production-from-treatment-plants-and-boreholes-to-distribution-sys.csv`: monthly average potable water production by supply system (Upper/Lower Mare aux Vacoas, Port-Louis, North, South, East), surface vs borehole, 2015–2022. Units are not stated in the file.
+  - `notifiable-diseases.csv`: yearly cases of water-borne, food-borne, mosquito-borne and mammal-borne notifiable diseases, 2012–2021. Background only. The app never says whether water is safe to drink.
 - **Supply rule for every locality** → `data/supply_rules.csv` (REAL, contract V5). 347 localities, 558 rows (two rows when a locality gets two slots a day). The locality list is P3's OSM index (`public/places.json`, 306 places on the main island) plus the 53 names in the October notice. `basis` says where each rule comes from. **`locality_notice` (66 localities):** named in the CWA communiqué of 10 Oct 2026 or in the two Defimedia articles quoting it: every 2 days, 03:00–08:00. **`regional_timetable` (211):** the CWA timetable of 5 Aug 2026, by district. The CWA names regions, not districts, so the district → region mapping is ours: Port Louis → Port-Louis; Pamplemousses, Rivière du Rempart → North; Flacq → East; Grand Port, Savanne → South. **`unknown` (70):** the rest of Plaines Wilhems, Moka and Black River. Their 17 Jun 2026 restrictions ("five to six hours a day") were never published with hours, so times are left blank. Built by `team/p5-pitch/build_supply_rules.py`.
 - **Earlier CWA timetable** (5 Aug 2026, North/East/South/Port-Louis, 2 slots a day): copy in `data/sources/` ([PDF](https://cwa.govmu.org/cwa/wp-content/uploads/2026/08/HORAIRES-5-1.pdf)). Used in `supply_rules.csv`.
 - **Demo data:** seeded reports flagged `is_demo = true` in the database (see "What is demo, not real"). They are NOT real neighbour reports.
 
 ## Stack
-Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres + Realtime) · Leaflet + OpenStreetMap · Vercel. Mobile-first (390px). The tanker is tracked by the driver's phone (`/driver`, geolocation + Wake Lock), not hardware.
+Next.js App Router + TypeScript + Tailwind + shadcn/ui · Supabase (Postgres + Realtime + Auth) · Leaflet + OpenStreetMap · Vercel. Mobile-first (390px). The tanker is tracked by the driver's phone (`/driver`, geolocation + Wake Lock), not hardware.
 
 ## AI tools used
 - Claude Code (Anthropic) — planning, code generation, review
 - Codex CLI (OpenAI) — code review, bug hunting
 - Skills/plugins: Ponytail, Karpathy guidelines
-- AI features inside the app: Claude reads pasted CWA notices (places, dates, times) for staff to check; the core ETA and reliability score are rule-based
+- AI inside the app: Claude (`claude-haiku-4-5`) reads CWA notices, scraped from the CWA site and news feeds or pasted by staff, into localities, dates and times. Staff check the reading before publishing; results are cached and labelled "AI-read". With no API key or an AI error, a rule reader takes over. The ETA, reliability score, forecast and dispatch plan are rule-based.
 - French and Kreol Morisien translations of the whole UI were drafted with Claude (components/ui/i18n-dict-*.ts) and reviewed by the team
 - Every data source and how it was collected is listed in the app at /sources
 
 ## Surprise card
-TBD (revealed during the event). The Home/Resident screen has an empty `<SurpriseCard />` slot for it.
+**"Let a new user reach the main feature independently."** (`docs/DECISIONS.md` #9)
+- **First-visit tour** (`components/home/Guide.tsx`): a skippable 30-second spotlight tour on the landing page and on `/resident` that points at the real buttons: search your place → today's water window → reminder → report → request a tanker.
+- **Always reachable again:** the drop logo pulses with a tip and reopens the tour; `/guide` explains each role (resident, tanker driver, CWA staff).
+- **No wall before the feature:** "Browse" on the landing goes straight to the resident screen as a guest; the main feature (today's water time for your place) needs one search, no account.
+- **Visible in the app:** the surprise card sits first on the Resident overview and links to `/guide`.
 
 ## Privacy
-Reports, requests and complaints are stored by street, never by house or person. Complaints are a fixed category only: no free text, no device id. Only the truck is tracked, and only while a round is active.
+Reports and requests are stored by street, never by house or person. A complaint is a fixed category only (no free text) and needs a signed-in account, so it can be traced if abused: the app stores an email login and nothing else, no name and no profile. Guest sessions are an opaque random token that expires after 24 h (only its hash is stored), used for rate limits. Only the truck is tracked, and only while a round is active.
 
 ## How to run
 1. `npm install`
-2. Copy `.env.example` to `.env.local` and fill in the Supabase keys (shared over WhatsApp DM, never committed).
-3. In Supabase, open the SQL Editor and run `sql/schema.sql`, then `sql/v2.sql`.
+2. Copy `.env.example` to `.env.local` and fill in the Supabase keys (shared over WhatsApp DM, never committed). Optional, server only: `ANTHROPIC_API_KEY` (AI notice reading; without it the rule reader is used), `DRIVER_ACCESS_CODE` and `OPS_ACCESS_CODE` (without them the codes `demo-driver` and `demo-ops` work in local dev only).
+3. In Supabase, open the SQL Editor and run, in this order: `sql/schema.sql`, `sql/v2.sql`, `sql/v3.sql`, `sql/v4.sql`, `sql/v5.sql`, `sql/v6.sql`. Then Authentication → Providers → Email on, "Confirm email" off for the demo.
 4. `npm run load-data` loads the CSVs from `data/`. `npm run seed-demo` adds the demo reports.
 5. `npm run dev`, then open http://localhost:3000
+6. Self-checks: `npx tsx lib/queries.ts`, `npx tsx lib/eta.ts`, `npx tsx components/ops/rules.ts`.
 
 ## Team
 See `team/` for per-person notes, `docs/DECISIONS.md` for decisions and times, `docs/PLAYBOOK.md` for how we work.
