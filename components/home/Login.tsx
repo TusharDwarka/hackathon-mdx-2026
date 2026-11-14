@@ -274,7 +274,9 @@ export function Login({ asked, next, mode: askedMode }: { asked: Role; next?: st
             )}
           </form>
           )}
-          <p className="mt-5 text-center text-xs text-muted-foreground">Stored by street, never by house or person.</p>
+          <p className="mt-5 text-center text-xs text-muted-foreground">
+            By continuing you agree to our <Link href="/privacy" className="font-semibold text-primary underline underline-offset-2">Privacy and terms</Link>. Stored by street, never by house or person.
+          </p>
         </div>
       </section>
     </main>

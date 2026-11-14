@@ -371,7 +371,8 @@ export function Landing({ info }: { info: PublicData }) {
       <footer className="mx-auto flex max-w-6xl flex-col gap-4 px-4 pb-10 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between lg:px-6">
         <Logo className="text-base text-foreground" />
         <p className="max-w-[60ch]">
-          Built at MDX Hackathon 2026, Mauritius. <Link href="/sources" className="font-semibold text-primary underline underline-offset-2">Data sources</Link>
+          Built at MDX Hackathon 2026, Mauritius. <Link href="/sources" className="font-semibold text-primary underline underline-offset-2">Data sources</Link>{" · "}
+          <Link href="/privacy" className="font-semibold text-primary underline underline-offset-2">Privacy and terms</Link>
         </p>
       </footer>
     </div>
