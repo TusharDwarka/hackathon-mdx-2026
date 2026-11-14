@@ -1,8 +1,21 @@
 # HANDOFF (p5-pitch)
 
+## Decision log — Sat 14 Nov
+
+### Changed
+- **`team/p5-pitch/DECISIONS-DRAFT.md`**: a 10-row decision log, with times taken from the git commits that recorded each decision. The current `docs/DECISIONS.md` has 16 rows, but the rules ask for 5 to 10. Old rows are merged (#1+#2, #6+#7) or left out (#11, #12, #14, #15).
+
+### Needs from others
+- **P1:** replace the rows in `docs/DECISIONS.md` with the draft. Fill row 10 (surprise card) with the time and answer once it's revealed. If it never is, put old #11 (accounts) back as row 10.
+
+### How to test
+1. Count the rows in the draft: 10.
+2. Check each time against `git log --date=format:'%a %d %b %H:%M' --format='%ad %s' -- docs/`.
+
 ## V5 (docs/SPLIT-V5.md) — Fri 13 Nov night
 
 ### Changed
+- `data/context/`: 4 Statistics Mauritius CSVs (abstraction by sector and by source 2010–2022, monthly potable water production by supply system 2015–2022, notifiable diseases 2012–2021). Context only. **TODO P5:** add the exact data.govmu.org dataset URLs to README (no download link was recorded).
 - **`data/supply_rules.csv`** (contract V5 columns): 347 localities, 558 rows (one row per slot, so 2 rows for a twice-a-day locality).
   - `locality_notice` (66): CWA 10 Oct communiqué + the 2 Defimedia articles quoting it. Every 2 days, 03:00–08:00, counted from `valid_from`.
   - `regional_timetable` (211): CWA 5 Aug timetable. **District → region mapping is ours** (the CWA doesn't publish one): Port Louis → Port-Louis; Pamplemousses, Rivière du Rempart → North; Flacq → East; Grand Port, Savanne → South.
